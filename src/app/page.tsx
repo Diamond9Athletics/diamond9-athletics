@@ -77,9 +77,6 @@ export default function Home() {
                     <span className="w-2 h-2 rounded-full bg-[#9954d2] animate-pulse shrink-0" />
                     <span className="text-[10px] text-[#b07adf] font-bold tracking-[0.2em] shrink-0">ACTIVE</span>
                     <IconBaseball className="w-5 h-5 text-[#b07adf] shrink-0" />
-                    <span className="pitch-tag pitch-tag-fb">4-Seam</span>
-                    <span className="pitch-tag pitch-tag-sl">Slider</span>
-                    <span className="pitch-tag pitch-tag-cb">Curve</span>
                   </div>
                   <h3 className="font-display text-5xl sm:text-6xl text-white mb-1">PITCHING</h3>
                   <h3 className="font-display text-5xl sm:text-6xl gradient-text leading-tight mb-4">PLANS</h3>
@@ -103,9 +100,6 @@ export default function Home() {
                     <span className="w-2 h-2 rounded-full bg-[#9954d2] animate-pulse shrink-0" />
                     <span className="text-[10px] text-[#b07adf] font-bold tracking-[0.2em] shrink-0">ACTIVE</span>
                     <IconBat className="w-5 h-5 text-[#b07adf] shrink-0" />
-                    <span className="pitch-tag pitch-tag-ch">Launch Angle</span>
-                    <span className="pitch-tag pitch-tag-fb">Exit Velo</span>
-                    <span className="pitch-tag pitch-tag-sl">Bat Speed</span>
                   </div>
                   <h3 className="font-display text-5xl sm:text-6xl text-white mb-1">HITTING</h3>
                   <h3 className="font-display text-5xl sm:text-6xl gradient-text leading-tight mb-4">PLANS</h3>

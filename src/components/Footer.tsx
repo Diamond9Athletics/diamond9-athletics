@@ -25,17 +25,7 @@ export default function Footer() {
             <p className="text-zinc-600 text-xs leading-relaxed mb-5 max-w-[220px]">
               Elite baseball training powered by Rapsodo data. Real trainers. Real results.
             </p>
-            {/* Scoreboard mini stats */}
-            <div className="flex gap-3">
-              <div className="scoreboard-panel rounded-lg px-3 py-2">
-                <p className="scoreboard-num text-lg">500+</p>
-                <p className="scoreboard-label">ATHLETES</p>
-              </div>
-              <div className="scoreboard-panel rounded-lg px-3 py-2">
-                <p className="scoreboard-num text-lg">+4 MPH</p>
-                <p className="scoreboard-label">AVG GAIN</p>
-              </div>
-            </div>
+
           </div>
 
           {/* Training */}
@@ -62,7 +52,7 @@ export default function Footer() {
           <div>
             <p className="text-zinc-500 text-[10px] tracking-widest mb-4 font-bold">CONNECT</p>
             <div className="space-y-3">
-              <a href="https://instagram.com/diamond9athletics" target="_blank" rel="noopener noreferrer" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">
+              <a href="https://instagram.com/diamond9atx" target="_blank" rel="noopener noreferrer" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">
                 Instagram
               </a>
             </div>

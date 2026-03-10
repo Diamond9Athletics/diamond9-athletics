@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const bookingSteps = [
   { num: "01", title: "PICK A PLAN",  desc: "Choose from our pitching or hitting plans: Half Session to College Summer." },
   { num: "02", title: "BOOK ONLINE",  desc: "Select your date and time directly in the scheduler below. Instant confirmation." },
-  { num: "03", title: "SHOW UP",      desc: "Come ready to work. Bring your glove. We bring the Rapsodo." },
+  { num: "03", title: "COME READY TO WORK", desc: "" },
 ];
 
 const plans = [
@@ -69,7 +69,7 @@ export default function Appointments() {
             {[
               { label: "RESPONSE TIME", value: "Within 24 hours",   icon: "⚡" },
               { label: "LOCATION",      value: "Texas",              icon: "📍" },
-              { label: "INSTAGRAM",     value: "@diamond9athletics", icon: "📸" },
+              { label: "INSTAGRAM",     value: "@diamond9atx", icon: "📸" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-4">
                 <div className="icon-box text-lg flex-shrink-0">{item.icon}</div>
