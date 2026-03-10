@@ -5,7 +5,7 @@ import { IconBaseball, IconBat, IconDiamond } from "@/components/BaseballIcons";
 const steps = [
   { num: "01", title: "CHOOSE A PLAN", desc: "Pick from Half Session to the full College Summer program." },
   { num: "02", title: "BOOK & SHOW UP", desc: "Schedule your session. Bring the effort. We bring the tech." },
-  { num: "03", title: "GET THE DATA", desc: "Walk away with Rapsodo numbers, video, and a plan to improve." },
+  { num: "03", title: "COME READY TO WORK", desc: "" },
 ];
 
 export default function Home() {
