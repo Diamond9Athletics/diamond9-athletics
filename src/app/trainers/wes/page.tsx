@@ -44,7 +44,7 @@ export default function WesGaffordBio() {
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${img("/images/hero-pitcher-night.jpg")}')` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/60 to-zinc-950" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">⚾ HEAD TRAINER</span>
+          <span className="badge-amber mb-5 inline-flex">HEAD TRAINER</span>
           <h1 className="font-display leading-none">
             <span className="text-white text-5xl sm:text-7xl lg:text-8xl block">WES</span>
             <span className="gradient-text text-glow text-5xl sm:text-7xl lg:text-8xl block">GAFFORD</span>

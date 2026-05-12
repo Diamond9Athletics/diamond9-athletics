@@ -24,7 +24,7 @@ const plans = [
     tag: "GREAT VALUE",
     price: "$275",
     sub: "4 sessions",
-    features: ["4 Lessons", "1 Media / Recruiting Video", "Swing Assessment", "Video Breakdown", "Bat Speed & Rotational Power", "Mobility Training", "Arm Care Protocols"],
+    features: ["4 Lessons", "1 Media / Recruiting Video", "Swing Assessment", "Video Breakdown", "Bat Speed & Rotational Power", "Mobility Training"],
     featured: false,
     jersey: "4",
     bar: 78,
@@ -61,13 +61,13 @@ export default function HittingPlans() {
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/75 via-zinc-950/55 to-zinc-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.07)_0%,transparent_100%)]" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">⚾ TRAINING PROGRAMS</span>
+          <span className="badge-amber mb-5 inline-flex">TRAINING PROGRAMS</span>
           <h1 className="font-display leading-none">
             <span className="text-white text-6xl sm:text-8xl lg:text-9xl block">HITTING</span>
             <span className="gradient-text text-glow text-6xl sm:text-8xl lg:text-9xl block">PLANS</span>
           </h1>
           <div className="divider-glow max-w-[100px] mx-auto mt-6 mb-5" />
-          <p className="text-zinc-400 text-sm">Every swing tracked. Every rep has a purpose.</p>
+          <p className="text-zinc-400 text-sm">Every rep has a purpose.</p>
         </div>
       </section>
 

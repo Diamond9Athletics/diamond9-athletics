@@ -21,8 +21,8 @@ const trainers = [
     name: "TURNER OLSON",
     title: "HITTING TRAINER",
     jersey: "9",
-    bio: "Mechanical precision trainer focused on repeatable delivery, command, and long-term arm longevity.",
-    specialties: ["Mechanical Analysis", "Weighted Ball", "Live At-Bats", "Video Breakdown"],
+    bio: "Swing-mechanics specialist focused on bat speed, contact consistency, and a repeatable, game-ready swing.",
+    specialties: ["Swing Mechanics", "Bat Speed", "Pitch Recognition", "Video Breakdown"],
     icon: <IconGlove className="w-10 h-10 text-[#b07adf]" />,
   },
 ];

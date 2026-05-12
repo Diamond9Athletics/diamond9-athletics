@@ -430,11 +430,11 @@ body {
 [data-theme="light"] .bg-zinc-900          { background-color: #ffffff !important; }
 [data-theme="light"] .bg-zinc-800          { background-color: #EDE5DC !important; }
 [data-theme="light"] .bg-zinc-700          { background-color: #E0D8CE !important; }
-[data-theme="light"] .bg-\[#040200\],
-[data-theme="light"] .bg-\[#020101\],
-[data-theme="light"] .bg-\[#030200\],
-[data-theme="light"] .bg-\[#050202\],
-[data-theme="light"] .bg-\[#080404\]       { background-color: #F8F2ED !important; }
+[data-theme="light"] [class*="bg-[#040200]"],
+[data-theme="light"] [class*="bg-[#020101]"],
+[data-theme="light"] [class*="bg-[#030200]"],
+[data-theme="light"] [class*="bg-[#050202]"],
+[data-theme="light"] [class*="bg-[#080404]"]       { background-color: #F8F2ED !important; }
 /* opacity/slash variants */
 [data-theme="light"] [class*="bg-zinc-900\/"] { background-color: rgba(255,255,255,0.9) !important; }
 [data-theme="light"] [class*="bg-zinc-800\/"] { background-color: rgba(237,229,220,0.7) !important; }
