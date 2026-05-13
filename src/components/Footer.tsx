@@ -45,6 +45,8 @@ export default function Footer() {
               <Link href="/about"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">About</Link>
               <Link href="/shop"    className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Shop</Link>
               <Link href="/contact" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Contact</Link>
+              <Link href="/support" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">App Support</Link>
+              <Link href="/privacy" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Privacy Policy</Link>
             </div>
           </div>
 
