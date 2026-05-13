@@ -68,6 +68,18 @@ export default function Privacy() {
           </div>
 
           <div>
+            <h2 className="font-display text-2xl text-white mb-3">PAYMENTS</h2>
+            <p>
+              All subscription payments for the App are processed through Apple&rsquo;s App Store.
+              We do not collect or store your credit card or other payment information. Apple
+              handles all billing and payment processing under Apple&rsquo;s own privacy practices.
+              Apple may share limited transaction information with us (such as a receipt token or
+              transaction identifier) so that we can validate your purchase and activate your
+              subscription within the App.
+            </p>
+          </div>
+
+          <div>
             <h2 className="font-display text-2xl text-white mb-3">DATA RETENTION</h2>
             <p>
               We retain your information for as long as your account is active or as needed to provide
