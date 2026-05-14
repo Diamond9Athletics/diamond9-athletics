@@ -4,8 +4,8 @@ import { img } from "@/lib/config";
 import { IconField } from "@/components/BaseballIcons";
 
 export const metadata: Metadata = {
-  title: "Hitting Plans | Diamond Nine Athletics",
-  description: "Elite data-driven hitting plans from Diamond Nine Athletics.",
+  title: "Hitting Plans",
+  description: "Elite, data-driven hitting plans from Diamond Nine Athletics — swing assessments, bat speed work, and video breakdown in Austin, TX.",
 };
 
 const plans = [

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Diamond Nine Athletics",
+  title: "Privacy Policy",
   description: "Privacy policy for the Diamond Nine Athletics mobile app.",
 };
 

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "App Support | Diamond Nine Athletics",
-  description: "Support and help for the Diamond Nine Athletics mobile app.",
+  title: "App Support",
+  description: "Support and help for the Diamond Nine Athletics mobile app — account, billing, bugs, and feature requests.",
 };
 
 const EMAIL = "support@diamond9athletics.com";

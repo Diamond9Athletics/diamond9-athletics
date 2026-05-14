@@ -5,8 +5,8 @@ import { img } from "@/lib/config";
 const STORE_URL = "https://shop.flyp.space/diamond9ath";
 
 export const metadata: Metadata = {
-  title: "Shop | Diamond Nine Athletics",
-  description: "Official Diamond Nine Athletics merchandise.",
+  title: "Shop",
+  description: "Official Diamond Nine Athletics merchandise and apparel.",
 };
 
 const products = [

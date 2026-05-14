@@ -4,8 +4,8 @@ import { img } from "@/lib/config";
 import { IconField } from "@/components/BaseballIcons";
 
 export const metadata: Metadata = {
-  title: "Pitching Plans | Diamond Nine Athletics",
-  description: "Elite pitching training plans with Rapsodo tracking.",
+  title: "Pitching Plans",
+  description: "Elite pitching training plans with Rapsodo tracking — velocity, command, and arm care programs in Austin, TX.",
 };
 
 const plans = [

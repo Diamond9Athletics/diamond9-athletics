@@ -4,8 +4,8 @@ import Script from "next/script";
 import { img } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "Book | Diamond Nine Athletics",
-  description: "Book a training session with Diamond Nine Athletics.",
+  title: "Book a Session",
+  description: "Book a pitching or hitting training session with Diamond Nine Athletics in Austin, Texas.",
 };
 
 const bookingSteps = [

@@ -4,8 +4,8 @@ import { img } from "@/lib/config";
 import { IconBaseball, IconGlove, IconDiamond } from "@/components/BaseballIcons";
 
 export const metadata: Metadata = {
-  title: "About | Diamond Nine Athletics",
-  description: "Meet the elite trainers behind Diamond Nine Athletics.",
+  title: "About",
+  description: "Meet the trainers behind Diamond Nine Athletics — a data-first baseball training program based in Austin, Texas.",
 };
 
 const trainers = [

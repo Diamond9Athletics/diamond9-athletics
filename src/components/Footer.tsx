@@ -71,13 +71,8 @@ export default function Footer() {
         <div className="divider-glow mb-6" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-zinc-700 text-xs">© 2025 Diamond Nine Athletics. All rights reserved.</p>
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            <span className="pitch-tag pitch-tag-fb" style={{fontSize:"0.55rem"}}>4-Seam</span>
-            <span className="pitch-tag pitch-tag-sl" style={{fontSize:"0.55rem"}}>Slider</span>
-            <span className="pitch-tag pitch-tag-cb" style={{fontSize:"0.55rem"}}>Curve</span>
-            <span className="font-mono text-zinc-700 text-[10px] ml-1">{BUILD_VERSION}</span>
-          </div>
+          <p className="text-zinc-700 text-xs">© 2026 Diamond Nine Athletics. All rights reserved.</p>
+          <span className="font-mono text-zinc-700 text-[10px]">{BUILD_VERSION}</span>
         </div>
       </div>
     </footer>
