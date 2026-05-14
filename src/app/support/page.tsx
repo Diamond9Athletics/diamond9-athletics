@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Support and help for the Diamond Nine Athletics mobile app.",
 };
 
-const EMAIL = "diamondnineathletics@gmail.com";
+const EMAIL = "support@diamond9athletics.com";
 
 const topics = [
   {

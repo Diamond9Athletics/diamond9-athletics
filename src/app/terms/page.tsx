@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Terms of service for the Diamond Nine Athletics mobile app.",
 };
 
-const EMAIL = "diamondnineathletics@gmail.com";
+const EMAIL = "support@diamond9athletics.com";
 const LAST_UPDATED = "May 13, 2026";
 const PRICE = "$9.99 USD";
 const PERIOD = "month";

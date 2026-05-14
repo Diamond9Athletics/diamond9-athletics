@@ -76,7 +76,7 @@ export default function Contact() {
             <div className="card-modern rounded-2xl p-6 space-y-5">
               {[
                 { label: "INSTAGRAM", value: "@diamond9atx", icon: "📸" },
-                { label: "EMAIL", value: "Diamondnineathletics@gmail.com", icon: "✉️" },
+                { label: "EMAIL", value: "info@diamond9athletics.com", icon: "✉️" },
                 { label: "LOCATION", value: "Austin, Texas", icon: "📍" },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4">

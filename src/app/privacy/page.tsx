@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Privacy policy for the Diamond Nine Athletics mobile app.",
 };
 
-const EMAIL = "diamondnineathletics@gmail.com";
+const EMAIL = "privacy@diamond9athletics.com";
 const LAST_UPDATED = "May 13, 2026";
 
 export default function Privacy() {
