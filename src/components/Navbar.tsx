@@ -9,7 +9,7 @@ import { img } from "@/lib/config";
 export const BUILD_VERSION = "v1.6.0";
 
 const navLinks = [
-  { href: "/app", label: "The App" },
+  { href: "/app", label: "D9 App" },
   { href: "/pitching-plans", label: "Pitching Plans" },
   { href: "/hitting-plans", label: "Hitting Plans" },
   { href: "https://shop.flyp.space/diamond9ath", label: "Shop", external: true },
