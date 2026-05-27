@@ -88,8 +88,8 @@ export default function AppPage() {
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
           <span className="badge-amber mb-5 inline-flex">◆ COMING SOON · iOS</span>
           <h1 className="font-display leading-none">
-            <span className="text-white text-5xl sm:text-7xl lg:text-8xl block">THE DIAMOND 9</span>
-            <span className="gradient-text text-glow text-5xl sm:text-7xl lg:text-8xl block">APP</span>
+            <span className="text-white text-6xl sm:text-8xl lg:text-9xl block">D9</span>
+            <span className="gradient-text text-glow text-6xl sm:text-8xl lg:text-9xl block">APP</span>
           </h1>
           <div className="divider-glow max-w-[100px] mx-auto mt-6 mb-5" />
           <p className="text-zinc-300 text-base sm:text-lg max-w-xl mx-auto mb-8">
