@@ -42,7 +42,7 @@ export default function Footer() {
           <div>
             <p className="text-zinc-500 text-[10px] tracking-widest mb-4 font-bold">COMPANY</p>
             <div className="space-y-2.5">
-              <Link href="/app"     className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">The App</Link>
+              <Link href="/app"     className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">D9 App</Link>
               <Link href="/about"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">About</Link>
               <Link href="/shop"    className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Shop</Link>
               <Link href="/contact" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Contact</Link>
