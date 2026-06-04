@@ -4,7 +4,8 @@
 -- ============================================================
 
 -- ── PROFILES ─────────────────────────────────────────────────
---  One row per athlete account.  Linked 1:1 to Supabase auth.users.
+--  One row per account.  Linked 1:1 to Supabase auth.users.
+--  Both athletes and trainers live here, distinguished by is_trainer.
 create table if not exists public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   first_name  text,
@@ -12,12 +13,38 @@ create table if not exists public.profiles (
   email       text not null,
   phone       text,
   is_admin    boolean not null default false,
+  is_trainer  boolean not null default false,
+  trainer_slug text unique,             -- e.g. 'wes', 'turner' (only set for trainers)
+  trainer_bio  text,                    -- short bio shown on the picker
+  trainer_categories text[],            -- e.g. ['pitching'] or ['pitching','hitting']
   created_at  timestamptz not null default now()
 );
 
+create index if not exists profiles_trainer_idx on public.profiles(is_trainer) where is_trainer;
+
 alter table public.profiles enable row level security;
-create policy "profile self read"   on public.profiles for select using (auth.uid() = id or is_admin);
-create policy "profile self update" on public.profiles for update using (auth.uid() = id);
+-- Anyone can read trainer profiles (for the trainer picker).
+-- Athletes can read & update only their own row.
+create policy "profile trainer public read" on public.profiles for select using (is_trainer);
+create policy "profile self read"           on public.profiles for select using (auth.uid() = id);
+create policy "profile self update"         on public.profiles for update using (auth.uid() = id);
+
+-- ── TRAINER GOOGLE CALENDAR OAUTH ────────────────────────────
+--  One row per trainer who has connected their Google Calendar.
+--  Tokens let the server read busy times + create/delete events.
+create table if not exists public.trainer_google_oauth (
+  trainer_id      uuid primary key references public.profiles(id) on delete cascade,
+  calendar_id     text not null,        -- Google calendar ID to read/write
+  access_token    text not null,
+  refresh_token   text not null,
+  token_expires_at timestamptz not null,
+  connected_at    timestamptz not null default now(),
+  -- nothing here is public; service_role only
+  check (calendar_id <> '')
+);
+
+alter table public.trainer_google_oauth enable row level security;
+-- No client policies — only the server (service_role) touches this table.
 
 -- ── SERVICES ─────────────────────────────────────────────────
 --  What an athlete can book.  Pitching 60-min, Hitting 60-min, etc.
@@ -97,17 +124,20 @@ create policy "credit self read" on public.credit_buckets for select using (
 create table if not exists public.bookings (
   id                uuid primary key default gen_random_uuid(),
   user_id           uuid not null references public.profiles(id) on delete cascade,
+  trainer_id        uuid not null references public.profiles(id),
   service_id        uuid not null references public.services(id),
   credit_bucket_id  uuid references public.credit_buckets(id) on delete set null,
   starts_at         timestamptz not null,
   ends_at           timestamptz not null,
   status            text not null default 'confirmed', -- confirmed | cancelled | completed | no_show
   notes             text,
+  google_event_id   text,               -- ID of the event on the trainer's Google Calendar
   created_at        timestamptz not null default now()
 );
 
-create index if not exists bookings_starts_idx on public.bookings(starts_at);
-create index if not exists bookings_user_idx   on public.bookings(user_id);
+create index if not exists bookings_starts_idx     on public.bookings(starts_at);
+create index if not exists bookings_user_idx       on public.bookings(user_id);
+create index if not exists bookings_trainer_idx    on public.bookings(trainer_id, starts_at);
 
 alter table public.bookings enable row level security;
 create policy "booking self read"   on public.bookings for select using (
@@ -121,10 +151,11 @@ create policy "booking self update" on public.bookings for update using (auth.ui
 create index if not exists bookings_overlap_idx on public.bookings(service_id, starts_at, ends_at);
 
 -- ── AVAILABILITY RULES ───────────────────────────────────────
---  Recurring weekly availability windows per category.
---  e.g. "Mon 4pm–8pm, pitching"
+--  Recurring weekly availability windows, per trainer.
+--  e.g. "Wes is available Mon 4pm-8pm for pitching"
 create table if not exists public.availability_rules (
   id              uuid primary key default gen_random_uuid(),
+  trainer_id      uuid not null references public.profiles(id) on delete cascade,
   category        text not null,         -- 'pitching' | 'hitting'
   day_of_week     int not null,          -- 0 = Sunday ... 6 = Saturday
   start_time      time not null,
@@ -132,14 +163,20 @@ create table if not exists public.availability_rules (
   active          boolean not null default true
 );
 
+create index if not exists availability_rules_trainer_idx
+  on public.availability_rules(trainer_id, day_of_week);
+
 alter table public.availability_rules enable row level security;
 create policy "availability public read" on public.availability_rules for select using (true);
 
 -- ── BLOCKED TIMES ────────────────────────────────────────────
---  Specific date ranges where Wes is unavailable (vacation, etc.).
+--  Specific date ranges where a trainer is unavailable.
+--  trainer_id NULL = blocks every trainer (site-wide closure).
+--  In day-to-day use we'll mostly rely on Google Calendar busy times
+--  instead of this table, but it's here for manual overrides.
 create table if not exists public.availability_blocks (
   id          uuid primary key default gen_random_uuid(),
-  category    text,                 -- NULL means blocks both calendars
+  trainer_id  uuid references public.profiles(id) on delete cascade,
   starts_at   timestamptz not null,
   ends_at     timestamptz not null,
   reason      text,

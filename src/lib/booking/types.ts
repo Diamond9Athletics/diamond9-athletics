@@ -12,7 +12,20 @@ export type Profile = {
   email: string;
   phone: string | null;
   is_admin: boolean;
+  is_trainer: boolean;
+  trainer_slug: string | null;        // e.g. "wes", "turner"
+  trainer_bio: string | null;
+  trainer_categories: Category[] | null;
   created_at: string;
+};
+
+export type TrainerGoogleOAuth = {
+  trainer_id: string;
+  calendar_id: string;
+  access_token: string;
+  refresh_token: string;
+  token_expires_at: string;
+  connected_at: string;
 };
 
 export type Service = {
@@ -66,17 +79,20 @@ export type BookingStatus = "confirmed" | "cancelled" | "completed" | "no_show";
 export type Booking = {
   id: string;
   user_id: string;
+  trainer_id: string;
   service_id: string;
   credit_bucket_id: string | null;
   starts_at: string;
   ends_at: string;
   status: BookingStatus;
   notes: string | null;
+  google_event_id: string | null;
   created_at: string;
 };
 
 export type AvailabilityRule = {
   id: string;
+  trainer_id: string;
   category: Category;
   day_of_week: number; // 0 = Sunday, 6 = Saturday
   start_time: string;  // "16:00"
@@ -86,7 +102,7 @@ export type AvailabilityRule = {
 
 export type AvailabilityBlock = {
   id: string;
-  category: Category | null; // null = blocks both
+  trainer_id: string | null; // null = blocks all trainers (site-wide closure)
   starts_at: string;
   ends_at: string;
   reason: string | null;
