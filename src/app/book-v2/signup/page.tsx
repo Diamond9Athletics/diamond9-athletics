@@ -77,8 +77,11 @@ export default function SignupPage() {
 
         <div className="card-modern rounded-2xl p-6 sm:p-8">
           <form onSubmit={onSubmit} className="space-y-4">
+            <p className="text-[#b07adf] text-[11px] tracking-wider bg-[#9954d2]/8 border border-[#9954d2]/20 rounded-lg px-3 py-2.5 leading-relaxed">
+              <span className="font-bold">PARENTS:</span> please enter the <span className="text-white">player&rsquo;s</span> name here, not your own.
+            </p>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="FIRST NAME">
+              <Field label="PLAYER FIRST NAME">
                 <input
                   type="text"
                   required
@@ -87,7 +90,7 @@ export default function SignupPage() {
                   className="input"
                 />
               </Field>
-              <Field label="LAST NAME">
+              <Field label="PLAYER LAST NAME">
                 <input
                   type="text"
                   required
