@@ -53,6 +53,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.diamond9athletics.com",
   },
+  // Tell search engines to skip preview deployments (booking-system branch
+  // etc.). Production builds index normally.
+  robots:
+    process.env.VERCEL_ENV === "production"
+      ? undefined
+      : { index: false, follow: false },
 };
 
 export default function RootLayout({
