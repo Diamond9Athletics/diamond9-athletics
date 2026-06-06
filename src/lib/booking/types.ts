@@ -37,6 +37,8 @@ export type Service = {
   active: boolean;
 };
 
+export type PackageKind = "credits" | "enrollment";
+
 export type Package = {
   id: string;
   slug: string;
@@ -47,6 +49,7 @@ export type Package = {
   expiry_days: number;
   stripe_price_id: string | null;
   active: boolean;
+  kind: PackageKind;
 };
 
 export type Purchase = {
