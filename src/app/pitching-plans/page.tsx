@@ -13,10 +13,10 @@ const plans = [
     name: "DIAMOND",
     tag: "MOST POPULAR",
     price: "$300",
-    sub: "5 sessions",
-    features: ["5 Lessons","2 Recruiting Videos","Throwing Plan","Weighted Ball Training","Mobility Training","Rapsodo Tracking","Arm Care"],
+    sub: "4 sessions",
+    features: ["4 Lessons","2 Recruiting Videos","Throwing Plan","Weighted Ball Training","Mobility Training","Rapsodo Tracking","Arm Care"],
     featured: true,
-    jersey: "5",
+    jersey: "4",
     bar: 100,
   },
   {
