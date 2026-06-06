@@ -344,7 +344,8 @@ function TimeStep({
       <h2 className="font-display text-2xl text-white mb-2">
         Pick a time —{" "}
         <span className="gradient-text">
-          {new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+          {new Date(`${date}T12:00:00-05:00`).toLocaleDateString("en-US", {
+            timeZone: "America/Chicago",
             weekday: "long",
             month: "long",
             day: "numeric",
@@ -370,7 +371,8 @@ function TimeStep({
                 onClick={() => onPick(iso)}
                 className="rounded-xl px-2 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition text-white text-sm"
               >
-                {d.toLocaleTimeString(undefined, {
+                {d.toLocaleTimeString("en-US", {
+                  timeZone: "America/Chicago",
                   hour: "numeric",
                   minute: "2-digit",
                 })}
@@ -434,7 +436,8 @@ function ConfirmStep({
         />
         <Row
           label="When"
-          value={start.toLocaleString(undefined, {
+          value={start.toLocaleString("en-US", {
+            timeZone: "America/Chicago",
             weekday: "long",
             month: "long",
             day: "numeric",

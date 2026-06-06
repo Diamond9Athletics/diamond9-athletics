@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { computeSlots, type TimeRange } from "@/lib/booking/slots";
+import { zonedWallToUtc } from "@/lib/booking/tz";
 
 /**
  * GET /api/booking/slots?trainer=ID&duration=30|60&date=YYYY-MM-DD
@@ -38,12 +39,11 @@ export async function GET(request: NextRequest) {
   }
 
   const categories = (trainer.trainer_categories ?? []) as string[];
-  // Local date range: build start-of-day and end-of-day in local time.
-  const day = new Date(`${dateStr}T00:00:00`);
-  const dayEnd = new Date(day);
-  dayEnd.setHours(23, 59, 59, 999);
 
-  // Pull all relevant data.
+  // Day window in the studio timezone, converted to UTC bounds for queries.
+  const dayStart = zonedWallToUtc(dateStr, "00:00:00");
+  const dayEnd = zonedWallToUtc(dateStr, "23:59:59");
+
   const [rulesRes, bookingsRes, blocksRes] = await Promise.all([
     supabase
       .from("availability_rules")
@@ -56,14 +56,14 @@ export async function GET(request: NextRequest) {
       .select("starts_at, ends_at")
       .eq("trainer_id", trainerId)
       .eq("status", "confirmed")
-      .gte("starts_at", day.toISOString())
+      .gte("starts_at", dayStart.toISOString())
       .lt("starts_at", dayEnd.toISOString()),
     supabase
       .from("availability_blocks")
       .select("starts_at, ends_at, trainer_id")
       .or(`trainer_id.eq.${trainerId},trainer_id.is.null`)
       .lt("starts_at", dayEnd.toISOString())
-      .gt("ends_at", day.toISOString()),
+      .gt("ends_at", dayStart.toISOString()),
   ]);
 
   const rules = rulesRes.data ?? [];
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
   }));
 
   const slots = computeSlots({
-    date: day,
+    dateStr,
     durationMin,
     rules,
     busy: [...bookings, ...blocks],

@@ -129,7 +129,8 @@ export default async function Dashboard() {
                       </p>
                     </div>
                     <p className="text-[#b07adf] text-sm font-bold">
-                      {d.toLocaleString(undefined, {
+                      {d.toLocaleString("en-US", {
+                        timeZone: "America/Chicago",
                         weekday: "short",
                         month: "short",
                         day: "numeric",
