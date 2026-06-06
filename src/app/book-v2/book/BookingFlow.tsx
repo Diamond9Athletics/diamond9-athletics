@@ -263,12 +263,12 @@ function DateStep({
   onPick: (date: string) => void;
   onBack: () => void;
 }) {
-  // Next 21 days.
+  // Next 31 days.
   const days = useMemo(() => {
     const out: Date[] = [];
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    for (let i = 0; i < 21; i++) {
+    for (let i = 0; i < 31; i++) {
       const d = new Date(start);
       d.setDate(d.getDate() + i);
       out.push(d);

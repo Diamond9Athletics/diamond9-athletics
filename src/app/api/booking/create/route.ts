@@ -54,6 +54,15 @@ export async function POST(request: NextRequest) {
   }
   const endDate = new Date(startDate.getTime() + service.duration_min * 60_000);
 
+  // Bookings must be within the next 31 days (matches credit-expiry rule).
+  const maxBookableMs = Date.now() + 31 * 24 * 60 * 60 * 1000;
+  if (startDate.getTime() > maxBookableMs) {
+    return NextResponse.json(
+      { error: "You can only book up to 31 days in advance." },
+      { status: 400 },
+    );
+  }
+
   // 2) Find an eligible credit_bucket — same service, credits_remaining > 0,
   //    not expired.
   const today = new Date().toISOString().slice(0, 10);
