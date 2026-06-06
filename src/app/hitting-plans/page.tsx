@@ -13,10 +13,10 @@ const plans = [
     name: "DIAMOND",
     tag: "MOST POPULAR",
     price: "$300",
-    sub: "5 sessions",
-    features: ["5 Lessons", "2 Media / Recruiting Videos", "At-Home Tee Plan", "Swing Path & Barrel Control", "Lower-Half Sequencing", "Video Analysis", "Bat Speed Development"],
+    sub: "4 sessions",
+    features: ["4 Lessons", "2 Media / Recruiting Videos", "At-Home Tee Plan", "Swing Path & Barrel Control", "Lower-Half Sequencing", "Video Analysis", "Bat Speed Development"],
     featured: true,
-    jersey: "5",
+    jersey: "4",
     bar: 100,
   },
   {
