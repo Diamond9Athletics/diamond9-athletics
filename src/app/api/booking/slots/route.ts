@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { computeSlots, type TimeRange } from "@/lib/booking/slots";
+
+/**
+ * GET /api/booking/slots?trainer=ID&duration=30|60&date=YYYY-MM-DD
+ * Returns available slot start times for the given trainer on that date.
+ */
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const trainerId = searchParams.get("trainer");
+  const durationMin = Number(searchParams.get("duration"));
+  const dateStr = searchParams.get("date");
+
+  if (!trainerId || !durationMin || !dateStr) {
+    return NextResponse.json(
+      { error: "Missing trainer, duration, or date" },
+      { status: 400 },
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+
+  // The trainer profile tells us which categories they serve.
+  const { data: trainer } = await supabase
+    .from("profiles")
+    .select("trainer_categories")
+    .eq("id", trainerId)
+    .eq("is_trainer", true)
+    .single();
+
+  if (!trainer) {
+    return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
+  }
+
+  const categories = (trainer.trainer_categories ?? []) as string[];
+  // Local date range: build start-of-day and end-of-day in local time.
+  const day = new Date(`${dateStr}T00:00:00`);
+  const dayEnd = new Date(day);
+  dayEnd.setHours(23, 59, 59, 999);
+
+  // Pull all relevant data.
+  const [rulesRes, bookingsRes, blocksRes] = await Promise.all([
+    supabase
+      .from("availability_rules")
+      .select("day_of_week, start_time, end_time")
+      .eq("trainer_id", trainerId)
+      .in("category", categories)
+      .eq("active", true),
+    supabase
+      .from("bookings")
+      .select("starts_at, ends_at")
+      .eq("trainer_id", trainerId)
+      .eq("status", "confirmed")
+      .gte("starts_at", day.toISOString())
+      .lt("starts_at", dayEnd.toISOString()),
+    supabase
+      .from("availability_blocks")
+      .select("starts_at, ends_at, trainer_id")
+      .or(`trainer_id.eq.${trainerId},trainer_id.is.null`)
+      .lt("starts_at", dayEnd.toISOString())
+      .gt("ends_at", day.toISOString()),
+  ]);
+
+  const rules = rulesRes.data ?? [];
+  const bookings = (bookingsRes.data ?? []).map<TimeRange>((b) => ({
+    start: new Date(b.starts_at),
+    end: new Date(b.ends_at),
+  }));
+  const blocks = (blocksRes.data ?? []).map<TimeRange>((b) => ({
+    start: new Date(b.starts_at),
+    end: new Date(b.ends_at),
+  }));
+
+  const slots = computeSlots({
+    date: day,
+    durationMin,
+    rules,
+    busy: [...bookings, ...blocks],
+  });
+
+  return NextResponse.json({
+    slots: slots.map((s) => s.toISOString()),
+  });
+}
