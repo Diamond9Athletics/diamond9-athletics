@@ -196,7 +196,7 @@ insert into public.services (slug, name, category, duration_min) values
 on conflict (slug) do nothing;
 
 insert into public.packages (slug, name, service_id, price_cents, credits, expiry_days)
-select 'pitching-diamond', 'Diamond Pitching Plan', id, 30000, 5, 31 from public.services where slug = 'pitching-60'
+select 'pitching-diamond', 'Diamond Pitching Plan', id, 30000, 4, 31 from public.services where slug = 'pitching-60'
 on conflict (slug) do nothing;
 
 insert into public.packages (slug, name, service_id, price_cents, credits, expiry_days)
@@ -212,7 +212,7 @@ select 'pitching-half',    'Half Pitching Session',   id,  5000, 1, 31 from publ
 on conflict (slug) do nothing;
 
 insert into public.packages (slug, name, service_id, price_cents, credits, expiry_days)
-select 'hitting-diamond',  'Diamond Hitting Plan',   id, 30000, 5, 31 from public.services where slug = 'hitting-60'
+select 'hitting-diamond',  'Diamond Hitting Plan',   id, 30000, 4, 31 from public.services where slug = 'hitting-60'
 on conflict (slug) do nothing;
 
 insert into public.packages (slug, name, service_id, price_cents, credits, expiry_days)

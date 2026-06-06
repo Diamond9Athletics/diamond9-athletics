@@ -76,6 +76,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // For credit packages, create a bucket.  For enrollments, skip.
   if (packageKind === "credits" && packageCredits > 0 && serviceId) {
+    // Idempotency: if a bucket already exists for this purchase
+    // (Stripe can re-deliver the same event), do nothing.
+    const { data: existing } = await admin
+      .from("credit_buckets")
+      .select("id")
+      .eq("purchase_id", purchaseId)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      return;
+    }
+
     const { error: bucketError } = await admin.from("credit_buckets").insert({
       user_id: userId,
       purchase_id: purchaseId,
