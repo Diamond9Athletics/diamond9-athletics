@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { CancelButton } from "./CancelButton";
 
 export const dynamic = "force-dynamic";
 
@@ -120,24 +121,27 @@ export default async function Dashboard() {
                 return (
                   <li
                     key={b.id}
-                    className="flex items-center justify-between border-b border-white/5 pb-2"
+                    className="flex items-center justify-between gap-3 border-b border-white/5 pb-2"
                   >
-                    <div>
-                      <p className="text-white text-sm">{svc?.name ?? "Session"}</p>
+                    <div className="min-w-0">
+                      <p className="text-white text-sm truncate">{svc?.name ?? "Session"}</p>
                       <p className="text-zinc-500 text-xs">
                         with {trn?.first_name} {trn?.last_name}
                       </p>
                     </div>
-                    <p className="text-[#b07adf] text-sm font-bold">
-                      {d.toLocaleString("en-US", {
-                        timeZone: "America/Chicago",
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                    <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                      <p className="text-[#b07adf] text-sm font-bold">
+                        {d.toLocaleString("en-US", {
+                          timeZone: "America/Chicago",
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      <CancelButton bookingId={b.id} />
+                    </div>
                   </li>
                 );
               })}

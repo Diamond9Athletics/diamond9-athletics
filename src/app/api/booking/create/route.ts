@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendBookingConfirmedEmails } from "@/lib/booking/emails";
 
 /**
  * POST /api/booking/create
@@ -143,7 +144,40 @@ export async function POST(request: NextRequest) {
 
   await admin.from("credit_buckets").update(update).eq("id", bucket.id);
 
-  return NextResponse.json({
-    booking,
-  });
+  // Fire confirmation emails (athlete + trainer).  Don't fail the
+  // booking if email sending hiccups — we log and move on.
+  try {
+    const [{ data: athlete }, { data: trainer }, { data: svcRow }] = await Promise.all([
+      admin
+        .from("profiles")
+        .select("first_name, last_name, email, phone")
+        .eq("id", user.id)
+        .single(),
+      admin
+        .from("profiles")
+        .select("first_name, last_name, email")
+        .eq("id", trainerId)
+        .single(),
+      admin.from("services").select("name").eq("id", serviceId).single(),
+    ]);
+
+    if (athlete && trainer && svcRow) {
+      await sendBookingConfirmedEmails({
+        bookingId: booking.id,
+        startsAtIso: booking.starts_at,
+        serviceName: svcRow.name,
+        athleteFirstName: athlete.first_name,
+        athleteLastName: athlete.last_name,
+        athleteEmail: athlete.email,
+        athletePhone: athlete.phone,
+        trainerFirstName: trainer.first_name,
+        trainerLastName: trainer.last_name,
+        trainerEmail: trainer.email,
+      });
+    }
+  } catch (e) {
+    console.error("Failed to send booking emails:", e);
+  }
+
+  return NextResponse.json({ booking });
 }
