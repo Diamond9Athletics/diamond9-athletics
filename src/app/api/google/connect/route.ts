@@ -36,10 +36,16 @@ export async function GET(request: NextRequest) {
   // State = the trainer's user id, kept simple since the callback
   // re-verifies via the session cookie anyway.
   const state = user.id;
-  const url = buildAuthUrl({
-    redirectUri: redirectUriFromRequest(request),
-    state,
-  });
-
-  return NextResponse.redirect(url);
+  try {
+    const url = buildAuthUrl({
+      redirectUri: redirectUriFromRequest(request),
+      state,
+    });
+    return NextResponse.redirect(url);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "unknown";
+    return NextResponse.redirect(
+      new URL(`/book-v2/trainer?google_error=${encodeURIComponent(msg)}`, request.url),
+    );
+  }
 }
