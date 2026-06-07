@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { buildAuthUrl } from "@/lib/google/oauth";
 
+export const dynamic = "force-dynamic";
+
 function redirectUriFromRequest(request: NextRequest): string {
   const proto = request.headers.get("x-forwarded-proto") ?? "https";
   const host =
@@ -15,37 +17,52 @@ function redirectUriFromRequest(request: NextRequest): string {
   return `${proto}://${host}/api/google/callback`;
 }
 
+function errorRedirect(request: NextRequest, msg: string) {
+  return NextResponse.redirect(
+    new URL(
+      `/book-v2/trainer?google_error=${encodeURIComponent(msg)}`,
+      request.url,
+    ),
+  );
+}
+
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.redirect(new URL("/book-v2/login", request.url));
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_trainer")
-    .eq("id", user.id)
-    .single();
-  if (!profile?.is_trainer) {
-    return NextResponse.redirect(new URL("/book-v2/dashboard", request.url));
-  }
-
-  // State = the trainer's user id, kept simple since the callback
-  // re-verifies via the session cookie anyway.
-  const state = user.id;
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.redirect(new URL("/book-v2/login", request.url));
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("is_trainer")
+      .eq("id", user.id)
+      .single();
+    if (profileError) {
+      return errorRedirect(request, `profile: ${profileError.message}`);
+    }
+    if (!profile?.is_trainer) {
+      return errorRedirect(request, "not_a_trainer");
+    }
+
+    if (!process.env.GOOGLE_OAUTH_CLIENT_ID) {
+      return errorRedirect(request, "GOOGLE_OAUTH_CLIENT_ID missing");
+    }
+    if (!process.env.GOOGLE_OAUTH_CLIENT_SECRET) {
+      return errorRedirect(request, "GOOGLE_OAUTH_CLIENT_SECRET missing");
+    }
+
     const url = buildAuthUrl({
       redirectUri: redirectUriFromRequest(request),
-      state,
+      state: user.id,
     });
     return NextResponse.redirect(url);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "unknown";
-    return NextResponse.redirect(
-      new URL(`/book-v2/trainer?google_error=${encodeURIComponent(msg)}`, request.url),
-    );
+    const msg = e instanceof Error ? e.message : "unknown_error";
+    return errorRedirect(request, msg);
   }
 }
