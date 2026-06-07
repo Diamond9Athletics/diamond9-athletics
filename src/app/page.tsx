@@ -39,7 +39,7 @@ export default function Home() {
             Real data. Real results.
           </p>
           <div className="animate-fade-in-up-delay-3 flex flex-row gap-3 justify-center flex-wrap">
-            <Link href="/appointments" className="btn-gold animate-pulse-glow px-8 py-4 text-sm rounded-full inline-block font-black tracking-widest">
+            <Link href="/book" className="btn-gold animate-pulse-glow px-8 py-4 text-sm rounded-full inline-block font-black tracking-widest">
               BOOK NOW
             </Link>
             <Link href="/pitching-plans" className="btn-outline px-8 py-4 text-sm rounded-full inline-block tracking-widest">

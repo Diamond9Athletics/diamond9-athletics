@@ -73,7 +73,7 @@ export function BookingFlow({
           You don&rsquo;t have any active credits yet. Buy a package to start booking.
         </p>
         <Link
-          href="/book-v2/packages"
+          href="/book/packages"
           className="btn-gold inline-block px-8 py-3 rounded-full text-xs tracking-widest font-black"
         >
           SEE PACKAGES
@@ -175,7 +175,7 @@ export function BookingFlow({
           onBack={() => setStep("time")}
           onError={setError}
           onSuccess={(bookingId) => {
-            router.push(`/book-v2/dashboard?booked=${bookingId}`);
+            router.push(`/book/dashboard?booked=${bookingId}`);
             router.refresh();
           }}
         />

@@ -84,7 +84,7 @@ export default function PitchingPlans() {
               <p className="text-zinc-500 text-sm mb-4">The complete package. Everything a college pitcher needs for summer ball.</p>
               <p className="gradient-text font-display text-7xl mb-2">$1,100</p>
               <p className="text-zinc-600 text-xs mb-8">Full program · All-inclusive</p>
-              <Link href="/appointments" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">
+              <Link href="/book" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">
                 ENROLL NOW
               </Link>
             </div>
@@ -150,7 +150,7 @@ export default function PitchingPlans() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/appointments" className={`text-center py-3.5 rounded-full text-sm tracking-widest font-bold block ${plan.featured ? "btn-gold" : "btn-outline"}`}>
+                <Link href="/book" className={`text-center py-3.5 rounded-full text-sm tracking-widest font-bold block ${plan.featured ? "btn-gold" : "btn-outline"}`}>
                   SELECT PLAN
                 </Link>
               </div>

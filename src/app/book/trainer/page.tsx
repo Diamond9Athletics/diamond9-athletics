@@ -37,7 +37,7 @@ export default async function TrainerPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/book-v2/login");
+  if (!user) redirect("/book/login");
 
   const { data: me } = await supabase
     .from("profiles")
@@ -50,7 +50,7 @@ export default async function TrainerPage({
       <main className="pt-24 bg-[#040200] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-24 text-center text-zinc-400">
           This page is for trainers.{" "}
-          <Link href="/book-v2/dashboard" className="text-[#b07adf]">Go to your dashboard</Link>.
+          <Link href="/book/dashboard" className="text-[#b07adf]">Go to your dashboard</Link>.
         </section>
       </main>
     );
@@ -98,7 +98,7 @@ export default async function TrainerPage({
           </p>
           <div className="mt-5">
             <Link
-              href="/book-v2/trainer/availability"
+              href="/book/trainer/availability"
               className="btn-outline inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-bold"
             >
               EDIT MY HOURS
@@ -201,7 +201,7 @@ export default async function TrainerPage({
 
         <div className="mt-10 text-center">
           <Link
-            href="/book-v2/dashboard"
+            href="/book/dashboard"
             className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider"
           >
             ← BACK TO MY DASHBOARD

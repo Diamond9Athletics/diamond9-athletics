@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/book-v2/dashboard";
+  const next = searchParams.get("next") ?? "/book/dashboard";
 
   if (token_hash && type) {
     const supabase = await createClient();
@@ -21,5 +21,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(new URL("/book-v2/login?error=confirm_failed", request.url));
+  return NextResponse.redirect(new URL("/book/login?error=confirm_failed", request.url));
 }

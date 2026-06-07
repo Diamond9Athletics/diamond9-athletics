@@ -70,7 +70,7 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-4">
               <ThemeToggle />
               <Link
-                href="/appointments"
+                href="/book"
                 className="btn-gold px-6 py-2.5 rounded-full text-sm tracking-wider inline-block"
               >
                 BOOK NOW
@@ -141,7 +141,7 @@ export default function Navbar() {
               )
             ))}
             <Link
-              href="/appointments"
+              href="/book"
               onClick={() => setIsOpen(false)}
               className="block mt-2 btn-gold px-4 py-3 rounded-full text-sm tracking-wider text-center"
             >

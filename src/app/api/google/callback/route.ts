@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
 
   if (errorParam) {
     return NextResponse.redirect(
-      new URL(`/book-v2/trainer?google_error=${encodeURIComponent(errorParam)}`, request.url),
+      new URL(`/book/trainer?google_error=${encodeURIComponent(errorParam)}`, request.url),
     );
   }
   if (!code) {
     return NextResponse.redirect(
-      new URL("/book-v2/trainer?google_error=no_code", request.url),
+      new URL("/book/trainer?google_error=no_code", request.url),
     );
   }
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user || user.id !== stateParam) {
-    return NextResponse.redirect(new URL("/book-v2/login", request.url));
+    return NextResponse.redirect(new URL("/book/login", request.url));
   }
 
   let tokens;
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   } catch (e) {
     console.error(e);
     return NextResponse.redirect(
-      new URL("/book-v2/trainer?google_error=exchange_failed", request.url),
+      new URL("/book/trainer?google_error=exchange_failed", request.url),
     );
   }
 
@@ -85,6 +85,6 @@ export async function GET(request: NextRequest) {
     );
 
   return NextResponse.redirect(
-    new URL("/book-v2/trainer?google_connected=1", request.url),
+    new URL("/book/trainer?google_connected=1", request.url),
   );
 }

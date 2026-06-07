@@ -12,7 +12,7 @@ export default async function Dashboard() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/book-v2/login");
+    redirect("/book/login");
   }
 
   const [{ data: profile }, { data: buckets }, { data: bookings }] =
@@ -85,7 +85,7 @@ export default async function Dashboard() {
             )}
             {totalCredits > 0 && (
               <Link
-                href="/book-v2/book"
+                href="/book/schedule"
                 className="btn-gold inline-block mt-5 px-6 py-3 rounded-full text-xs tracking-widest font-black"
               >
                 BOOK A SESSION
@@ -99,7 +99,7 @@ export default async function Dashboard() {
               Pick a Diamond, Gold, Single, or Half package — then use credits to book without paying again.
             </p>
             <Link
-              href="/book-v2/packages"
+              href="/book/packages"
               className="btn-outline px-6 py-3 rounded-full text-xs tracking-widest font-black text-center"
             >
               SEE PACKAGES
@@ -142,7 +142,7 @@ export default async function Dashboard() {
                       </p>
                       <div className="flex items-center gap-3">
                         <Link
-                          href={`/book-v2/book?reschedule=${b.id}`}
+                          href={`/book/schedule?reschedule=${b.id}`}
                           className="text-zinc-500 hover:text-[#b07adf] text-[11px] tracking-wider"
                         >
                           RESCHEDULE
@@ -159,7 +159,7 @@ export default async function Dashboard() {
 
         {profile?.is_trainer && (
           <Link
-            href="/book-v2/trainer"
+            href="/book/trainer"
             className="block card-modern-amber rounded-2xl p-6 mb-6 hover:opacity-90 transition"
           >
             <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">TRAINER VIEW</p>
@@ -173,7 +173,7 @@ export default async function Dashboard() {
           Signed in as {profile?.email ?? user.email}
         </p>
 
-        <form action="/book-v2/logout" method="post" className="mt-4 text-center">
+        <form action="/book/logout" method="post" className="mt-4 text-center">
           <button
             type="submit"
             className="btn-outline px-8 py-3 rounded-full text-xs tracking-widest font-bold"

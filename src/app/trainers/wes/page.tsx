@@ -109,7 +109,7 @@ export default function WesGaffordBio() {
           </ul>
         </div>
         <div className="mt-10 text-center flex flex-wrap gap-3 justify-center">
-          <Link href="/appointments" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">BOOK A SESSION</Link>
+          <Link href="/book" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">BOOK A SESSION</Link>
           <Link href="/about" className="btn-outline px-8 py-4 rounded-full text-sm tracking-widest inline-block">MEET THE TEAM</Link>
         </div>
       </section>

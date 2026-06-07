@@ -34,7 +34,7 @@ export default function Footer() {
             <div className="space-y-2.5">
               <Link href="/pitching-plans" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Pitching Plans</Link>
               <Link href="/hitting-plans"  className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Hitting Plans</Link>
-              <Link href="/appointments"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Book Session</Link>
+              <Link href="/book"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Book Session</Link>
             </div>
           </div>
 
@@ -61,7 +61,7 @@ export default function Footer() {
               </a>
             </div>
             <div className="mt-6">
-              <Link href="/appointments" className="btn-gold px-5 py-2.5 rounded-full text-xs tracking-widest inline-block font-black">
+              <Link href="/book" className="btn-gold px-5 py-2.5 rounded-full text-xs tracking-widest inline-block font-black">
                 BOOK NOW
               </Link>
             </div>

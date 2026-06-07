@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
   const admin = createAdminClient();
   await admin.from("trainer_google_oauth").delete().eq("trainer_id", user.id);
-  return NextResponse.redirect(new URL("/book-v2/trainer", request.url), {
+  return NextResponse.redirect(new URL("/book/trainer", request.url), {
     status: 303,
   });
 }

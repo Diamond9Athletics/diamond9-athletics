@@ -16,7 +16,7 @@ export default function Success() {
           Your purchase is processing. Credits will appear on your dashboard within a few seconds.
         </p>
         <Link
-          href="/book-v2/dashboard"
+          href="/book/dashboard"
           className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block"
         >
           GO TO DASHBOARD

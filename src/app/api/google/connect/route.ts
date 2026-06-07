@@ -20,7 +20,7 @@ function redirectUriFromRequest(request: NextRequest): string {
 function errorRedirect(request: NextRequest, msg: string) {
   return NextResponse.redirect(
     new URL(
-      `/book-v2/trainer?google_error=${encodeURIComponent(msg)}`,
+      `/book/trainer?google_error=${encodeURIComponent(msg)}`,
       request.url,
     ),
   );
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.redirect(new URL("/book-v2/login", request.url));
+      return NextResponse.redirect(new URL("/book/login", request.url));
     }
 
     const { data: profile, error: profileError } = await supabase

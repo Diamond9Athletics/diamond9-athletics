@@ -32,7 +32,7 @@ export default async function Packages() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/book-v2/login");
+  if (!user) redirect("/book/login");
 
   const { data, error } = await supabase
     .from("packages")

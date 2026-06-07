@@ -167,7 +167,7 @@ export default function About() {
           </p>
           <div className="divider-glow max-w-[80px] mx-auto mt-7 relative z-10" />
           <div className="mt-8 relative z-10 text-center">
-            <Link href="/appointments" className="btn-gold px-8 py-3.5 rounded-full text-sm tracking-widest font-black inline-block">
+            <Link href="/book" className="btn-gold px-8 py-3.5 rounded-full text-sm tracking-widest font-black inline-block">
               BOOK A SESSION
             </Link>
           </div>

@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  async redirects() {
+    return [
+      // Old Acuity-era URL keeps working.
+      { source: "/appointments", destination: "/book", permanent: true },
+      // Preview/dev URLs that linked at /book-v2 stay working.
+      { source: "/book-v2", destination: "/book", permanent: true },
+      { source: "/book-v2/:path*", destination: "/book/:path*", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -18,7 +18,7 @@ export default async function BookV2() {
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect("/book-v2/dashboard");
+    redirect("/book/dashboard");
   }
 
   return (
@@ -37,13 +37,13 @@ export default async function BookV2() {
           </p>
           <div className="flex flex-row gap-3 justify-center flex-wrap">
             <Link
-              href="/book-v2/signup"
+              href="/book/signup"
               className="btn-gold px-8 py-4 text-sm rounded-full inline-block font-black tracking-widest"
             >
               CREATE ACCOUNT
             </Link>
             <Link
-              href="/book-v2/login"
+              href="/book/login"
               className="btn-outline px-8 py-4 text-sm rounded-full inline-block tracking-widest"
             >
               SIGN IN

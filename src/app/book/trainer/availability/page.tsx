@@ -12,7 +12,7 @@ export default async function AvailabilityPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/book-v2/login");
+  if (!user) redirect("/book/login");
 
   const { data: me } = await supabase
     .from("profiles")
@@ -82,7 +82,7 @@ export default async function AvailabilityPage() {
 
         <div className="mt-10 text-center">
           <Link
-            href="/book-v2/trainer"
+            href="/book/trainer"
             className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider"
           >
             ← BACK TO SCHEDULE
