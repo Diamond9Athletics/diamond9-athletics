@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Trainer Dashboard" };
@@ -58,6 +59,9 @@ export default async function TrainerPage({
   const now = new Date();
   const in30Days = new Date(now.getTime() + 31 * 24 * 60 * 60 * 1000);
 
+  // trainer_google_oauth is locked to service_role only — use admin
+  // client to fetch just the non-secret metadata.
+  const admin = createAdminClient();
   const [{ data: bookings }, { data: gOAuth }] = await Promise.all([
     supabase
       .from("bookings")
@@ -69,7 +73,7 @@ export default async function TrainerPage({
       .gte("starts_at", now.toISOString())
       .lte("starts_at", in30Days.toISOString())
       .order("starts_at"),
-    supabase
+    admin
       .from("trainer_google_oauth")
       .select("calendar_id, connected_at")
       .eq("trainer_id", user.id)
