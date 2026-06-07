@@ -8,12 +8,42 @@ export const metadata = {
   title: "Book a Session",
 };
 
-export default async function BookPage() {
+export default async function BookPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reschedule?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/book-v2/login");
+
+  const { reschedule: rescheduleId } = await searchParams;
+
+  // If this is a reschedule, fetch the original booking so the flow
+  // can pre-pick the service and trainer.
+  let rescheduleFor: {
+    bookingId: string;
+    serviceId: string;
+    trainerId: string;
+    startsAt: string;
+  } | null = null;
+  if (rescheduleId) {
+    const { data: orig } = await supabase
+      .from("bookings")
+      .select("id, service_id, trainer_id, starts_at, user_id, status")
+      .eq("id", rescheduleId)
+      .single();
+    if (orig && orig.user_id === user.id && orig.status === "confirmed") {
+      rescheduleFor = {
+        bookingId: orig.id,
+        serviceId: orig.service_id,
+        trainerId: orig.trainer_id,
+        startsAt: orig.starts_at,
+      };
+    }
+  }
 
   // What can this athlete book? Pull their non-empty credit buckets.
   const { data: bucketRows } = await supabase
@@ -64,7 +94,11 @@ export default async function BookPage() {
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
 
-        <BookingFlow buckets={buckets} trainers={trainers} />
+        <BookingFlow
+          buckets={buckets}
+          trainers={trainers}
+          rescheduleFor={rescheduleFor}
+        />
       </section>
     </main>
   );

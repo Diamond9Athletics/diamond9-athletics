@@ -29,23 +29,43 @@ export type Trainer = {
 
 type Step = "service" | "trainer" | "date" | "time" | "confirm";
 
+export type RescheduleFor = {
+  bookingId: string;
+  serviceId: string;
+  trainerId: string;
+  startsAt: string;
+} | null;
+
 export function BookingFlow({
   buckets,
   trainers,
+  rescheduleFor = null,
 }: {
   buckets: Bucket[];
   trainers: Trainer[];
+  rescheduleFor?: RescheduleFor;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("service");
-  const [bucket, setBucket] = useState<Bucket | null>(null);
-  const [trainer, setTrainer] = useState<Trainer | null>(null);
+  // Pre-select bucket and trainer when rescheduling.
+  const presetBucket = rescheduleFor
+    ? buckets.find((b) => b.service.id === rescheduleFor.serviceId) ?? null
+    : null;
+  const presetTrainer = rescheduleFor
+    ? trainers.find((t) => t.id === rescheduleFor.trainerId) ?? null
+    : null;
+  const [step, setStep] = useState<Step>(
+    rescheduleFor && presetBucket && presetTrainer ? "date" : "service",
+  );
+  const [bucket, setBucket] = useState<Bucket | null>(presetBucket);
+  const [trainer, setTrainer] = useState<Trainer | null>(presetTrainer);
   const [date, setDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // No credits → tell them to buy a package.
-  if (buckets.length === 0) {
+  // Reschedule is fine even when buckets are empty (we'll refund the credit
+  // first), so skip this check in that mode.
+  if (buckets.length === 0 && !rescheduleFor) {
     return (
       <div className="card-modern rounded-2xl p-8 text-center space-y-5">
         <p className="text-[#b07adf] text-xs tracking-widest font-bold">NO CREDITS</p>
@@ -85,6 +105,27 @@ export function BookingFlow({
 
   return (
     <div className="space-y-6">
+      {rescheduleFor && (
+        <div className="rounded-2xl border border-[#9954d2]/30 bg-[#9954d2]/10 px-4 py-3">
+          <p className="text-[10px] tracking-widest text-[#b07adf] font-bold mb-1">
+            RESCHEDULING
+          </p>
+          <p className="text-zinc-300 text-sm">
+            Your current booking is{" "}
+            <span className="text-white">
+              {new Date(rescheduleFor.startsAt).toLocaleString("en-US", {
+                timeZone: "America/Chicago",
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </span>
+            . Pick a new time below — it&rsquo;ll be cancelled and the credit reused.
+          </p>
+        </div>
+      )}
       <Stepper step={step} />
 
       {step === "service" && (
@@ -130,6 +171,7 @@ export function BookingFlow({
           bucket={bucket}
           trainer={trainer}
           slot={slot}
+          rescheduleFor={rescheduleFor}
           onBack={() => setStep("time")}
           onError={setError}
           onSuccess={(bookingId) => {
@@ -390,6 +432,7 @@ function ConfirmStep({
   bucket,
   trainer,
   slot,
+  rescheduleFor,
   onBack,
   onError,
   onSuccess,
@@ -397,6 +440,7 @@ function ConfirmStep({
   bucket: Bucket;
   trainer: Trainer;
   slot: string;
+  rescheduleFor: RescheduleFor;
   onBack: () => void;
   onError: (msg: string) => void;
   onSuccess: (id: string) => void;
@@ -414,6 +458,7 @@ function ConfirmStep({
         trainerId: trainer.id,
         serviceId: bucket.service.id,
         startsAt: slot,
+        rescheduleFor: rescheduleFor?.bookingId ?? null,
       }),
     });
     const json = await res.json();
@@ -427,7 +472,9 @@ function ConfirmStep({
 
   return (
     <div className="card-modern-amber rounded-2xl p-6 sm:p-8 space-y-4">
-      <h2 className="font-display text-2xl text-white mb-2">Confirm your booking</h2>
+      <h2 className="font-display text-2xl text-white mb-2">
+        {rescheduleFor ? "Confirm reschedule" : "Confirm your booking"}
+      </h2>
       <div className="text-zinc-300 text-sm space-y-2">
         <Row label="Service" value={bucket.service.name} />
         <Row
@@ -445,14 +492,14 @@ function ConfirmStep({
             minute: "2-digit",
           })}
         />
-        <Row label="Cost" value="1 credit" />
+        <Row label="Cost" value={rescheduleFor ? "No charge (reusing credit)" : "1 credit"} />
       </div>
       <button
         onClick={confirm}
         disabled={submitting}
         className="btn-gold w-full py-4 rounded-full text-sm tracking-widest font-black disabled:opacity-60"
       >
-        {submitting ? "BOOKING…" : "CONFIRM BOOKING"}
+        {submitting ? "BOOKING…" : rescheduleFor ? "CONFIRM RESCHEDULE" : "CONFIRM BOOKING"}
       </button>
       <BackButton onClick={onBack} />
     </div>

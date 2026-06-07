@@ -140,7 +140,15 @@ export default async function Dashboard() {
                           minute: "2-digit",
                         })}
                       </p>
-                      <CancelButton bookingId={b.id} />
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/book-v2/book?reschedule=${b.id}`}
+                          className="text-zinc-500 hover:text-[#b07adf] text-[11px] tracking-wider"
+                        >
+                          RESCHEDULE
+                        </Link>
+                        <CancelButton bookingId={b.id} />
+                      </div>
                     </div>
                   </li>
                 );

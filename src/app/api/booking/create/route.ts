@@ -20,7 +20,7 @@ import { sendBookingConfirmedEmails } from "@/lib/booking/emails";
  */
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { trainerId, serviceId, startsAt } = body ?? {};
+  const { trainerId, serviceId, startsAt, rescheduleFor } = body ?? {};
 
   if (!trainerId || !serviceId || !startsAt) {
     return NextResponse.json(
@@ -38,6 +38,42 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
+
+  // If this is a reschedule, atomically cancel the old booking and refund
+  // its credit first.  Then continue with normal booking creation, which
+  // will consume that refunded credit.
+  if (rescheduleFor) {
+    const { data: oldBooking } = await admin
+      .from("bookings")
+      .select("id, user_id, credit_bucket_id, status")
+      .eq("id", rescheduleFor)
+      .single();
+    if (!oldBooking || oldBooking.user_id !== user.id) {
+      return NextResponse.json(
+        { error: "Original booking not found" },
+        { status: 404 },
+      );
+    }
+    if (oldBooking.status === "confirmed") {
+      await admin
+        .from("bookings")
+        .update({ status: "cancelled" })
+        .eq("id", oldBooking.id);
+      if (oldBooking.credit_bucket_id) {
+        const { data: bk } = await admin
+          .from("credit_buckets")
+          .select("credits_remaining")
+          .eq("id", oldBooking.credit_bucket_id)
+          .single();
+        if (bk) {
+          await admin
+            .from("credit_buckets")
+            .update({ credits_remaining: bk.credits_remaining + 1 })
+            .eq("id", oldBooking.credit_bucket_id);
+        }
+      }
+    }
+  }
 
   // 1) Look up the service to know its duration.
   const { data: service, error: svcErr } = await admin
