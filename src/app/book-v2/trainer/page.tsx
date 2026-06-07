@@ -80,6 +80,14 @@ export default async function TrainerPage() {
           <p className="text-zinc-500 text-xs mt-4">
             Next 31 days — all times Central
           </p>
+          <div className="mt-5">
+            <Link
+              href="/book-v2/trainer/availability"
+              className="btn-outline inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-bold"
+            >
+              EDIT MY HOURS
+            </Link>
+          </div>
         </div>
 
         {grouped.length === 0 ? (
