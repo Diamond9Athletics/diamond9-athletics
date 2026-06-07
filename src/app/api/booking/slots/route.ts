@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { computeSlots, type TimeRange } from "@/lib/booking/slots";
 import { zonedWallToUtc } from "@/lib/booking/tz";
+import { getValidAccessToken, getBusy } from "@/lib/google/calendar";
 
 /**
  * GET /api/booking/slots?trainer=ID&duration=30|60&date=YYYY-MM-DD
@@ -76,11 +77,25 @@ export async function GET(request: NextRequest) {
     end: new Date(b.ends_at),
   }));
 
+  // If the trainer has connected Google Calendar, pull busy ranges too.
+  let googleBusy: TimeRange[] = [];
+  try {
+    const { accessToken, calendarId } = await getValidAccessToken(trainerId);
+    googleBusy = await getBusy({
+      accessToken,
+      calendarId,
+      timeMin: dayStart,
+      timeMax: dayEnd,
+    });
+  } catch {
+    // Trainer hasn't connected Google or token issue — ignore.
+  }
+
   const slots = computeSlots({
     dateStr,
     durationMin,
     rules,
-    busy: [...bookings, ...blocks],
+    busy: [...bookings, ...blocks, ...googleBusy],
   });
 
   return NextResponse.json({

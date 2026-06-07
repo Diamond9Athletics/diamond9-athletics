@@ -26,7 +26,12 @@ type BookingRow = {
   }> | null;
 };
 
-export default async function TrainerPage() {
+export default async function TrainerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ google_connected?: string; google_error?: string }>;
+}) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -53,16 +58,23 @@ export default async function TrainerPage() {
   const now = new Date();
   const in30Days = new Date(now.getTime() + 31 * 24 * 60 * 60 * 1000);
 
-  const { data: bookings } = await supabase
-    .from("bookings")
-    .select(
-      "id, starts_at, ends_at, status, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
-    )
-    .eq("trainer_id", user.id)
-    .eq("status", "confirmed")
-    .gte("starts_at", now.toISOString())
-    .lte("starts_at", in30Days.toISOString())
-    .order("starts_at");
+  const [{ data: bookings }, { data: gOAuth }] = await Promise.all([
+    supabase
+      .from("bookings")
+      .select(
+        "id, starts_at, ends_at, status, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
+      )
+      .eq("trainer_id", user.id)
+      .eq("status", "confirmed")
+      .gte("starts_at", now.toISOString())
+      .lte("starts_at", in30Days.toISOString())
+      .order("starts_at"),
+    supabase
+      .from("trainer_google_oauth")
+      .select("calendar_id, connected_at")
+      .eq("trainer_id", user.id)
+      .maybeSingle(),
+  ]);
 
   const rows = (bookings ?? []) as unknown as BookingRow[];
   const grouped = groupByDayInCT(rows);
@@ -88,6 +100,51 @@ export default async function TrainerPage() {
               EDIT MY HOURS
             </Link>
           </div>
+        </div>
+
+        {/* Google Calendar status */}
+        <div className="card-modern rounded-2xl p-5 mb-6 flex items-center justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <p className="text-zinc-500 text-[10px] tracking-widest font-bold mb-1">
+              GOOGLE CALENDAR
+            </p>
+            {gOAuth ? (
+              <p className="text-zinc-300 text-sm">
+                ✓ Connected — bookings auto-appear on{" "}
+                <span className="text-white truncate">{gOAuth.calendar_id}</span>.
+                Your Google busy times block bookings too.
+              </p>
+            ) : (
+              <p className="text-zinc-400 text-sm">
+                Not connected. Bookings won&rsquo;t appear on your calendar yet.
+              </p>
+            )}
+            {sp.google_connected === "1" && (
+              <p className="text-green-400 text-xs mt-1">Connection successful.</p>
+            )}
+            {sp.google_error && (
+              <p className="text-red-400 text-xs mt-1">
+                Couldn&rsquo;t connect: {sp.google_error}
+              </p>
+            )}
+          </div>
+          {gOAuth ? (
+            <form action="/api/google/disconnect" method="post">
+              <button
+                type="submit"
+                className="text-zinc-500 hover:text-red-400 text-[11px] tracking-wider font-bold"
+              >
+                DISCONNECT
+              </button>
+            </form>
+          ) : (
+            <a
+              href="/api/google/connect"
+              className="btn-gold px-5 py-2 rounded-full text-[11px] tracking-widest font-black"
+            >
+              CONNECT GOOGLE CALENDAR
+            </a>
+          )}
         </div>
 
         {grouped.length === 0 ? (

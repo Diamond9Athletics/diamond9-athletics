@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBookingConfirmedEmails } from "@/lib/booking/emails";
+import {
+  createEvent,
+  deleteEvent,
+  getValidAccessToken,
+} from "@/lib/google/calendar";
 
 /**
  * POST /api/booking/create
@@ -179,6 +184,63 @@ export async function POST(request: NextRequest) {
   }
 
   await admin.from("credit_buckets").update(update).eq("id", bucket.id);
+
+  // If the old booking had a Google event, delete it.  Idempotent.
+  if (rescheduleFor) {
+    try {
+      const { data: oldB } = await admin
+        .from("bookings")
+        .select("google_event_id, trainer_id")
+        .eq("id", rescheduleFor)
+        .single();
+      if (oldB?.google_event_id) {
+        const { accessToken, calendarId } = await getValidAccessToken(
+          oldB.trainer_id,
+        );
+        await deleteEvent({
+          accessToken,
+          calendarId,
+          eventId: oldB.google_event_id,
+        });
+      }
+    } catch {
+      // Trainer hasn't connected Google, or token issue — ignore.
+    }
+  }
+
+  // If the trainer has Google Calendar connected, push an event.
+  try {
+    const { accessToken, calendarId } = await getValidAccessToken(trainerId);
+    // Athlete info for the summary/description.
+    const { data: athlete } = await admin
+      .from("profiles")
+      .select("first_name, last_name, email, phone")
+      .eq("id", user.id)
+      .single();
+    const athleteName =
+      `${athlete?.first_name ?? ""} ${athlete?.last_name ?? ""}`.trim() || "Athlete";
+    const eventId = await createEvent({
+      accessToken,
+      calendarId,
+      startsAt: startDate,
+      endsAt: endDate,
+      summary: `${athleteName} — ${service.category === "pitching" ? "Pitching" : "Hitting"}`,
+      description:
+        `Diamond Nine Athletics booking\n\n` +
+        `Athlete: ${athleteName}\n` +
+        `Email: ${athlete?.email ?? "—"}\n` +
+        (athlete?.phone ? `Phone: ${athlete.phone}\n` : ""),
+      attendeeEmail: athlete?.email ?? undefined,
+    });
+    await admin
+      .from("bookings")
+      .update({ google_event_id: eventId })
+      .eq("id", booking.id);
+  } catch (e) {
+    // Trainer hasn't connected Google Calendar yet, or call failed.
+    // Booking still stands; we'll just have no calendar entry.
+    console.warn("Google event create skipped:", (e as Error).message);
+  }
 
   // Fire confirmation emails (athlete + trainer).  Don't fail the
   // booking if email sending hiccups — we log and move on.

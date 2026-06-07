@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, shell, fmtCT } from "@/lib/email";
+import { deleteEvent, getValidAccessToken } from "@/lib/google/calendar";
 
 /**
  * POST /api/booking/cancel
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
   const { data: booking, error } = await admin
     .from("bookings")
     .select(
-      "id, user_id, trainer_id, credit_bucket_id, status, starts_at, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
+      "id, user_id, trainer_id, credit_bucket_id, status, starts_at, google_event_id, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
     )
     .eq("id", bookingId)
     .single();
@@ -73,6 +74,22 @@ export async function POST(request: NextRequest) {
         .from("credit_buckets")
         .update({ credits_remaining: bucket.credits_remaining + 1 })
         .eq("id", booking.credit_bucket_id);
+    }
+  }
+
+  // Remove Google Calendar event if any.
+  if (booking.google_event_id) {
+    try {
+      const { accessToken, calendarId } = await getValidAccessToken(
+        booking.trainer_id,
+      );
+      await deleteEvent({
+        accessToken,
+        calendarId,
+        eventId: booking.google_event_id,
+      });
+    } catch (e) {
+      console.warn("Google event delete skipped:", (e as Error).message);
     }
   }
 
