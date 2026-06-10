@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 const EMAIL = "support@diamond9athletics.com";
 
-/* TODO: replace href="#" with the real App Store URL once the app is approved. */
-const APP_STORE_URL = "#";
+const APP_STORE_URL =
+  "https://apps.apple.com/us/app/diamond-nine-athletics/id6762482389";
 
 const features = [
   {
@@ -62,6 +62,8 @@ function AppStoreBadge({ className = "" }: { className?: string }) {
   return (
     <a
       href={APP_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
       className={`inline-flex items-center gap-3 rounded-xl bg-black border border-zinc-700 px-5 py-3 hover:border-zinc-500 transition-colors ${className}`}
       aria-label="Download on the App Store"
     >
@@ -86,7 +88,7 @@ export default function AppPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/65 to-zinc-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.08)_0%,transparent_100%)]" />
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">◆ COMING SOON · iOS</span>
+          <span className="badge-amber mb-5 inline-flex">◆ NOW ON iOS</span>
           <h1 className="font-display leading-none">
             <span className="text-white text-5xl sm:text-7xl lg:text-8xl block">THE DIAMOND 9</span>
             <span className="gradient-text text-glow text-5xl sm:text-7xl lg:text-8xl block">APP</span>
