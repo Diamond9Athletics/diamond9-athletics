@@ -23,10 +23,10 @@ const plans = [
     name: "GOLD",
     tag: "GREAT VALUE",
     price: "$275",
-    sub: "4 sessions",
-    features: ["4 Lessons", "1 Media / Recruiting Video", "Swing Assessment", "Video Breakdown", "Bat Speed & Rotational Power", "Mobility Training"],
+    sub: "3 sessions",
+    features: ["3 Lessons", "1 Media / Recruiting Video", "Swing Assessment", "Video Breakdown", "Bat Speed & Rotational Power", "Mobility Training"],
     featured: false,
-    jersey: "4",
+    jersey: "3",
     bar: 78,
   },
   {
