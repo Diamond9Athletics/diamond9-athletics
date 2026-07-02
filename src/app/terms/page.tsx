@@ -7,9 +7,7 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "support@diamond9athletics.com";
-const LAST_UPDATED = "May 13, 2026";
-const PRICE = "$9.99 USD";
-const PERIOD = "month";
+const LAST_UPDATED = "November 7, 2026";
 
 export default function Terms() {
   return (
@@ -60,59 +58,12 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">SUBSCRIPTION &amp; BILLING</h2>
-            <p className="mb-3">
-              The App offers an auto-renewable subscription at <span className="text-white">{PRICE} per {PERIOD}</span>.
-              All purchases and renewals are processed through Apple&rsquo;s App Store and are governed
-              by your Apple ID account.
-            </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Payment will be charged to your Apple ID account at confirmation of purchase.</li>
-              <li>
-                Your subscription automatically renews for the same period unless auto-renew is turned
-                off at least 24 hours before the end of the current period.
-              </li>
-              <li>
-                Your account will be charged for renewal within 24 hours prior to the end of the
-                current period at the cost of the chosen subscription.
-              </li>
-              <li>
-                You can manage your subscription and turn off auto-renewal at any time by going to
-                your Apple ID account settings after purchase.
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="font-display text-2xl text-white mb-3">CANCELLATION</h2>
+            <h2 className="font-display text-2xl text-white mb-3">PRICING</h2>
             <p>
-              You can cancel your subscription at any time through your Apple ID account settings.
-              Cancellation takes effect at the end of the current billing period — you will continue
-              to have access to subscription features until that date. Uninstalling the App does not
-              cancel your subscription.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="font-display text-2xl text-white mb-3">REFUNDS</h2>
-            <p>
-              Refunds for subscriptions purchased through the App Store are handled by Apple, not by
-              Diamond Nine Athletics. To request a refund, please visit{" "}
-              <a href="https://reportaproblem.apple.com" target="_blank" rel="noopener noreferrer" className="text-[#b07adf] hover:underline">
-                reportaproblem.apple.com
-              </a>
-              . Apple&rsquo;s refund decisions are made at Apple&rsquo;s sole discretion.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="font-display text-2xl text-white mb-3">PRICE CHANGES</h2>
-            <p>
-              We may change subscription prices from time to time. If we increase the price of your
-              subscription, we will notify you in advance through the App or by email. Any price
-              change will take effect at the start of the next subscription period following the
-              notice. If you do not agree to the new price, you may cancel your subscription before
-              it renews.
+              The App is currently free to use. We reserve the right to introduce paid features or
+              subscription plans in future versions. Any such changes will be announced in advance
+              through the App, and pricing terms will be presented for your acceptance before any
+              charge is made.
             </p>
           </div>
 

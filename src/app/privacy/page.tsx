@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "privacy@diamond9athletics.com";
-const LAST_UPDATED = "May 13, 2026";
+const LAST_UPDATED = "November 7, 2026";
 
 export default function Privacy() {
   return (
@@ -68,51 +68,11 @@ export default function Privacy() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">SUBSCRIPTIONS &amp; PAYMENT PROCESSING</h2>
-            <p className="mb-3">
-              All subscription purchases for the App are processed by{" "}
-              <span className="text-white">Apple, Inc.</span> through the App Store. Apple is the
-              payment processor and is responsible for collecting and handling all billing
-              information. We do not see, collect, or store your credit card number, CVV, billing
-              address, or any other payment-card information. Apple processes your payment
-              according to Apple&rsquo;s own{" "}
-              <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener noreferrer" className="text-[#b07adf] hover:underline">
-                Privacy Policy
-              </a>{" "}
-              and{" "}
-              <a href="https://www.apple.com/legal/internet-services/itunes/" target="_blank" rel="noopener noreferrer" className="text-[#b07adf] hover:underline">
-                Media Services Terms
-              </a>.
-            </p>
-            <p className="mb-3">
-              When you purchase, renew, or restore a subscription, Apple shares limited transaction
-              information with the App so that we can validate your purchase and grant access to
-              subscription features. The information Apple may share with us includes:
-            </p>
-            <ul className="list-disc pl-5 space-y-2 mb-3">
-              <li>A signed App Store receipt or transaction identifier</li>
-              <li>The product identifier of the subscription you purchased (for example, monthly subscription)</li>
-              <li>The purchase date, original purchase date, and expiration date of your subscription</li>
-              <li>Subscription status (active, expired, in grace period, refunded, or canceled)</li>
-              <li>Renewal and auto-renewal status</li>
-              <li>An anonymized user identifier provided by Apple, used only to link the receipt to your in-app account</li>
-            </ul>
-            <p className="mb-3">
-              We use this information solely to:
-            </p>
-            <ul className="list-disc pl-5 space-y-2 mb-3">
-              <li>Verify that your purchase is legitimate (receipt validation)</li>
-              <li>Activate, maintain, or restore subscription features in your account</li>
-              <li>Provide customer support related to your subscription</li>
-              <li>Detect and prevent fraudulent purchases</li>
-            </ul>
+            <h2 className="font-display text-2xl text-white mb-3">PAYMENTS</h2>
             <p>
-              We do not receive your Apple ID, full name, email address, or payment details from
-              Apple. To request a refund for an App Store purchase, please use Apple&rsquo;s{" "}
-              <a href="https://reportaproblem.apple.com" target="_blank" rel="noopener noreferrer" className="text-[#b07adf] hover:underline">
-                Report a Problem
-              </a>{" "}
-              page, as refunds are handled by Apple, not by Diamond Nine Athletics.
+              The App is currently free to use. We do not collect any payment information from you.
+              If we introduce paid features or subscription plans in the future, this Privacy Policy
+              will be updated in advance to describe how payment information is handled.
             </p>
           </div>
 

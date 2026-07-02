@@ -5,55 +5,55 @@ import { img } from "@/lib/config";
 export const metadata: Metadata = {
   title: "The App",
   description:
-    "The Diamond Nine Athletics iOS app — pitching analytics, training calendars, drill library, and coach-athlete tools. Built for pitchers and the coaches who develop them.",
+    "The Diamond Nine Athletics iOS app — Rapsodo & Trackman analytics, training programs, drill library, coach–athlete messaging, and scouting reports. Free for everyone.",
 };
 
 const EMAIL = "support@diamond9athletics.com";
 
 const APP_STORE_URL =
-  "https://apps.apple.com/us/app/diamond-nine-athletics/id6762482389";
+  "https://apps.apple.com/us/app/diamond-nine/id6762482389";
 
 const features = [
   {
-    title: "PITCHING ANALYTICS",
-    desc: "Log every outing and watch your stats build over time. Velocity, command, and progress — all in one place.",
+    title: "RAPSODO & TRACKMAN",
+    desc: "Upload your Rapsodo or Trackman CSV — get per-pitch analytics, strike zone heatmaps, movement profiles, personal bests, and progression charts automatically.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 15l4-4 3 3 5-6" />
     ),
   },
   {
     title: "LEADERBOARDS",
-    desc: "See where you stack up. Rankings keep athletes competitive and motivated to chase the top spot.",
+    desc: "See where you stack up against every Diamond Nine athlete. Live rankings keep pitchers competitive and chasing the top spot.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8M12 17v4M6 4h12v4a6 6 0 01-12 0V4zM6 6H4a2 2 0 002 4m12-4h2a2 2 0 01-2 4" />
     ),
   },
   {
-    title: "TRAINING CALENDAR",
-    desc: "Coaches program a full month of development. Athletes open the app and know exactly what to do each day.",
+    title: "TRAINING PROGRAMS",
+    desc: "Coaches build reusable multi-week training programs once, then apply them to any athlete's calendar in a single tap.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
     ),
   },
   {
     title: "DRILL LIBRARY",
-    desc: "A full library of training drills with instructional video — so every rep is done right.",
+    desc: "Organized library of drills with video attachments — either YouTube links or coach-uploaded clips — so every rep is done right.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
     ),
   },
   {
-    title: "DAILY CHECKLIST",
-    desc: "Mark all your work complete for the day in one tap. Stay accountable and never lose track.",
+    title: "COACH ↔ ATHLETE",
+    desc: "Direct messaging between coaches and athletes, plus daily training checklists so nothing gets missed.",
     icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.5-1.34" />
     ),
   },
   {
-    title: "COACH + ATHLETE",
-    desc: "Coaches claim and manage their players, program their training, and monitor progress from anywhere.",
+    title: "SCOUTING REPORTS",
+    desc: "Generate professional PDF reports of any athlete's arsenal and progression — ready to send to college coaches and scouts.",
     icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.5-1.34" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     ),
   },
 ];
@@ -88,7 +88,7 @@ export default function AppPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/65 to-zinc-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.08)_0%,transparent_100%)]" />
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">◆ NOW ON iOS</span>
+          <span className="badge-amber mb-5 inline-flex">◆ NOW ON iOS · FREE</span>
           <h1 className="font-display leading-none">
             <span className="text-white text-5xl sm:text-7xl lg:text-8xl block">THE DIAMOND 9</span>
             <span className="gradient-text text-glow text-5xl sm:text-7xl lg:text-8xl block">APP</span>
@@ -129,61 +129,26 @@ export default function AppPage() {
             </div>
           ))}
         </div>
+        <p className="text-center text-zinc-600 text-[11px] mt-8 tracking-wide">
+          Compatible with Rapsodo and Trackman CSV exports. Not affiliated with or endorsed by
+          Rapsodo or Trackman.
+        </p>
       </section>
 
-      {/* ── Pricing ──────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <p className="section-label mb-3">SIMPLE PRICING</p>
-          <h2 className="font-display text-4xl sm:text-6xl text-white">ONE PRICE. <span className="gradient-text">ALL IN.</span></h2>
-          <div className="divider-glow max-w-[120px] mx-auto mt-5" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
-
-          {/* Athletes */}
-          <div className="relative card-modern-amber rounded-2xl overflow-hidden card-lift flex flex-col">
-            <div className="h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
-            <div className="p-8 sm:p-10 flex flex-col flex-1">
-              <span className="badge-amber mb-5 inline-flex self-start">★ FOR ATHLETES</span>
-              <h3 className="font-display text-3xl text-white mb-1">ATHLETE</h3>
-              <div className="flex items-baseline gap-2 mb-1">
-                <span className="font-display text-6xl gradient-text">$9.99</span>
-                <span className="text-zinc-500 text-sm">/ month</span>
-              </div>
-              <p className="text-zinc-500 text-sm mb-7">or <span className="text-zinc-300">$99 / year</span> — save 17%</p>
-              <ul className="space-y-3 mb-8 flex-1">
-                {["Full pitching analytics","Leaderboards & rankings","Your daily training plan","Complete drill library","Daily progress checklist"].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-zinc-300 text-sm">
-                    <svg className="w-4 h-4 text-[#9954d2] shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <AppStoreBadge className="self-start" />
-            </div>
+      {/* ── Free banner ──────────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-6 py-8">
+        <div className="card-modern-amber rounded-2xl overflow-hidden card-lift">
+          <div className="h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
+          <div className="p-8 sm:p-10 text-center">
+            <p className="section-label mb-3">SIMPLE</p>
+            <h2 className="font-display text-4xl sm:text-5xl text-white mb-3">
+              <span className="gradient-text">FREE</span> TO DOWNLOAD AND USE
+            </h2>
+            <p className="text-zinc-400 text-sm sm:text-base max-w-xl mx-auto mb-6">
+              For athletes and coaches. No subscription. No in-app purchases. Premium plans coming soon.
+            </p>
+            <AppStoreBadge />
           </div>
-
-          {/* Coaches */}
-          <div className="relative card-modern rounded-2xl overflow-hidden card-lift flex flex-col">
-            <div className="p-8 sm:p-10 flex flex-col flex-1">
-              <span className="badge-amber mb-5 inline-flex self-start">FOR COACHES</span>
-              <h3 className="font-display text-3xl text-white mb-1">COACH</h3>
-              <div className="flex items-baseline gap-2 mb-1">
-                <span className="font-display text-6xl gradient-text-white">FREE</span>
-              </div>
-              <p className="text-zinc-500 text-sm mb-7">Always — no cost to coaches</p>
-              <ul className="space-y-3 mb-8 flex-1">
-                {["Claim & manage your athletes","Program a full month of training","Assign drills from the library","Monitor every athlete's progress","Build your roster"].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-zinc-300 text-sm">
-                    <svg className="w-4 h-4 text-[#9954d2] shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <AppStoreBadge className="self-start" />
-            </div>
-          </div>
-
         </div>
       </section>
 
