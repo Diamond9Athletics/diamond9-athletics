@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendPurchaseReceipt } from "@/lib/booking/emails";
 import type Stripe from "stripe";
 
 // Stripe webhooks must read the raw body to verify the signature.
@@ -77,7 +78,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // For credit packages, create a bucket.  For enrollments, skip.
   if (packageKind === "credits" && packageCredits > 0 && serviceId) {
     // Idempotency: if a bucket already exists for this purchase
-    // (Stripe can re-deliver the same event), do nothing.
+    // (Stripe can re-deliver the same event), do nothing further.
     const { data: existing } = await admin
       .from("credit_buckets")
       .select("id")
@@ -101,5 +102,56 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     if (bucketError) {
       console.error("Failed to create credit bucket:", bucketError);
     }
+  }
+
+  // Receipt email (athlete) + heads-up to relevant trainers.
+  // Idempotent-ish: the credit-bucket check above short-circuits
+  // duplicate deliveries before we get here, so we only email once.
+  try {
+    const [{ data: athlete }, { data: pkg }] = await Promise.all([
+      admin
+        .from("profiles")
+        .select("first_name, last_name, email")
+        .eq("id", userId)
+        .single(),
+      admin
+        .from("packages")
+        .select("name, service:services(category)")
+        .eq("id", packageId)
+        .single(),
+    ]);
+
+    if (!athlete || !pkg) return;
+
+    const svc = Array.isArray(pkg.service) ? pkg.service[0] : pkg.service;
+    const category = svc?.category as "pitching" | "hitting" | undefined;
+
+    // Send receipt to matching trainers for the package's category.
+    // For enrollment packages with an unknown category, notify all trainers.
+    let trainerQuery = admin
+      .from("profiles")
+      .select("email, trainer_categories")
+      .eq("is_trainer", true);
+    if (category) {
+      trainerQuery = trainerQuery.contains("trainer_categories", [category]);
+    }
+    const { data: trainers } = await trainerQuery;
+    const trainerEmails = (trainers ?? []).map((t) => t.email).filter(Boolean);
+
+    await sendPurchaseReceipt(
+      {
+        athleteFirstName: athlete.first_name,
+        athleteLastName: athlete.last_name,
+        athleteEmail: athlete.email,
+        packageName: pkg.name,
+        amountCents: session.amount_total ?? 0,
+        credits: packageCredits,
+        isEnrollment: packageKind === "enrollment",
+        purchaseId,
+      },
+      trainerEmails,
+    );
+  } catch (e) {
+    console.error("Failed to send purchase receipt:", e);
   }
 }
