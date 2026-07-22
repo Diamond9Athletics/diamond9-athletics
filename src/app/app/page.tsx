@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const EMAIL = "support@diamond9athletics.com";
 
 const APP_STORE_URL =
-  "https://apps.apple.com/us/app/diamond-nine/id6762482389";
+  "https://apps.apple.com/us/app/diamond-nine-athletics/id6762482389";
 
 const features = [
   {
