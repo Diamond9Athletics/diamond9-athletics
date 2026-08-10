@@ -1,66 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [honey, setHoney] = useState(""); // bot honeypot
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  // Timestamp of first render — real users need at least ~2s to fill the form.
+  const startedAt = useRef(Date.now());
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/book/auth/confirm`,
-        data: { first_name: firstName, last_name: lastName },
-      },
+    const res = await fetch("/api/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        password,
+        honey,
+        startedAt: startedAt.current,
+      }),
     });
+    const json = await res.json().catch(() => ({}));
 
     setSubmitting(false);
 
-    if (error) {
-      setError(error.message);
+    if (!res.ok) {
+      setError(json.error ?? "Something went wrong.");
       return;
     }
 
-    setDone(true);
-  }
+    if (json.needsSignIn) {
+      router.push("/book/login");
+      return;
+    }
 
-  if (done) {
-    return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
-        <section className="max-w-md mx-auto px-6 py-20 text-center">
-          <span className="badge-amber mb-5 inline-flex">◆ ALMOST DONE</span>
-          <h1 className="font-display text-5xl text-white mb-4">CHECK YOUR EMAIL</h1>
-          <div className="divider-glow max-w-[80px] mx-auto mb-6" />
-          <p className="text-zinc-400 text-sm leading-relaxed mb-8">
-            We sent a confirmation link to <span className="text-white">{email}</span>.
-            Click the link to finish creating your account.
-          </p>
-          <p className="text-zinc-600 text-xs">
-            Already confirmed?{" "}
-            <Link href="/book/login" className="text-[#b07adf] hover:underline">
-              Sign in
-            </Link>
-            .
-          </p>
-        </section>
-      </main>
-    );
+    // Session cookie is set — land straight on dashboard.
+    router.push("/book/dashboard");
+    router.refresh();
   }
 
   return (
@@ -76,10 +65,25 @@ export default function SignupPage() {
         </div>
 
         <div className="card-modern rounded-2xl p-6 sm:p-8">
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4" autoComplete="on">
             <p className="text-[#b07adf] text-[11px] tracking-wider bg-[#9954d2]/8 border border-[#9954d2]/20 rounded-lg px-3 py-2.5 leading-relaxed">
               <span className="font-bold">PARENTS:</span> please enter the <span className="text-white">player&rsquo;s</span> name here, not your own.
             </p>
+
+            {/* Honeypot — invisible to humans, tempting to bots. */}
+            <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, overflow: "hidden" }}>
+              <label htmlFor="middle_name">Middle name (leave blank)</label>
+              <input
+                id="middle_name"
+                name="middle_name"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honey}
+                onChange={(e) => setHoney(e.target.value)}
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <Field label="PLAYER FIRST NAME">
                 <input
@@ -88,6 +92,7 @@ export default function SignupPage() {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   className="input"
+                  autoComplete="given-name"
                 />
               </Field>
               <Field label="PLAYER LAST NAME">
@@ -97,6 +102,7 @@ export default function SignupPage() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   className="input"
+                  autoComplete="family-name"
                 />
               </Field>
             </div>
