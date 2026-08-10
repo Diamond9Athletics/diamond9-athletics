@@ -16,16 +16,22 @@ import { createClient } from "@/lib/supabase/server";
 
 // ---- Bot heuristics ----------------------------------------------------
 
-/** Bots pick random-looking names like "oNQViQUyKqYbPfblEPdvh". */
+/**
+ * Bots pick random-looking names like "oNQViQUyKqYbPfblEPdvh".
+ * Real names — even unusual surnames like MacDonald, McKay, DeAngelo,
+ * O'Brien, Jean-Luc — have at most 2-3 uppercase letters. Bot names
+ * routinely have 8+ scattered through the string.
+ */
 function looksLikeRandomName(s: string): boolean {
   const clean = s.trim();
   if (clean.length < 2 || clean.length > 25) return true;
-  if (!/^[a-zA-Z][a-zA-Z .'\-]*$/.test(clean)) return true;
-  const inner = clean.slice(1);
-  const hasUpper = /[A-Z]/.test(inner);
-  const hasLower = /[a-z]/.test(inner);
-  // Mixed case in the tail is the giveaway.
-  if (hasUpper && hasLower) return true;
+  // Allow Unicode letters, apostrophes, hyphens, periods, spaces.
+  if (!/^\p{L}[\p{L} .'\-]*$/u.test(clean)) return true;
+  // Total uppercase count > 3 = bot territory.
+  const upperCount = (clean.match(/[A-Z]/g) ?? []).length;
+  if (upperCount > 3) return true;
+  // Also reject "no vowels" — bots often generate consonant clusters.
+  if (!/[aeiouyAEIOUY]/.test(clean)) return true;
   return false;
 }
 
