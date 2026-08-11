@@ -1,8 +1,24 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Script from "next/script";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+// Cloudflare Turnstile — global stub injected by their script.
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        el: string | HTMLElement,
+        opts: { sitekey: string; callback: (token: string) => void; theme?: string },
+      ) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -13,8 +29,30 @@ export default function SignupPage() {
   const [honey, setHoney] = useState(""); // bot honeypot
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
   // Timestamp of first render — real users need at least ~2s to fill the form.
   const startedAt = useRef(Date.now());
+  const turnstileWidgetRef = useRef<string | null>(null);
+
+  // Mount Turnstile once the CF script loads.
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    const tryRender = () => {
+      if (window.turnstile && !turnstileWidgetRef.current) {
+        turnstileWidgetRef.current = window.turnstile.render(
+          "#turnstile-container",
+          {
+            sitekey: TURNSTILE_SITE_KEY,
+            theme: "dark",
+            callback: (token: string) => setTurnstileToken(token),
+          },
+        );
+      }
+    };
+    tryRender();
+    const t = setInterval(tryRender, 500);
+    return () => clearInterval(t);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,6 +69,7 @@ export default function SignupPage() {
         password,
         honey,
         startedAt: startedAt.current,
+        turnstileToken,
       }),
     });
     const json = await res.json().catch(() => ({}));
@@ -39,6 +78,11 @@ export default function SignupPage() {
 
     if (!res.ok) {
       setError(json.error ?? "Something went wrong.");
+      // Reset Turnstile so the user gets a fresh challenge on retry.
+      if (window.turnstile && turnstileWidgetRef.current) {
+        window.turnstile.reset(turnstileWidgetRef.current);
+        setTurnstileToken("");
+      }
       return;
     }
 
@@ -54,6 +98,14 @@ export default function SignupPage() {
 
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">
+      {TURNSTILE_SITE_KEY && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          strategy="afterInteractive"
+          async
+          defer
+        />
+      )}
       <section className="max-w-md mx-auto px-6 py-16">
         <div className="text-center mb-8">
           <span className="badge-amber mb-4 inline-flex">◆ ATHLETE SIGNUP</span>
@@ -129,6 +181,10 @@ export default function SignupPage() {
               <p className="text-zinc-600 text-[10px] mt-1.5 tracking-wider">AT LEAST 8 CHARACTERS</p>
             </Field>
 
+            {TURNSTILE_SITE_KEY && (
+              <div id="turnstile-container" className="flex justify-center" />
+            )}
+
             {error && (
               <p className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">
                 {error}
@@ -137,7 +193,9 @@ export default function SignupPage() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={
+                submitting || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)
+              }
               className="btn-gold w-full py-3.5 rounded-full text-sm tracking-widest font-black disabled:opacity-60"
             >
               {submitting ? "CREATING…" : "CREATE ACCOUNT"}

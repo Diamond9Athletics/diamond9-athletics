@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { img } from "@/lib/config";
+import { HomeTestimonials } from "@/components/HomeTestimonials";
 
 const steps = [
   { num: "01", title: "CHOOSE A PLAN", desc: "Pick from Half Session to the full Diamond Plan." },
@@ -183,6 +184,7 @@ export default function Home() {
         </div>
       </section>
 
+      <HomeTestimonials />
 
     </main>
   );

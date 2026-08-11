@@ -67,6 +67,35 @@ function rateLimit(ip: string): boolean {
 
 // ---- Route ------------------------------------------------------------
 
+async function verifyTurnstile(
+  token: string | undefined,
+  ip: string,
+): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  // If Turnstile isn't configured, skip — the other checks still apply.
+  if (!secret) return true;
+  if (!token) return false;
+  try {
+    const res = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret,
+          response: token,
+          remoteip: ip,
+        }),
+      },
+    );
+    const data = (await res.json()) as { success?: boolean };
+    return Boolean(data.success);
+  } catch (e) {
+    console.error("Turnstile verify failed:", e);
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   let body: {
     firstName?: string;
@@ -75,6 +104,7 @@ export async function POST(request: NextRequest) {
     password?: string;
     honey?: string;
     startedAt?: number;
+    turnstileToken?: string;
   };
   try {
     body = await request.json();
@@ -130,7 +160,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 6) Create the auth user, auto-confirmed.
+  // 6) Cloudflare Turnstile — if the env var is set, real users must pass it.
+  const captchaOk = await verifyTurnstile(body.turnstileToken, ip);
+  if (!captchaOk) {
+    return NextResponse.json(
+      { error: "Please complete the security check." },
+      { status: 400 },
+    );
+  }
+
+  // 7) Create the auth user, auto-confirmed.
   const admin = createAdminClient();
   const created = await admin.auth.admin.createUser({
     email,
@@ -155,7 +194,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 7) Sign them in so they walk out with a session cookie.
+  // 8) Sign them in so they walk out with a session cookie.
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
