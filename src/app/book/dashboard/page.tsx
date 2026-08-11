@@ -19,7 +19,7 @@ export default async function Dashboard() {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("first_name, last_name, email, is_trainer")
+        .select("first_name, last_name, email, is_trainer, is_admin")
         .eq("id", user.id)
         .single(),
       supabase
@@ -140,15 +140,7 @@ export default async function Dashboard() {
                           minute: "2-digit",
                         })}
                       </p>
-                      <div className="flex items-center gap-3">
-                        <Link
-                          href={`/book/schedule?reschedule=${b.id}`}
-                          className="text-zinc-500 hover:text-[#b07adf] text-[11px] tracking-wider"
-                        >
-                          RESCHEDULE
-                        </Link>
-                        <CancelButton bookingId={b.id} />
-                      </div>
+                      <CancelButton bookingId={b.id} />
                     </div>
                   </li>
                 );
@@ -160,7 +152,7 @@ export default async function Dashboard() {
         {profile?.is_trainer && (
           <Link
             href="/book/trainer"
-            className="block card-modern-amber rounded-2xl p-6 mb-6 hover:opacity-90 transition"
+            className="block card-modern-amber rounded-2xl p-6 mb-4 hover:opacity-90 transition"
           >
             <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">TRAINER VIEW</p>
             <p className="text-white text-sm">
@@ -169,7 +161,26 @@ export default async function Dashboard() {
           </Link>
         )}
 
-        <p className="text-zinc-700 text-xs text-center mt-6">
+        {profile?.is_admin && (
+          <Link
+            href="/book/admin"
+            className="block card-modern rounded-2xl p-6 mb-4 hover:opacity-90 transition border border-[#9954d2]/20"
+          >
+            <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">ADMIN PANEL</p>
+            <p className="text-white text-sm">
+              Athletes, credits, revenue, and account tools →
+            </p>
+          </Link>
+        )}
+
+        <Link
+          href="/book/profile"
+          className="block text-center text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider mt-6"
+        >
+          MY PROFILE →
+        </Link>
+
+        <p className="text-zinc-700 text-xs text-center mt-4">
           Signed in as {profile?.email ?? user.email}
         </p>
 

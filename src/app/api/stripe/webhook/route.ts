@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     await handleCheckoutCompleted(session);
+  } else if (
+    event.type === "charge.refunded" ||
+    event.type === "refund.created"
+  ) {
+    await handleRefund(event.data.object as Stripe.Charge | Stripe.Refund);
   }
 
   return NextResponse.json({ received: true });
@@ -154,4 +159,55 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   } catch (e) {
     console.error("Failed to send purchase receipt:", e);
   }
+}
+
+/**
+ * When a Stripe refund is issued (via the dashboard or API), zero out
+ * the corresponding credit_bucket so the athlete can't keep using
+ * credits they no longer paid for. Bookings against those credits are
+ * left alone — Wes can cancel them manually from the admin panel if
+ * the refund was for a truly bad experience.
+ */
+async function handleRefund(object: Stripe.Charge | Stripe.Refund) {
+  const admin = createAdminClient();
+
+  // Both event shapes give us a payment_intent to find the purchase.
+  const paymentIntent =
+    typeof (object as Stripe.Refund).payment_intent === "string"
+      ? ((object as Stripe.Refund).payment_intent as string)
+      : typeof (object as Stripe.Charge).payment_intent === "string"
+        ? ((object as Stripe.Charge).payment_intent as string)
+        : null;
+
+  if (!paymentIntent) {
+    console.error("Refund event without payment_intent");
+    return;
+  }
+
+  const { data: purchase, error } = await admin
+    .from("purchases")
+    .select("id, user_id, package_id, status")
+    .eq("stripe_payment_intent_id", paymentIntent)
+    .maybeSingle();
+
+  if (error || !purchase) {
+    console.error("Refund: could not find purchase for PI", paymentIntent);
+    return;
+  }
+
+  // Mark the purchase refunded (idempotent).
+  await admin
+    .from("purchases")
+    .update({ status: "refunded" })
+    .eq("id", purchase.id);
+
+  // Zero out any credit bucket that came from this purchase.
+  await admin
+    .from("credit_buckets")
+    .update({ credits_remaining: 0 })
+    .eq("purchase_id", purchase.id);
+
+  console.log(
+    `Refund processed for purchase ${purchase.id} (user ${purchase.user_id})`,
+  );
 }
