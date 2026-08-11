@@ -62,6 +62,7 @@ export default async function AdminPage() {
     { data: purchaseRows },
     { count: totalUsers },
     { count: totalBookings },
+    { data: services },
   ] = await Promise.all([
     admin
       .from("profiles")
@@ -91,6 +92,12 @@ export default async function AdminPage() {
       .select("id", { count: "exact", head: true })
       .eq("status", "confirmed")
       .gte("starts_at", nowIso),
+    admin
+      .from("services")
+      .select("id, name, category, duration_min")
+      .eq("active", true)
+      .order("category")
+      .order("duration_min", { ascending: false }),
   ]);
 
   const creditsByUser = new Map<string, number>();
@@ -215,7 +222,11 @@ export default async function AdminPage() {
           </div>
           <div className="space-y-2">
             {athletes.map((a) => (
-              <AthleteRow key={a.id} athlete={a} />
+              <AthleteRow
+                key={a.id}
+                athlete={a}
+                services={services ?? []}
+              />
             ))}
           </div>
         </div>

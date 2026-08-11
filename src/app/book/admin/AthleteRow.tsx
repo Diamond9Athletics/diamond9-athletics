@@ -16,11 +16,30 @@ type Athlete = {
   upcoming: number;
 };
 
-export function AthleteRow({ athlete: a }: { athlete: Athlete }) {
+type Service = {
+  id: string;
+  name: string;
+  category: string;
+  duration_min: number;
+};
+
+export function AthleteRow({
+  athlete: a,
+  services,
+}: {
+  athlete: Athlete;
+  services: Service[];
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjustServiceId, setAdjustServiceId] = useState(
+    services[0]?.id ?? "",
+  );
+  const [adjustDelta, setAdjustDelta] = useState<string>("1");
+  const [adjustNote, setAdjustNote] = useState("");
 
   const name = `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || "—";
   const joined = new Date(a.created_at).toLocaleDateString("en-US", {
@@ -29,14 +48,14 @@ export function AthleteRow({ athlete: a }: { athlete: Athlete }) {
     year: "numeric",
   });
 
-  async function act(action: string, confirmMsg?: string) {
+  async function act(action: string, confirmMsg?: string, extra?: object) {
     if (confirmMsg && !confirm(confirmMsg)) return;
     setBusy(action);
     setError(null);
     const res = await fetch("/api/admin/athlete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: a.id, action }),
+      body: JSON.stringify({ userId: a.id, action, ...(extra ?? {}) }),
     });
     setBusy(null);
     if (!res.ok) {
@@ -45,7 +64,26 @@ export function AthleteRow({ athlete: a }: { athlete: Athlete }) {
       return;
     }
     router.refresh();
-    setOpen(false);
+    if (action === "adjust_credits") {
+      setAdjustOpen(false);
+      setAdjustDelta("1");
+      setAdjustNote("");
+    } else {
+      setOpen(false);
+    }
+  }
+
+  async function applyAdjust() {
+    const delta = parseInt(adjustDelta, 10);
+    if (!Number.isFinite(delta) || delta === 0) {
+      setError("Enter a non-zero number (e.g. 2 to add, -1 to deduct).");
+      return;
+    }
+    await act("adjust_credits", undefined, {
+      delta,
+      serviceId: adjustServiceId,
+      note: adjustNote,
+    });
   }
 
   return (
@@ -112,6 +150,11 @@ export function AthleteRow({ athlete: a }: { athlete: Athlete }) {
 
           <div className="flex flex-wrap gap-2 pt-2">
             <ActionBtn
+              onClick={() => setAdjustOpen((v) => !v)}
+              busy={false}
+              label={adjustOpen ? "CLOSE ADJUST" : "ADJUST CREDITS"}
+            />
+            <ActionBtn
               onClick={() => act("send_reset")}
               busy={busy === "send_reset"}
               label="SEND RESET EMAIL"
@@ -154,6 +197,59 @@ export function AthleteRow({ athlete: a }: { athlete: Athlete }) {
             )}
           </div>
 
+          {adjustOpen && (
+            <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
+              <p className="text-[10px] tracking-widest text-zinc-500 font-bold">
+                ADJUST CREDITS
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
+                <select
+                  value={adjustServiceId}
+                  onChange={(e) => setAdjustServiceId(e.target.value)}
+                  className="adjust-input"
+                >
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  step="1"
+                  value={adjustDelta}
+                  onChange={(e) => setAdjustDelta(e.target.value)}
+                  placeholder="±"
+                  className="adjust-input text-center font-bold"
+                />
+              </div>
+              <input
+                type="text"
+                value={adjustNote}
+                onChange={(e) => setAdjustNote(e.target.value)}
+                placeholder="Reason (optional) — e.g. Venmo cash, comp session"
+                className="adjust-input"
+                maxLength={200}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={applyAdjust}
+                  disabled={busy === "adjust_credits"}
+                  className="text-[10px] tracking-widest font-bold px-3 py-1.5 rounded-full border border-[#9954d2]/40 text-[#b07adf] hover:bg-[#9954d2]/10 disabled:opacity-50"
+                >
+                  {busy === "adjust_credits"
+                    ? "APPLYING…"
+                    : Number(adjustDelta) >= 0
+                      ? "ADD CREDITS"
+                      : "DEDUCT CREDITS"}
+                </button>
+                <p className="text-zinc-600 text-[10px] tracking-wider">
+                  Positive to add · negative to deduct
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <p className="text-red-400 text-[11px] bg-red-950/30 border border-red-900/40 rounded-lg px-2 py-1.5 mt-2">
               {error}
@@ -161,6 +257,21 @@ export function AthleteRow({ athlete: a }: { athlete: Athlete }) {
           )}
         </div>
       )}
+      <style jsx>{`
+        .adjust-input {
+          background: rgba(24, 24, 27, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: white;
+          font-size: 12px;
+          padding: 6px 10px;
+          border-radius: 6px;
+          outline: none;
+          width: 100%;
+        }
+        .adjust-input:focus {
+          border-color: rgba(153, 84, 210, 0.5);
+        }
+      `}</style>
     </div>
   );
 }
