@@ -20,6 +20,7 @@ type AthleteRowData = {
   created_at: string;
   credits: number;
   upcoming: number;
+  creditsByService: Record<string, number>;
 };
 
 export default async function AdminPage() {
@@ -73,7 +74,7 @@ export default async function AdminPage() {
       .limit(500),
     admin
       .from("credit_buckets")
-      .select("user_id, credits_remaining"),
+      .select("user_id, service_id, credits_remaining"),
     admin
       .from("bookings")
       .select("user_id, starts_at, status")
@@ -101,11 +102,16 @@ export default async function AdminPage() {
   ]);
 
   const creditsByUser = new Map<string, number>();
+  const creditsByUserAndService = new Map<string, Record<string, number>>();
   for (const r of creditRows ?? []) {
     creditsByUser.set(
       r.user_id,
       (creditsByUser.get(r.user_id) ?? 0) + (r.credits_remaining ?? 0),
     );
+    const byService = creditsByUserAndService.get(r.user_id) ?? {};
+    byService[r.service_id] =
+      (byService[r.service_id] ?? 0) + (r.credits_remaining ?? 0);
+    creditsByUserAndService.set(r.user_id, byService);
   }
 
   const upcomingByUser = new Map<string, number>();
@@ -124,6 +130,7 @@ export default async function AdminPage() {
     created_at: p.created_at,
     credits: creditsByUser.get(p.id) ?? 0,
     upcoming: upcomingByUser.get(p.id) ?? 0,
+    creditsByService: creditsByUserAndService.get(p.id) ?? {},
   }));
 
   const monthCents = (purchaseRows ?? []).reduce(

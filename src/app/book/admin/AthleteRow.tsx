@@ -14,6 +14,7 @@ type Athlete = {
   created_at: string;
   credits: number;
   upcoming: number;
+  creditsByService: Record<string, number>;
 };
 
 type Service = {
@@ -34,12 +35,11 @@ export function AthleteRow({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [adjustOpen, setAdjustOpen] = useState(false);
-  const [adjustServiceId, setAdjustServiceId] = useState(
-    services[0]?.id ?? "",
+  // Optimistic per-service credit counts so the UI updates instantly on
+  // click, then we refresh from the server.
+  const [localCredits, setLocalCredits] = useState<Record<string, number>>(
+    a.creditsByService,
   );
-  const [adjustDelta, setAdjustDelta] = useState<string>("1");
-  const [adjustNote, setAdjustNote] = useState("");
 
   const name = `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || "—";
   const joined = new Date(a.created_at).toLocaleDateString("en-US", {
@@ -61,30 +61,35 @@ export function AthleteRow({
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
       setError(json.error ?? `Could not ${action}.`);
-      return;
+      return false;
     }
     router.refresh();
-    if (action === "adjust_credits") {
-      setAdjustOpen(false);
-      setAdjustDelta("1");
-      setAdjustNote("");
-    } else {
-      setOpen(false);
-    }
+    if (action !== "adjust_credits") setOpen(false);
+    return true;
   }
 
-  async function applyAdjust() {
-    const delta = parseInt(adjustDelta, 10);
-    if (!Number.isFinite(delta) || delta === 0) {
-      setError("Enter a non-zero number (e.g. 2 to add, -1 to deduct).");
-      return;
-    }
-    await act("adjust_credits", undefined, {
+  async function bump(serviceId: string, delta: number) {
+    const key = `bump-${serviceId}-${delta}`;
+    setError(null);
+    setBusy(key);
+    // Optimistic UI update.
+    const previous = localCredits[serviceId] ?? 0;
+    const nextValue = Math.max(0, previous + delta);
+    setLocalCredits((c) => ({ ...c, [serviceId]: nextValue }));
+
+    const ok = await act("adjust_credits", undefined, {
       delta,
-      serviceId: adjustServiceId,
-      note: adjustNote,
+      serviceId,
     });
+
+    if (!ok) {
+      // Roll back on failure.
+      setLocalCredits((c) => ({ ...c, [serviceId]: previous }));
+    }
+    setBusy(null);
   }
+
+  const totalDisplayed = Object.values(localCredits).reduce((s, n) => s + n, 0);
 
   return (
     <div
@@ -117,7 +122,7 @@ export function AthleteRow({
         </div>
         <div className="text-right shrink-0 hidden sm:block">
           <p className="text-[#b07adf] text-sm font-bold">
-            {a.credits} credit{a.credits === 1 ? "" : "s"}
+            {totalDisplayed} credit{totalDisplayed === 1 ? "" : "s"}
           </p>
           <p className="text-zinc-600 text-xs">
             {a.upcoming} upcoming · joined {joined}
@@ -126,12 +131,54 @@ export function AthleteRow({
       </button>
 
       {open && (
-        <div className="border-t border-white/5 px-3 py-3 space-y-2 text-xs">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-zinc-400">
-            <p>
-              <span className="text-zinc-600">Credits:</span>{" "}
-              <span className="text-white">{a.credits}</span>
+        <div className="border-t border-white/5 px-3 py-3 space-y-3 text-xs">
+          {/* Per-service credit stepper */}
+          <div>
+            <p className="text-[10px] tracking-widest text-zinc-500 font-bold mb-2">
+              CREDITS
             </p>
+            <div className="space-y-1.5">
+              {services.map((s) => {
+                const count = localCredits[s.id] ?? 0;
+                const decBusy = busy === `bump-${s.id}--1`;
+                const incBusy = busy === `bump-${s.id}-1`;
+                return (
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-3 bg-zinc-900/40 border border-white/5 rounded-lg px-3 py-2"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white truncate">{s.name}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => bump(s.id, -1)}
+                        disabled={decBusy || count <= 0}
+                        aria-label={`Deduct one ${s.name} credit`}
+                        className="w-7 h-7 rounded-full border border-white/10 text-zinc-300 hover:border-red-500/40 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold"
+                      >
+                        {decBusy ? "…" : "−"}
+                      </button>
+                      <span className="w-8 text-center text-white font-bold text-sm">
+                        {count}
+                      </span>
+                      <button
+                        onClick={() => bump(s.id, 1)}
+                        disabled={incBusy}
+                        aria-label={`Add one ${s.name} credit`}
+                        className="w-7 h-7 rounded-full border border-white/10 text-zinc-300 hover:border-emerald-500/40 hover:text-emerald-400 disabled:opacity-30 flex items-center justify-center text-sm font-bold"
+                      >
+                        {incBusy ? "…" : "+"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Meta */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-zinc-400 pt-1">
             <p>
               <span className="text-zinc-600">Upcoming:</span>{" "}
               <span className="text-white">{a.upcoming}</span>
@@ -140,20 +187,10 @@ export function AthleteRow({
               <span className="text-zinc-600">Joined:</span>{" "}
               <span className="text-white">{joined}</span>
             </p>
-            <p>
-              <span className="text-zinc-600">User ID:</span>{" "}
-              <span className="text-white font-mono text-[10px]">
-                {a.id.slice(0, 8)}…
-              </span>
-            </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <ActionBtn
-              onClick={() => setAdjustOpen((v) => !v)}
-              busy={false}
-              label={adjustOpen ? "CLOSE ADJUST" : "ADJUST CREDITS"}
-            />
+          {/* Other actions */}
+          <div className="flex flex-wrap gap-2 pt-1 border-t border-white/5">
             <ActionBtn
               onClick={() => act("send_reset")}
               busy={busy === "send_reset"}
@@ -197,81 +234,13 @@ export function AthleteRow({
             )}
           </div>
 
-          {adjustOpen && (
-            <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
-              <p className="text-[10px] tracking-widest text-zinc-500 font-bold">
-                ADJUST CREDITS
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
-                <select
-                  value={adjustServiceId}
-                  onChange={(e) => setAdjustServiceId(e.target.value)}
-                  className="adjust-input"
-                >
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  step="1"
-                  value={adjustDelta}
-                  onChange={(e) => setAdjustDelta(e.target.value)}
-                  placeholder="±"
-                  className="adjust-input text-center font-bold"
-                />
-              </div>
-              <input
-                type="text"
-                value={adjustNote}
-                onChange={(e) => setAdjustNote(e.target.value)}
-                placeholder="Reason (optional) — e.g. Venmo cash, comp session"
-                className="adjust-input"
-                maxLength={200}
-              />
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={applyAdjust}
-                  disabled={busy === "adjust_credits"}
-                  className="text-[10px] tracking-widest font-bold px-3 py-1.5 rounded-full border border-[#9954d2]/40 text-[#b07adf] hover:bg-[#9954d2]/10 disabled:opacity-50"
-                >
-                  {busy === "adjust_credits"
-                    ? "APPLYING…"
-                    : Number(adjustDelta) >= 0
-                      ? "ADD CREDITS"
-                      : "DEDUCT CREDITS"}
-                </button>
-                <p className="text-zinc-600 text-[10px] tracking-wider">
-                  Positive to add · negative to deduct
-                </p>
-              </div>
-            </div>
-          )}
-
           {error && (
-            <p className="text-red-400 text-[11px] bg-red-950/30 border border-red-900/40 rounded-lg px-2 py-1.5 mt-2">
+            <p className="text-red-400 text-[11px] bg-red-950/30 border border-red-900/40 rounded-lg px-2 py-1.5">
               {error}
             </p>
           )}
         </div>
       )}
-      <style jsx>{`
-        .adjust-input {
-          background: rgba(24, 24, 27, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          color: white;
-          font-size: 12px;
-          padding: 6px 10px;
-          border-radius: 6px;
-          outline: none;
-          width: 100%;
-        }
-        .adjust-input:focus {
-          border-color: rgba(153, 84, 210, 0.5);
-        }
-      `}</style>
     </div>
   );
 }
