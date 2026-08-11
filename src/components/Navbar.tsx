@@ -66,9 +66,15 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Theme Toggle + Book Now */}
-            <div className="hidden md:flex items-center gap-4">
+            {/* Theme Toggle + Sign In + Book Now */}
+            <div className="hidden md:flex items-center gap-3">
               <ThemeToggle />
+              <Link
+                href="/book/login"
+                className="btn-outline px-5 py-2.5 rounded-full text-sm tracking-wider inline-block"
+              >
+                SIGN IN
+              </Link>
               <Link
                 href="/book"
                 className="btn-gold px-6 py-2.5 rounded-full text-sm tracking-wider inline-block"
@@ -140,6 +146,13 @@ export default function Navbar() {
                 </Link>
               )
             ))}
+            <Link
+              href="/book/login"
+              onClick={() => setIsOpen(false)}
+              className="block mt-2 btn-outline px-4 py-3 rounded-full text-sm tracking-wider text-center"
+            >
+              SIGN IN
+            </Link>
             <Link
               href="/book"
               onClick={() => setIsOpen(false)}
