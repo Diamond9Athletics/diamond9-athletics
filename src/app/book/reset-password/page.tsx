@@ -21,16 +21,61 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  // Confirm we actually have a session before showing the form.
+  // Establish the recovery session from the URL before showing the form.
   useEffect(() => {
-    supabase.auth.getUser().then(({ data, error }) => {
-      if (error || !data.user) {
+    let cancelled = false;
+
+    async function init() {
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+
+      // 1) Supabase can bounce back with error params on failure.
+      const errParam =
+        params.get("error_description") ?? params.get("error");
+      if (errParam) {
+        if (cancelled) return;
         setError(
-          "This reset link has expired or is invalid. Request a new one from Forgot Password.",
+          decodeURIComponent(errParam).replaceAll("+", " ") +
+            " — request a new link from Forgot Password.",
+        );
+        setReady(true);
+        return;
+      }
+
+      // 2) PKCE flow: `?code=…` query param → exchange for a session.
+      const code = params.get("code");
+      if (code) {
+        const { error: exErr } = await supabase.auth.exchangeCodeForSession(
+          code,
+        );
+        // Clean the URL either way so a refresh doesn't retry a stale code.
+        window.history.replaceState({}, "", "/book/reset-password");
+        if (exErr) {
+          if (cancelled) return;
+          setError(
+            `${exErr.message}. Reset links only work in the same browser that requested them — if you opened the email on a different device, request a new one there.`,
+          );
+          setReady(true);
+          return;
+        }
+      }
+
+      // 3) Older/implicit flow: `#access_token=…` hash — the SDK
+      //    picks that up automatically. Either way, verify we now have a user.
+      const { data, error: userErr } = await supabase.auth.getUser();
+      if (cancelled) return;
+      if (userErr || !data.user) {
+        setError(
+          "This reset link is expired or invalid. Head back to Forgot Password to send a fresh one.",
         );
       }
       setReady(true);
-    });
+    }
+
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, [supabase]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
