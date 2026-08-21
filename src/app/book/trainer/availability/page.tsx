@@ -43,7 +43,10 @@ export default async function AvailabilityPage() {
       .from("availability_blocks")
       .select("id, starts_at, ends_at, reason")
       .eq("trainer_id", user.id)
-      .gte("starts_at", new Date().toISOString())
+      // Show anything that hasn't fully ended yet — including blocks
+      // whose start_time is earlier today. Filtering on starts_at hid
+      // same-day blocks the moment they began.
+      .gte("ends_at", new Date().toISOString())
       .order("starts_at"),
   ]);
 
