@@ -39,16 +39,6 @@ const plans = [
     jersey: "1",
     bar: 55,
   },
-  {
-    name: "HALF",
-    tag: "QUICK HIT",
-    price: "$50",
-    sub: "30 min session",
-    features: ["30 Min Cage Session", "Swing Flaw ID", "1-2 Key Adjustments", "Contact Consistency Drills"],
-    featured: false,
-    jersey: "½",
-    bar: 35,
-  },
 ];
 
 export default function HittingPlans() {

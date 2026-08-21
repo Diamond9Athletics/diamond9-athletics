@@ -38,16 +38,6 @@ const plans = [
     jersey: "1",
     bar: 55,
   },
-  {
-    name: "HALF",
-    tag: "QUICK HIT",
-    price: "$50",
-    sub: "30 min session",
-    features: ["30 Min Bullpen","Mechanical Breakdown","Arm Care"],
-    featured: false,
-    jersey: "½",
-    bar: 35,
-  },
 ];
 
 export default function PitchingPlans() {
