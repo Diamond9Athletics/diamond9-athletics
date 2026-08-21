@@ -36,7 +36,10 @@ function fmtBlockRange(b: Block) {
 
 export function BlocksEditor({ initialBlocks }: { initialBlocks: Block[] }) {
   const router = useRouter();
-  const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
+  // Drive the list off the prop so a router.refresh() re-render is
+  // reflected immediately. Local `useState(initialBlocks)` only
+  // initializes once, which caused newly-added blocks to never appear.
+  const blocks = initialBlocks;
   const [date, setDate] = useState(isoDateInCT(new Date()));
   const [startTime, setStartTime] = useState("00:00");
   const [endTime, setEndTime] = useState("23:59");
@@ -69,7 +72,6 @@ export function BlocksEditor({ initialBlocks }: { initialBlocks: Block[] }) {
       setMsg(json.error ?? "Could not delete block.");
       return;
     }
-    setBlocks((prev) => prev.filter((b) => b.id !== id));
     router.refresh();
   }
 
