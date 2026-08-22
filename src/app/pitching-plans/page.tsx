@@ -23,7 +23,7 @@ const plans = [
     tag: "GREAT VALUE",
     price: "$285",
     sub: "3 sessions",
-    features: ["3 Lessons","1 Media Video","Throwing Plan","Weighted Ball Training","Mobility Training","Rapsodo Tracking","Arm Care"],
+    features: ["3 Lessons","Weighted Ball Training","Rapsodo Tracking","Arm Care"],
     featured: false,
     jersey: "3",
     bar: 78,
