@@ -21,7 +21,7 @@ const plans = [
   {
     name: "GOLD",
     tag: "GREAT VALUE",
-    price: "$275",
+    price: "$285",
     sub: "3 sessions",
     features: ["3 Lessons","1 Media Video","Throwing Plan","Weighted Ball Training","Mobility Training","Rapsodo Tracking","Arm Care"],
     featured: false,
@@ -31,7 +31,7 @@ const plans = [
   {
     name: "SINGLE",
     tag: "ONE TIME",
-    price: "$100",
+    price: "$125",
     sub: "60 min session",
     features: ["60 Min Bullpen","Rapsodo Tracking","Throwing Drills","Arm Care"],
     featured: false,
