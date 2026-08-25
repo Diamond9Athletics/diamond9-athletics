@@ -1,6 +1,16 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BuyButton } from "./BuyButton";
+
+// The pitching Diamond bundle is no longer sold as a package — it's now
+// a monthly membership handled by /book/subscribe. Hide any DB rows that
+// look like the old Diamond pitching package or the retired Half sessions.
+const HIDDEN_SLUGS = new Set([
+  "pitching-diamond",
+  "pitching-half",
+  "hitting-half",
+]);
 
 export const dynamic = "force-dynamic";
 
@@ -49,8 +59,9 @@ export default async function Packages() {
   }
 
   const packages = (data ?? []) as unknown as PackageRow[];
-  const pitching = packages.filter((p) => p.service?.category === "pitching");
-  const hitting = packages.filter((p) => p.service?.category === "hitting");
+  const visible = packages.filter((p) => !HIDDEN_SLUGS.has(p.slug));
+  const pitching = visible.filter((p) => p.service?.category === "pitching");
+  const hitting = visible.filter((p) => p.service?.category === "hitting");
 
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">
@@ -64,8 +75,16 @@ export default async function Packages() {
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
 
-        <Group title="Pitching" packages={pitching} />
-        <div className="h-10" />
+        <h2 className="font-display text-3xl sm:text-4xl text-white mb-5 tracking-wide">
+          PITCHING <span className="gradient-text">PLANS</span>
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <DiamondSubscribeCard />
+          {pitching.map((p) => (
+            <PackageCard key={p.id} pkg={p} />
+          ))}
+        </div>
+
         <Group title="Hitting" packages={hitting} />
       </section>
     </main>
@@ -83,6 +102,30 @@ function Group({ title, packages }: { title: string; packages: PackageRow[] }) {
           <PackageCard key={p.id} pkg={p} />
         ))}
       </div>
+    </div>
+  );
+}
+
+function DiamondSubscribeCard() {
+  return (
+    <div className="relative rounded-2xl overflow-hidden card-modern-amber p-6 flex flex-col">
+      <span className="badge-amber mb-3 inline-flex">MEMBERSHIP</span>
+      <h3 className="font-display text-2xl sm:text-3xl text-white leading-tight mb-1">
+        DIAMOND
+      </h3>
+      <p className="text-zinc-500 text-xs mb-4">unlimited sessions · monthly</p>
+      <p className="gradient-text font-display text-5xl mb-5">
+        $350<span className="text-2xl text-zinc-500 font-normal ml-1">/mo</span>
+      </p>
+      <p className="text-zinc-500 text-[11px] mb-5 leading-relaxed">
+        Come in whenever the schedule is open. Cancel anytime — no long-term commitment.
+      </p>
+      <Link
+        href="/book/subscribe"
+        className="btn-gold w-full text-center py-3 rounded-full text-xs tracking-widest font-black mt-auto block"
+      >
+        SUBSCRIBE
+      </Link>
     </div>
   );
 }
