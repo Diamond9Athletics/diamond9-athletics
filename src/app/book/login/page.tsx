@@ -2,11 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+
+// Only allow internal paths so ?next= can't be used as an open redirect.
+function safeNext(next: string | null): string {
+  if (!next) return "/book/dashboard";
+  if (!next.startsWith("/") || next.startsWith("//")) return "/book/dashboard";
+  return next;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNext(searchParams.get("next"));
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +36,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/book/dashboard");
+    router.push(next);
     router.refresh();
   }
 
@@ -92,7 +101,10 @@ export default function LoginPage() {
 
         <p className="text-center text-zinc-500 text-xs mt-6">
           New here?{" "}
-          <Link href="/book/signup" className="text-[#b07adf] hover:underline">
+          <Link
+            href={`/book/signup${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
+            className="text-[#b07adf] hover:underline"
+          >
             Create an account
           </Link>
           .

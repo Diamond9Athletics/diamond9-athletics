@@ -7,16 +7,42 @@ export const metadata: Metadata = {
   description: "Elite pitching training plans with Rapsodo tracking — velocity, command, and arm care programs in Austin, TX.",
 };
 
-const plans = [
+type Plan = {
+  name: string;
+  tag: string;
+  price: string;
+  priceSuffix?: string;
+  sub: string;
+  features: string[];
+  featured: boolean;
+  jersey: string;
+  bar: number;
+  href: string;
+  cta: string;
+};
+
+const plans: Plan[] = [
   {
     name: "DIAMOND",
-    tag: "MOST POPULAR",
-    price: "$300",
-    sub: "4 sessions",
-    features: ["4 Lessons","2 Recruiting Videos","Throwing Plan","Weighted Ball Training","Mobility Training","Rapsodo Tracking","Arm Care"],
+    tag: "MEMBERSHIP",
+    price: "$350",
+    priceSuffix: "/mo",
+    sub: "unlimited sessions · cancel anytime",
+    features: [
+      "Unlimited Sessions Per Month",
+      "Personal Throwing Plan",
+      "Plyo Ball Program",
+      "Weighted Ball Training",
+      "Mobility & Arm Care",
+      "Rapsodo Tracking",
+      "Unlimited Video Review",
+      "Full D9 App Access",
+    ],
     featured: true,
-    jersey: "4",
+    jersey: "◆",
     bar: 100,
+    href: "/book/subscribe",
+    cta: "SUBSCRIBE",
   },
   {
     name: "GOLD",
@@ -26,7 +52,9 @@ const plans = [
     features: ["3 Lessons","Weighted Ball Training","Rapsodo Tracking","Arm Care"],
     featured: false,
     jersey: "3",
-    bar: 78,
+    bar: 60,
+    href: "/book",
+    cta: "SELECT PLAN",
   },
   {
     name: "SINGLE",
@@ -36,7 +64,9 @@ const plans = [
     features: ["60 Min Bullpen","Rapsodo Tracking","Throwing Drills","Arm Care"],
     featured: false,
     jersey: "1",
-    bar: 55,
+    bar: 35,
+    href: "/book",
+    cta: "SELECT PLAN",
   },
 ];
 
@@ -71,7 +101,7 @@ export default function PitchingPlans() {
               {plan.featured && (
                 <>
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
-                  <div className="ribbon">MOST POPULAR</div>
+                  <div className="ribbon">{plan.tag}</div>
                 </>
               )}
               {/* Jersey number watermark */}
@@ -85,7 +115,12 @@ export default function PitchingPlans() {
                 </div>
                 <h3 className="font-display text-3xl text-white mb-0.5">{plan.name}</h3>
                 <p className="text-zinc-600 text-xs mb-4">{plan.sub}</p>
-                <p className="gradient-text font-display text-5xl mb-5">{plan.price}</p>
+                <p className="gradient-text font-display text-5xl mb-5">
+                  {plan.price}
+                  {plan.priceSuffix && (
+                    <span className="text-2xl text-zinc-500 font-normal ml-1">{plan.priceSuffix}</span>
+                  )}
+                </p>
 
                 {/* Intensity bar */}
                 <div className="mb-5">
@@ -108,8 +143,8 @@ export default function PitchingPlans() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/book" className={`text-center py-3.5 rounded-full text-sm tracking-widest font-bold block ${plan.featured ? "btn-gold" : "btn-outline"}`}>
-                  SELECT PLAN
+                <Link href={plan.href} className={`text-center py-3.5 rounded-full text-sm tracking-widest font-bold block ${plan.featured ? "btn-gold" : "btn-outline"}`}>
+                  {plan.cta}
                 </Link>
               </div>
             </div>

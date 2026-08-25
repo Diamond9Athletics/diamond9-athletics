@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
+// Only allow internal paths so ?next= can't be used as an open redirect.
+function safeNext(next: string | null): string {
+  if (!next) return "/book/dashboard";
+  if (!next.startsWith("/") || next.startsWith("//")) return "/book/dashboard";
+  return next;
+}
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -22,6 +29,8 @@ declare global {
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNext(searchParams.get("next"));
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -87,12 +96,14 @@ export default function SignupPage() {
     }
 
     if (json.needsSignIn) {
-      router.push("/book/login");
+      router.push(
+        `/book/login${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`,
+      );
       return;
     }
 
-    // Session cookie is set — land straight on dashboard.
-    router.push("/book/dashboard");
+    // Session cookie is set — land on the next page (or dashboard).
+    router.push(next);
     router.refresh();
   }
 
@@ -205,7 +216,10 @@ export default function SignupPage() {
 
         <p className="text-center text-zinc-500 text-xs mt-6">
           Already have an account?{" "}
-          <Link href="/book/login" className="text-[#b07adf] hover:underline">
+          <Link
+            href={`/book/login${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
+            className="text-[#b07adf] hover:underline"
+          >
             Sign in
           </Link>
           .
