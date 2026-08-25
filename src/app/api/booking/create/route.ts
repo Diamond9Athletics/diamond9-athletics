@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBookingConfirmedEmails } from "@/lib/booking/emails";
+import { categoryCapacity } from "@/lib/booking/slots";
 import {
   createEvent,
   deleteEvent,
@@ -134,14 +135,23 @@ export async function POST(request: NextRequest) {
   //    just re-check for direct overlap here.
   const { data: clashing } = await admin
     .from("bookings")
-    .select("id")
+    .select("id, service:services(category)")
     .eq("trainer_id", trainerId)
     .eq("status", "confirmed")
     .lt("starts_at", endDate.toISOString())
-    .gt("ends_at", startDate.toISOString())
-    .limit(1);
+    .gt("ends_at", startDate.toISOString());
 
-  if (clashing && clashing.length > 0) {
+  // Same-category overlaps only fill the slot once capacity is hit
+  // (pitching = 2, hitting = 1). Any other-category overlap still blocks.
+  const cap = categoryCapacity(service.category);
+  let sameCategoryOverlap = 0;
+  let otherCategoryOverlap = false;
+  for (const row of clashing ?? []) {
+    const svc = Array.isArray(row.service) ? row.service[0] : row.service;
+    if (svc?.category === service.category) sameCategoryOverlap += 1;
+    else otherCategoryOverlap = true;
+  }
+  if (otherCategoryOverlap || sameCategoryOverlap >= cap) {
     return NextResponse.json(
       { error: "That slot was just taken. Please pick another." },
       { status: 409 },

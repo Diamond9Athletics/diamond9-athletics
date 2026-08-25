@@ -157,6 +157,7 @@ export function BookingFlow({
         <TimeStep
           trainerId={trainer.id}
           duration={bucket.service.duration_min}
+          category={bucket.service.category}
           date={date}
           onPick={(iso) => {
             setSlot(iso);
@@ -351,12 +352,14 @@ function DateStep({
 function TimeStep({
   trainerId,
   duration,
+  category,
   date,
   onPick,
   onBack,
 }: {
   trainerId: string;
   duration: number;
+  category: string;
   date: string;
   onPick: (iso: string) => void;
   onBack: () => void;
@@ -368,7 +371,9 @@ function TimeStep({
     let canceled = false;
     setSlots(null);
     setError(null);
-    fetch(`/api/booking/slots?trainer=${trainerId}&duration=${duration}&date=${date}`)
+    fetch(
+      `/api/booking/slots?trainer=${trainerId}&duration=${duration}&category=${category}&date=${date}`,
+    )
       .then((r) => r.json())
       .then((json) => {
         if (canceled) return;
@@ -379,7 +384,7 @@ function TimeStep({
     return () => {
       canceled = true;
     };
-  }, [trainerId, duration, date]);
+  }, [trainerId, duration, category, date]);
 
   return (
     <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-4">

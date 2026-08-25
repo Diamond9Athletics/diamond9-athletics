@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { computeSlots, type TimeRange } from "@/lib/booking/slots";
+import {
+  categoryCapacity,
+  computeSlots,
+  type TimeRange,
+} from "@/lib/booking/slots";
 import { zonedWallToUtc } from "@/lib/booking/tz";
 import { getValidAccessToken, getBusy } from "@/lib/google/calendar";
 
@@ -13,6 +17,7 @@ export async function GET(request: NextRequest) {
   const trainerId = searchParams.get("trainer");
   const durationMin = Number(searchParams.get("duration"));
   const dateStr = searchParams.get("date");
+  const category = searchParams.get("category");
 
   if (!trainerId || !durationMin || !dateStr) {
     return NextResponse.json(
@@ -39,7 +44,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
   }
 
-  const categories = (trainer.trainer_categories ?? []) as string[];
+  const trainerCategories = (trainer.trainer_categories ?? []) as string[];
+  // If the caller specified a category, only use rules for that one.
+  const ruleCategories = category ? [category] : trainerCategories;
 
   // Day window in the studio timezone, converted to UTC bounds for queries.
   const dayStart = zonedWallToUtc(dateStr, "00:00:00");
@@ -50,11 +57,11 @@ export async function GET(request: NextRequest) {
       .from("availability_rules")
       .select("day_of_week, start_time, end_time")
       .eq("trainer_id", trainerId)
-      .in("category", categories)
+      .in("category", ruleCategories)
       .eq("active", true),
     supabase
       .from("bookings")
-      .select("starts_at, ends_at")
+      .select("starts_at, ends_at, service:services(category)")
       .eq("trainer_id", trainerId)
       .eq("status", "confirmed")
       .gte("starts_at", dayStart.toISOString())
@@ -68,10 +75,36 @@ export async function GET(request: NextRequest) {
   ]);
 
   const rules = rulesRes.data ?? [];
-  const bookings = (bookingsRes.data ?? []).map<TimeRange>((b) => ({
-    start: new Date(b.starts_at),
-    end: new Date(b.ends_at),
-  }));
+
+  // Split bookings by whether they share the target category. Same-category
+  // bookings only fill a slot once its capacity is reached; other-category
+  // bookings block the trainer entirely.
+  type BookingRow = {
+    starts_at: string;
+    ends_at: string;
+    // Supabase can return the joined row as either an object or a single-item
+    // array depending on how the FK resolves — accept both.
+    service:
+      | { category: string | null }
+      | { category: string | null }[]
+      | null;
+  };
+  const bookingRows = (bookingsRes.data ?? []) as BookingRow[];
+  const sameCategoryBookings: TimeRange[] = [];
+  const otherCategoryBookings: TimeRange[] = [];
+  for (const b of bookingRows) {
+    const svc = Array.isArray(b.service) ? b.service[0] : b.service;
+    const range: TimeRange = {
+      start: new Date(b.starts_at),
+      end: new Date(b.ends_at),
+    };
+    if (category && svc?.category === category) {
+      sameCategoryBookings.push(range);
+    } else {
+      otherCategoryBookings.push(range);
+    }
+  }
+
   const blocks = (blocksRes.data ?? []).map<TimeRange>((b) => ({
     start: new Date(b.starts_at),
     end: new Date(b.ends_at),
@@ -95,7 +128,9 @@ export async function GET(request: NextRequest) {
     dateStr,
     durationMin,
     rules,
-    busy: [...bookings, ...blocks, ...googleBusy],
+    busy: [...otherCategoryBookings, ...blocks, ...googleBusy],
+    shared: sameCategoryBookings,
+    sharedCapacity: categoryCapacity(category),
   });
 
   return NextResponse.json({
