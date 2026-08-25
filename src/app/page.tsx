@@ -3,7 +3,7 @@ import { img } from "@/lib/config";
 import { HomeTestimonials } from "@/components/HomeTestimonials";
 
 const steps = [
-  { num: "01", title: "CHOOSE A PLAN", desc: "Pick from Half Session to the full Diamond Plan." },
+  { num: "01", title: "CHOOSE A PLAN", desc: "Go Diamond for unlimited sessions, or grab a Single or Gold package." },
   { num: "02", title: "BOOK & SHOW UP", desc: "Schedule your session. Bring the effort. We bring the tech." },
   { num: "03", title: "COME READY TO WORK", desc: "" },
 ];
@@ -79,7 +79,7 @@ export default function Home() {
                   </div>
                   <h3 className="font-display text-5xl sm:text-6xl text-white mb-1">PITCHING</h3>
                   <h3 className="font-display text-5xl sm:text-6xl gradient-text leading-tight mb-4">PLANS</h3>
-                  <p className="text-zinc-400 text-sm mb-6">From $50 · Rapsodo tracked every session</p>
+                  <p className="text-zinc-400 text-sm mb-6">From $125 · Rapsodo tracked every session</p>
                   <span className="flex items-center gap-2 text-[#b07adf] text-sm font-black tracking-wider">
                     VIEW ALL PLANS
                     <svg className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
@@ -101,7 +101,7 @@ export default function Home() {
                   </div>
                   <h3 className="font-display text-5xl sm:text-6xl text-white mb-1">HITTING</h3>
                   <h3 className="font-display text-5xl sm:text-6xl gradient-text leading-tight mb-4">PLANS</h3>
-                  <p className="text-zinc-400 text-sm mb-6">From $50 · Data-driven every session</p>
+                  <p className="text-zinc-400 text-sm mb-6">From $100 · Data-driven every session</p>
                   <span className="flex items-center gap-2 text-[#b07adf] text-sm font-black tracking-wider">
                     VIEW ALL PLANS
                     <svg className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
@@ -138,48 +138,59 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ══ SUMMER TRAINING ═══════════════════════════════════════ */}
+      {/* ══ DIAMOND MEMBERSHIP ════════════════════════════════════ */}
       <section className="relative py-24 px-6 bg-[#040200]">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9954d2]/30 to-transparent" />
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
-            <p className="section-label mb-3">SEASONAL PROGRAMS</p>
-            <h2 className="font-display text-5xl sm:text-7xl text-white">SUMMER <span className="gradient-text">TRAINING</span></h2>
+            <p className="section-label mb-3">NEW · MOST POPULAR</p>
+            <h2 className="font-display text-5xl sm:text-7xl text-white">DIAMOND <span className="gradient-text">MEMBERSHIP</span></h2>
             <div className="divider-glow max-w-[120px] mx-auto mt-5" />
           </div>
-          <div className="grid grid-cols-1 gap-5">
 
-            {/* College — FEATURED */}
-            <div className="rounded-2xl overflow-hidden card-lift card-shine card-modern-amber">
-              <div className="h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
-              <div className="p-8 sm:p-10 relative overflow-hidden">
-                <div className="jersey-num absolute right-2 bottom-0 text-[8rem]">C</div>
-                <span className="badge-amber mb-5 inline-flex">★ FLAGSHIP PROGRAM</span>
-                <h2 className="font-display text-4xl sm:text-5xl text-white mb-1">COLLEGE SUMMER</h2>
-                <div className="flex items-baseline gap-2 mb-7">
-                  <span className="font-display text-6xl gradient-text">$1,100</span>
-                  <span className="text-zinc-600 text-sm">/ full program</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5 mb-8">
-                  {["A/B/Recovery System","Long Toss Plan","Weekly Live At-Bats","Rapsodo Tracking","Plyo Ball + Arm Care","Mobility Training","Video Capture","Recruiting Video","Workload Management"].map((feature) => (
-                    <div key={feature} className="flex items-center gap-2 text-zinc-300 text-xs">
-                      <svg className="w-3 h-3 text-[#9954d2] shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Link href="/pitching-plans" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">
-                    ENROLL NOW
-                  </Link>
-                  <a href={img("/downloads/summer-college-flyer.pdf")} download className="btn-outline px-8 py-4 rounded-full text-sm tracking-widest font-bold inline-flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    GET THE FLYER
-                  </a>
-                </div>
+          <div className="rounded-2xl overflow-hidden card-lift card-shine card-modern-amber">
+            <div className="h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
+            <div className="p-8 sm:p-10 relative overflow-hidden">
+              <div className="jersey-num absolute right-2 bottom-0 text-[10rem] select-none pointer-events-none">◆</div>
+
+              <span className="badge-amber mb-5 inline-flex">★ UNLIMITED TRAINING</span>
+              <h2 className="font-display text-4xl sm:text-5xl text-white mb-1">PITCHING · MONTHLY</h2>
+              <div className="flex items-baseline gap-2 mb-3">
+                <span className="font-display text-6xl gradient-text">$350</span>
+                <span className="text-zinc-500 text-sm">/ month</span>
+              </div>
+              <p className="text-zinc-400 text-sm mb-8 max-w-2xl">
+                Come in whenever the schedule is open. Bullpens, high-intent throwing days, plyo work,
+                pulldowns, med ball — all coached, all yours. Cancel anytime.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-8 max-w-2xl">
+                {[
+                  "Unlimited Sessions Per Month",
+                  "Personal Throwing Plan",
+                  "Plyo Ball Program",
+                  "Weighted Ball Training",
+                  "Mobility & Arm Care",
+                  "Rapsodo Tracking Every Session",
+                  "Unlimited Video Review",
+                  "Full D9 App Access",
+                ].map((feature) => (
+                  <div key={feature} className="flex items-center gap-2 text-zinc-300 text-xs">
+                    <svg className="w-3 h-3 text-[#9954d2] shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                    {feature}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href="/book/subscribe" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">
+                  SUBSCRIBE — $350/MO
+                </Link>
+                <Link href="/pitching-plans" className="btn-outline px-8 py-4 rounded-full text-sm tracking-widest font-bold inline-block">
+                  SEE ALL PITCHING PLANS
+                </Link>
               </div>
             </div>
-
           </div>
         </div>
       </section>
