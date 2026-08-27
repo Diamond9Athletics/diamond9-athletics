@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CancelButton } from "./CancelButton";
+import { ManageSubscriptionLink } from "./ManageSubscriptionLink";
 
 export const dynamic = "force-dynamic";
 
@@ -179,6 +180,8 @@ export default async function Dashboard() {
         >
           MY PROFILE →
         </Link>
+
+        <ManageSubscriptionLink />
 
         <p className="text-zinc-700 text-xs text-center mt-4">
           Signed in as {profile?.email ?? user.email}
