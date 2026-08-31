@@ -133,6 +133,37 @@ export async function createEvent({
   return json.id as string;
 }
 
+/** Move an existing event to a new start/end. Same event id kept. */
+export async function patchEvent({
+  accessToken,
+  calendarId,
+  eventId,
+  startsAt,
+  endsAt,
+}: {
+  accessToken: string;
+  calendarId: string;
+  eventId: string;
+  startsAt: Date;
+  endsAt: Date;
+}): Promise<void> {
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=none`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        start: { dateTime: startsAt.toISOString() },
+        end: { dateTime: endsAt.toISOString() },
+      }),
+    },
+  );
+  if (!res.ok) throw new Error(`patchEvent failed: ${await res.text()}`);
+}
+
 /** Delete an event. */
 export async function deleteEvent({
   accessToken,

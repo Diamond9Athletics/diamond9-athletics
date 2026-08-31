@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MoveBookingButton } from "./MoveBookingButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Trainer Dashboard" };
@@ -171,7 +172,7 @@ export default async function TrainerPage({
                     const ath = Array.isArray(b.athlete) ? b.athlete[0] : b.athlete;
                     return (
                       <li key={b.id} className="p-4 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-white text-base font-bold leading-tight">
                             {fmtTime(b.starts_at)}
                             <span className="text-zinc-600 text-xs font-normal">
@@ -192,6 +193,12 @@ export default async function TrainerPage({
                               </a>
                             )}
                           </div>
+                        </div>
+                        <div className="shrink-0">
+                          <MoveBookingButton
+                            bookingId={b.id}
+                            startsAtIso={b.starts_at}
+                          />
                         </div>
                       </li>
                     );
