@@ -63,7 +63,10 @@ export default async function TrainerPage({
   // client to fetch just the non-secret metadata.
   const admin = createAdminClient();
   const [{ data: bookings }, { data: gOAuth }] = await Promise.all([
-    supabase
+    // Use admin client — RLS blocks trainers from reading the athlete's
+    // profile row directly, which nulls out the joined athlete fields.
+    // The is_trainer check above already gates access to this data.
+    admin
       .from("bookings")
       .select(
         "id, starts_at, ends_at, status, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
