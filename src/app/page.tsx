@@ -56,32 +56,32 @@ export default function Home() {
       </section>
 
       {/* ══ DIAMOND MEMBERSHIP ════════════════════════════════════ */}
-      <section className="relative py-20 px-6 bg-[#040200]">
+      <section className="relative py-14 sm:py-20 px-6 bg-[#040200]">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9954d2]/30 to-transparent" />
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <p className="section-label mb-3">NEW · MOST POPULAR</p>
-            <h2 className="font-display text-5xl sm:text-7xl text-white">DIAMOND <span className="gradient-text">MEMBERSHIP</span></h2>
+            <h2 className="font-display text-4xl sm:text-7xl text-white leading-none">DIAMOND <span className="gradient-text">MEMBERSHIP</span></h2>
             <div className="divider-glow max-w-[120px] mx-auto mt-5" />
           </div>
 
           <div className="rounded-2xl overflow-hidden card-lift card-shine card-modern-amber">
             <div className="h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
-            <div className="p-8 sm:p-10 relative overflow-hidden">
-              <div className="jersey-num absolute right-2 bottom-0 text-[10rem] select-none pointer-events-none">◆</div>
+            <div className="p-6 sm:p-10 relative overflow-hidden">
+              <div className="jersey-num absolute right-2 bottom-0 text-[6rem] sm:text-[10rem] select-none pointer-events-none">◆</div>
 
               <span className="badge-amber mb-5 inline-flex">★ UNLIMITED TRAINING</span>
-              <h2 className="font-display text-4xl sm:text-5xl text-white mb-1">PITCHING · MONTHLY</h2>
+              <h2 className="font-display text-3xl sm:text-5xl text-white mb-1">PITCHING · MONTHLY</h2>
               <div className="flex items-baseline gap-2 mb-3">
-                <span className="font-display text-6xl gradient-text">$350</span>
+                <span className="font-display text-5xl sm:text-6xl gradient-text">$350</span>
                 <span className="text-zinc-500 text-sm">/ month</span>
               </div>
-              <p className="text-zinc-400 text-sm mb-8 max-w-2xl">
+              <p className="text-zinc-400 text-sm mb-6 sm:mb-8 max-w-2xl">
                 Come in whenever the schedule is open. Bullpens, high-intent throwing days, plyo work,
                 pulldowns, med ball — all coached, all yours. Cancel anytime.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-8 max-w-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6 sm:mb-8 max-w-2xl">
                 {[
                   "Unlimited Sessions Per Month",
                   "Personal Throwing Plan",
@@ -99,12 +99,12 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Link href="/book/subscribe" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">
-                  SUBSCRIBE — $350/MO
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 relative z-10">
+                <Link href="/book/subscribe" className="btn-gold px-6 sm:px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block text-center whitespace-nowrap">
+                  SUBSCRIBE · $350/MO
                 </Link>
-                <Link href="/pitching-plans" className="btn-outline px-8 py-4 rounded-full text-sm tracking-widest font-bold inline-block">
-                  SEE ALL PITCHING PLANS
+                <Link href="/pitching-plans" className="btn-outline px-6 sm:px-8 py-4 rounded-full text-xs sm:text-sm tracking-widest font-bold inline-block text-center whitespace-nowrap">
+                  SEE ALL PLANS
                 </Link>
               </div>
             </div>
