@@ -29,10 +29,15 @@ function LoginPageInner() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // When Supabase returns "Invalid login credentials", surface a friendly
+  // signup nudge alongside — a lot of existing customers try to sign in
+  // without ever having created an account.
+  const [showSignupNudge, setShowSignupNudge] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setShowSignupNudge(false);
     setSubmitting(true);
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -40,7 +45,15 @@ function LoginPageInner() {
     setSubmitting(false);
 
     if (error) {
-      setError(error.message);
+      const isCredsError = /invalid.*(login|credentials)/i.test(error.message);
+      if (isCredsError) {
+        setError(
+          "That email and password don't match. If you've never signed up before, create an account below.",
+        );
+        setShowSignupNudge(true);
+      } else {
+        setError(error.message);
+      }
       return;
     }
 
@@ -92,9 +105,17 @@ function LoginPageInner() {
             </Field>
 
             {error && (
-              <p className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">
-                {error}
-              </p>
+              <div className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2.5 space-y-2">
+                <p>{error}</p>
+                {showSignupNudge && (
+                  <Link
+                    href={`/book/signup${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
+                    className="inline-block bg-[#9954d2] hover:bg-[#b07adf] text-black px-4 py-2 rounded-full text-[11px] tracking-widest font-black no-underline"
+                  >
+                    CREATE AN ACCOUNT →
+                  </Link>
+                )}
+              </div>
             )}
 
             <button
