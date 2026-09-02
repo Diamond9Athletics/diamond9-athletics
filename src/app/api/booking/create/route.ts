@@ -8,6 +8,10 @@ import {
   deleteEvent,
   getValidAccessToken,
 } from "@/lib/google/calendar";
+import {
+  DIAMOND_PITCHING_PRICE_ID,
+  hasActiveSubscription,
+} from "@/lib/stripe/subscription";
 
 /**
  * POST /api/booking/create
@@ -106,8 +110,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 2) Find an eligible credit_bucket — same service, credits_remaining > 0,
-  //    not expired.
+  // 2) Entitlement: either an active Diamond pitching subscription
+  //    (unlimited bookings) or a credit_bucket with credits left.
+  //    Subscription check hits Stripe as the source of truth, so a
+  //    lapsed card is caught even without our webhook running.
+  let hasSubscriptionEntitlement = false;
+  if (service.category === "pitching" && user.email) {
+    try {
+      hasSubscriptionEntitlement = await hasActiveSubscription(
+        user.email,
+        DIAMOND_PITCHING_PRICE_ID,
+      );
+    } catch (e) {
+      // Don't punish the athlete for a Stripe hiccup — fall through
+      // to the credit bucket check.
+      console.warn("Subscription check failed:", (e as Error).message);
+    }
+  }
+
   const today = new Date().toISOString().slice(0, 10);
   const { data: buckets, error: bucketErr } = await admin
     .from("credit_buckets")
@@ -121,13 +141,15 @@ export async function POST(request: NextRequest) {
   if (bucketErr) {
     return NextResponse.json({ error: bucketErr.message }, { status: 500 });
   }
-  if (!buckets || buckets.length === 0) {
+
+  const bucket = buckets?.[0] ?? null;
+
+  if (!hasSubscriptionEntitlement && !bucket) {
     return NextResponse.json(
       { error: "You don't have credits for this service. Buy a package first." },
       { status: 402 },
     );
   }
-  const bucket = buckets[0];
 
   // 3) Sanity: trainer is real, the requested slot doesn't overlap an
   //    existing booking, and it falls inside an availability rule.
@@ -158,14 +180,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 4) Insert booking.
+  // 4) Insert booking. When the subscription covers it, no bucket is
+  //    attached — subscribers don't consume credits.
+  const useBucket = !hasSubscriptionEntitlement && bucket;
+
   const { data: booking, error: bookErr } = await admin
     .from("bookings")
     .insert({
       user_id: user.id,
       trainer_id: trainerId,
       service_id: serviceId,
-      credit_bucket_id: bucket.id,
+      credit_bucket_id: useBucket ? bucket.id : null,
       starts_at: startDate.toISOString(),
       ends_at: endDate.toISOString(),
       status: "confirmed",
@@ -180,20 +205,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 5) Decrement the bucket.  If this is the first booking against it,
-  //    also set first_booking_date and expires_at.
-  const update: Record<string, unknown> = {
-    credits_remaining: bucket.credits_remaining - 1,
-  };
-  if (!bucket.first_booking_date) {
-    const firstDate = startDate.toISOString().slice(0, 10);
-    update.first_booking_date = firstDate;
-    const exp = new Date(startDate);
-    exp.setDate(exp.getDate() + (bucket.expiry_days ?? 31));
-    update.expires_at = exp.toISOString().slice(0, 10);
+  // 5) Decrement the bucket (only when the booking was paid for by
+  //    credits, not by the subscription).  If this is the first
+  //    booking against the bucket, also set first_booking_date and
+  //    expires_at.
+  if (useBucket) {
+    const update: Record<string, unknown> = {
+      credits_remaining: bucket.credits_remaining - 1,
+    };
+    if (!bucket.first_booking_date) {
+      const firstDate = startDate.toISOString().slice(0, 10);
+      update.first_booking_date = firstDate;
+      const exp = new Date(startDate);
+      exp.setDate(exp.getDate() + (bucket.expiry_days ?? 31));
+      update.expires_at = exp.toISOString().slice(0, 10);
+    }
+    await admin.from("credit_buckets").update(update).eq("id", bucket.id);
   }
-
-  await admin.from("credit_buckets").update(update).eq("id", bucket.id);
 
   // If the old booking had a Google event, delete it.  Idempotent.
   if (rescheduleFor) {

@@ -3,6 +3,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CancelButton } from "./CancelButton";
 import { ManageSubscriptionLink } from "./ManageSubscriptionLink";
+import {
+  DIAMOND_PITCHING_PRICE_ID,
+  hasActiveSubscription,
+} from "@/lib/stripe/subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +48,23 @@ export default async function Dashboard() {
   const totalCredits =
     buckets?.reduce((sum, b) => sum + (b.credits_remaining ?? 0), 0) ?? 0;
 
+  // Live-check Stripe for an active Diamond pitching membership. Runs
+  // one HTTP round-trip; keeps the source of truth in Stripe so a
+  // lapsed card is caught even without our webhook running.
+  let isPitchingSubscriber = false;
+  if (user.email) {
+    try {
+      isPitchingSubscriber = await hasActiveSubscription(
+        user.email,
+        DIAMOND_PITCHING_PRICE_ID,
+      );
+    } catch (e) {
+      console.warn("Dashboard subscription check failed:", (e as Error).message);
+    }
+  }
+
+  const canBook = isPitchingSubscriber || totalCredits > 0;
+
   const displayName =
     profile?.first_name || user.email?.split("@")[0] || "Athlete";
 
@@ -61,13 +82,25 @@ export default async function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
           <div className="card-modern rounded-2xl p-6 sm:p-7">
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">MY CREDITS</p>
-            <p className="font-display text-5xl gradient-text mb-1">{totalCredits}</p>
-            <p className="text-zinc-500 text-xs">
-              {totalCredits > 0
-                ? "Ready to book"
-                : "No active credits — buy a package to get started"}
-            </p>
+            {isPitchingSubscriber ? (
+              <>
+                <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">DIAMOND MEMBERSHIP</p>
+                <p className="font-display text-4xl gradient-text mb-1">UNLIMITED</p>
+                <p className="text-zinc-500 text-xs">
+                  Pitching sessions — book anytime the schedule is open.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">MY CREDITS</p>
+                <p className="font-display text-5xl gradient-text mb-1">{totalCredits}</p>
+                <p className="text-zinc-500 text-xs">
+                  {totalCredits > 0
+                    ? "Ready to book"
+                    : "No active credits — buy a package to get started"}
+                </p>
+              </>
+            )}
             {buckets && buckets.length > 0 && (
               <div className="mt-4 space-y-1.5">
                 {buckets.map((b, i) => {
@@ -84,7 +117,7 @@ export default async function Dashboard() {
                 })}
               </div>
             )}
-            {totalCredits > 0 && (
+            {canBook && (
               <Link
                 href="/book/schedule"
                 className="btn-gold inline-block mt-5 px-6 py-3 rounded-full text-xs tracking-widest font-black"
