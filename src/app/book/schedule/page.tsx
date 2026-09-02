@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BookingFlow, type Trainer, type Bucket, type Service } from "./BookingFlow";
+import {
+  DIAMOND_PITCHING_PRICE_ID,
+  hasActiveSubscription,
+} from "@/lib/stripe/subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +70,38 @@ export default async function BookPage({
       },
     ];
   });
+
+  // Diamond pitching subscribers get a synthetic "unlimited" bucket for
+  // any pitching service so the booking flow treats them as entitled.
+  // The booking POST re-verifies against Stripe and inserts with no
+  // credit_bucket_id, so no credits get consumed.
+  let hasPitchingSubscription = false;
+  if (user.email) {
+    try {
+      hasPitchingSubscription = await hasActiveSubscription(
+        user.email,
+        DIAMOND_PITCHING_PRICE_ID,
+      );
+    } catch (e) {
+      console.warn("Schedule subscription check failed:", (e as Error).message);
+    }
+  }
+
+  if (hasPitchingSubscription) {
+    const { data: pitchingServices } = await supabase
+      .from("services")
+      .select("id, name, category, duration_min")
+      .eq("category", "pitching");
+    for (const svc of pitchingServices ?? []) {
+      buckets.push({
+        id: `sub-${svc.id}`,
+        credits_remaining: Number.MAX_SAFE_INTEGER,
+        expires_at: null,
+        service: svc as Service,
+        isSubscription: true,
+      });
+    }
+  }
 
   // Pull active trainers.
   const { data: trainerRows } = await supabase

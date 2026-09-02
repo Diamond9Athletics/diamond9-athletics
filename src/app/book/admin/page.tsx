@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AthleteRow } from "./AthleteRow";
+import {
+  DIAMOND_PITCHING_PRICE_ID,
+  activeSubscriberEmails,
+} from "@/lib/stripe/subscription";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin" };
@@ -21,6 +25,7 @@ type AthleteRowData = {
   credits: number;
   upcoming: number;
   creditsByService: Record<string, number>;
+  hasPitchingSubscription: boolean;
 };
 
 export default async function AdminPage() {
@@ -119,6 +124,15 @@ export default async function AdminPage() {
     upcomingByUser.set(r.user_id, (upcomingByUser.get(r.user_id) ?? 0) + 1);
   }
 
+  // One batch call to Stripe to build the "who's an active subscriber?"
+  // set — used to badge rows without doing N per-athlete lookups.
+  let subscriberEmails = new Set<string>();
+  try {
+    subscriberEmails = await activeSubscriberEmails(DIAMOND_PITCHING_PRICE_ID);
+  } catch (e) {
+    console.warn("Admin subscription batch failed:", (e as Error).message);
+  }
+
   const athletes: AthleteRowData[] = (profiles ?? []).map((p) => ({
     id: p.id,
     first_name: p.first_name,
@@ -131,6 +145,9 @@ export default async function AdminPage() {
     credits: creditsByUser.get(p.id) ?? 0,
     upcoming: upcomingByUser.get(p.id) ?? 0,
     creditsByService: creditsByUserAndService.get(p.id) ?? {},
+    hasPitchingSubscription: subscriberEmails.has(
+      (p.email ?? "").trim().toLowerCase(),
+    ),
   }));
 
   const monthCents = (purchaseRows ?? []).reduce(

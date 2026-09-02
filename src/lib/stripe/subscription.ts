@@ -40,3 +40,41 @@ export async function hasActiveSubscription(
   }
   return false;
 }
+
+/**
+ * One-shot batch: fetch every currently-entitled subscription in the
+ * account for a given price id and return the deduped, lower-cased set
+ * of customer emails. Cheap way to answer "which athletes are
+ * subscribed?" for a list view. Auto-paginates.
+ */
+export async function activeSubscriberEmails(
+  priceId: string,
+): Promise<Set<string>> {
+  const emails = new Set<string>();
+  for await (const sub of stripe.subscriptions.list({
+    price: priceId,
+    status: "active",
+    limit: 100,
+    expand: ["data.customer"],
+  })) {
+    const c = sub.customer;
+    if (typeof c === "string") continue;
+    if ("deleted" in c && c.deleted) continue;
+    const email = (c.email ?? "").trim().toLowerCase();
+    if (email) emails.add(email);
+  }
+  // Also pull trialing.
+  for await (const sub of stripe.subscriptions.list({
+    price: priceId,
+    status: "trialing",
+    limit: 100,
+    expand: ["data.customer"],
+  })) {
+    const c = sub.customer;
+    if (typeof c === "string") continue;
+    if ("deleted" in c && c.deleted) continue;
+    const email = (c.email ?? "").trim().toLowerCase();
+    if (email) emails.add(email);
+  }
+  return emails;
+}

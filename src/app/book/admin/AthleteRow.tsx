@@ -15,6 +15,7 @@ type Athlete = {
   credits: number;
   upcoming: number;
   creditsByService: Record<string, number>;
+  hasPitchingSubscription: boolean;
 };
 
 type Service = {
@@ -114,6 +115,11 @@ export function AthleteRow({
                 TRAINER
               </span>
             )}
+            {a.hasPitchingSubscription && (
+              <span className="text-[9px] tracking-wider bg-gradient-to-r from-[#9954d2]/25 to-[#b07adf]/25 border border-[#9954d2]/40 text-[#b07adf] px-2 py-0.5 rounded-full font-black flex items-center gap-1">
+                <span className="text-sm leading-none">◆</span> DIAMOND ∞
+              </span>
+            )}
           </p>
           <p className="text-zinc-500 text-xs truncate">
             {a.email}
@@ -122,7 +128,18 @@ export function AthleteRow({
         </div>
         <div className="text-right shrink-0 hidden sm:block">
           <p className="text-[#b07adf] text-sm font-bold">
-            {totalDisplayed} credit{totalDisplayed === 1 ? "" : "s"}
+            {a.hasPitchingSubscription ? (
+              <>
+                <span className="text-base leading-none">∞</span> pitching
+                {totalDisplayed > 0 && (
+                  <span className="text-zinc-500"> · +{totalDisplayed} credit{totalDisplayed === 1 ? "" : "s"}</span>
+                )}
+              </>
+            ) : (
+              <>
+                {totalDisplayed} credit{totalDisplayed === 1 ? "" : "s"}
+              </>
+            )}
           </p>
           <p className="text-zinc-600 text-xs">
             {a.upcoming} upcoming · joined {joined}

@@ -16,6 +16,9 @@ export type Bucket = {
   credits_remaining: number;
   expires_at: string | null;
   service: Service;
+  /** True when this "bucket" is really an active subscription entitlement,
+   * not a purchased credit pack. Renders as ∞ / UNLIMITED. */
+  isSubscription?: boolean;
 };
 
 export type Trainer = {
@@ -227,16 +230,30 @@ function ServiceStep({
   buckets: Bucket[];
   onPick: (b: Bucket) => void;
 }) {
-  // De-dup: if the user has multiple buckets for the same service, list it once with the total.
+  // Group by service. A subscription "bucket" always wins as the picked
+  // bucket for that service — booking route bypasses credit deduction
+  // when the subscription covers it.
   const grouped = useMemo(() => {
-    const map = new Map<string, { service: Service; total: number; bucket: Bucket }>();
+    const map = new Map<
+      string,
+      { service: Service; total: number; bucket: Bucket; isSubscription: boolean }
+    >();
     for (const b of buckets) {
       const k = b.service.id;
       const prev = map.get(k);
       if (prev) {
-        prev.total += b.credits_remaining;
+        if (!b.isSubscription) prev.total += b.credits_remaining;
+        if (b.isSubscription) {
+          prev.isSubscription = true;
+          prev.bucket = b;
+        }
       } else {
-        map.set(k, { service: b.service, total: b.credits_remaining, bucket: b });
+        map.set(k, {
+          service: b.service,
+          total: b.isSubscription ? 0 : b.credits_remaining,
+          bucket: b,
+          isSubscription: !!b.isSubscription,
+        });
       }
     }
     return [...map.values()];
@@ -245,7 +262,7 @@ function ServiceStep({
   return (
     <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-3">
       <h2 className="font-display text-2xl text-white mb-2">Pick a service</h2>
-      {grouped.map(({ service, total, bucket }) => (
+      {grouped.map(({ service, total, bucket, isSubscription }) => (
         <button
           key={service.id}
           onClick={() => onPick(bucket)}
@@ -255,9 +272,16 @@ function ServiceStep({
             <p className="text-white text-sm font-bold">{service.name}</p>
             <p className="text-zinc-500 text-xs capitalize">{service.category} · {service.duration_min} min</p>
           </div>
-          <span className="text-[#b07adf] text-xs font-bold">
-            {total} {total === 1 ? "credit" : "credits"}
-          </span>
+          {isSubscription ? (
+            <span className="text-[#b07adf] text-xs font-bold flex items-baseline gap-1">
+              <span className="text-lg leading-none">∞</span>
+              <span>UNLIMITED</span>
+            </span>
+          ) : (
+            <span className="text-[#b07adf] text-xs font-bold">
+              {total} {total === 1 ? "credit" : "credits"}
+            </span>
+          )}
         </button>
       ))}
     </div>
