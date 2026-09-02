@@ -85,8 +85,11 @@ export default async function Dashboard() {
             {isPitchingSubscriber ? (
               <>
                 <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">DIAMOND MEMBERSHIP</p>
-                <p className="font-display text-4xl gradient-text mb-1">UNLIMITED</p>
-                <p className="text-zinc-500 text-xs">
+                <p className="font-display gradient-text mb-1 leading-none flex items-baseline gap-3">
+                  <span className="text-7xl">∞</span>
+                  <span className="text-2xl text-zinc-400 font-normal tracking-wider">UNLIMITED</span>
+                </p>
+                <p className="text-zinc-500 text-xs mt-2">
                   Pitching sessions — book anytime the schedule is open.
                 </p>
               </>
