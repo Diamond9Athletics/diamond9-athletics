@@ -32,6 +32,12 @@ export type Trainer = {
 
 type Step = "service" | "trainer" | "date" | "time" | "confirm";
 
+type BlockRange = {
+  starts_at: string;
+  ends_at: string;
+  reason: string | null;
+};
+
 export type RescheduleFor = {
   bookingId: string;
   serviceId: string;
@@ -64,6 +70,30 @@ export function BookingFlow({
   const [date, setDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [blocks, setBlocks] = useState<BlockRange[]>([]);
+
+  // When a trainer is picked, pull their upcoming blocks so the date
+  // and time pickers can surface *why* certain days are unavailable
+  // instead of just showing nothing.
+  useEffect(() => {
+    if (!trainer) {
+      setBlocks([]);
+      return;
+    }
+    let canceled = false;
+    fetch(`/api/booking/blocks?trainer=${trainer.id}&days=31`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (canceled) return;
+        setBlocks(json.blocks ?? []);
+      })
+      .catch(() => {
+        if (!canceled) setBlocks([]);
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [trainer]);
 
   // No credits → tell them to buy a package.
   // Reschedule is fine even when buckets are empty (we'll refund the credit
@@ -148,6 +178,7 @@ export function BookingFlow({
 
       {step === "date" && bucket && trainer && (
         <DateStep
+          blocks={blocks}
           onPick={(d) => {
             setDate(d);
             setStep("time");
@@ -162,6 +193,7 @@ export function BookingFlow({
           duration={bucket.service.duration_min}
           category={bucket.service.category}
           date={date}
+          blocks={blocks}
           onPick={(iso) => {
             setSlot(iso);
             setStep("confirm");
@@ -323,10 +355,43 @@ function TrainerStep({
   );
 }
 
+/** Return the day-of-CT-time span [00:00, 24:00) for a YYYY-MM-DD date. */
+function ctDayBounds(dateIso: string): { start: Date; end: Date } {
+  // Interpret the ISO date as noon CT and clip to day. Good enough for
+  // determining whether a block overlaps this day (blocks are minute-
+  // granular but we compare day-buckets for the picker).
+  const noon = new Date(`${dateIso}T12:00:00-05:00`);
+  const dayLabel = noon.toLocaleDateString("en-CA", {
+    timeZone: "America/Chicago",
+  });
+  const start = new Date(`${dayLabel}T00:00:00-05:00`);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end };
+}
+
+function blocksForDay(blocks: BlockRange[], dateIso: string): BlockRange[] {
+  const { start, end } = ctDayBounds(dateIso);
+  return blocks.filter((b) => {
+    const bs = new Date(b.starts_at).getTime();
+    const be = new Date(b.ends_at).getTime();
+    return bs < end.getTime() && be > start.getTime();
+  });
+}
+
+/** Does a block cover the entire day? */
+function isFullDayBlock(block: BlockRange, dateIso: string): boolean {
+  const { start, end } = ctDayBounds(dateIso);
+  const bs = new Date(block.starts_at).getTime();
+  const be = new Date(block.ends_at).getTime();
+  return bs <= start.getTime() && be >= end.getTime();
+}
+
 function DateStep({
+  blocks,
   onPick,
   onBack,
 }: {
+  blocks: BlockRange[];
   onPick: (date: string) => void;
   onBack: () => void;
 }) {
@@ -349,25 +414,98 @@ function DateStep({
       <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
         {days.map((d) => {
           const iso = isoDate(d);
+          const dayBlocks = blocksForDay(blocks, iso);
+          const fullDay = dayBlocks.some((b) => isFullDayBlock(b, iso));
+          const partial = dayBlocks.length > 0 && !fullDay;
+          const label = fullDay ? "UNAVAILABLE" : partial ? "PARTIAL" : null;
           return (
             <button
               key={iso}
               onClick={() => onPick(iso)}
-              className="rounded-xl px-2 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition text-center"
+              className={`rounded-xl px-2 py-3 border transition text-center ${
+                fullDay
+                  ? "bg-red-950/20 border-red-900/40 hover:border-red-500/60"
+                  : partial
+                    ? "bg-amber-950/15 border-amber-900/30 hover:border-amber-500/40"
+                    : "bg-zinc-900/50 border-zinc-800 hover:border-[#9954d2]/50"
+              }`}
+              title={
+                dayBlocks
+                  .map((b) => b.reason ?? "Blocked")
+                  .join(" · ") || undefined
+              }
             >
               <p className="text-zinc-500 text-[10px] tracking-wider">
                 {d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}
               </p>
-              <p className="text-white text-lg font-bold leading-tight">
+              <p className={`text-lg font-bold leading-tight ${fullDay ? "text-red-300" : "text-white"}`}>
                 {d.getDate()}
               </p>
               <p className="text-zinc-600 text-[10px]">
                 {d.toLocaleDateString(undefined, { month: "short" })}
               </p>
+              {label && (
+                <p
+                  className={`text-[8px] tracking-widest font-bold mt-1 ${
+                    fullDay ? "text-red-400" : "text-amber-400"
+                  }`}
+                >
+                  {label}
+                </p>
+              )}
             </button>
           );
         })}
       </div>
+      {(() => {
+        const upcomingBlocked = days
+          .map((d) => ({ iso: isoDate(d), d }))
+          .flatMap(({ iso, d }) =>
+            blocksForDay(blocks, iso).map((b) => ({ iso, d, b })),
+          );
+        if (upcomingBlocked.length === 0) return null;
+        return (
+          <div className="rounded-xl border border-white/5 bg-zinc-900/40 p-3 mt-3">
+            <p className="text-[10px] tracking-widest text-zinc-500 font-bold mb-2">
+              UPCOMING BLOCKED TIMES
+            </p>
+            <ul className="space-y-1">
+              {upcomingBlocked.slice(0, 6).map(({ iso, d, b }, i) => (
+                <li key={`${iso}-${i}`} className="text-xs text-zinc-400">
+                  <span className="text-white">
+                    {d.toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  {isFullDayBlock(b, iso) ? (
+                    <span className="text-red-400"> · all day</span>
+                  ) : (
+                    <span className="text-amber-400">
+                      {" "}·{" "}
+                      {new Date(b.starts_at).toLocaleTimeString("en-US", {
+                        timeZone: "America/Chicago",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                      {" – "}
+                      {new Date(b.ends_at).toLocaleTimeString("en-US", {
+                        timeZone: "America/Chicago",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  )}
+                  {b.reason && (
+                    <span className="text-zinc-500"> · {b.reason}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
       <BackButton onClick={onBack} />
     </div>
   );
@@ -378,6 +516,7 @@ function TimeStep({
   duration,
   category,
   date,
+  blocks,
   onPick,
   onBack,
 }: {
@@ -385,9 +524,11 @@ function TimeStep({
   duration: number;
   category: string;
   date: string;
+  blocks: BlockRange[];
   onPick: (iso: string) => void;
   onBack: () => void;
 }) {
+  const dayBlocks = blocksForDay(blocks, date);
   const [slots, setSlots] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -423,6 +564,41 @@ function TimeStep({
           })}
         </span>
       </h2>
+      {dayBlocks.length > 0 && (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-950/15 p-3">
+          <p className="text-[10px] tracking-widest text-amber-400 font-bold mb-1">
+            {dayBlocks.some((b) => isFullDayBlock(b, date))
+              ? "TRAINER OUT ALL DAY"
+              : "PARTIALLY UNAVAILABLE"}
+          </p>
+          <ul className="space-y-0.5">
+            {dayBlocks.map((b, i) => (
+              <li key={i} className="text-xs text-zinc-300">
+                {isFullDayBlock(b, date) ? (
+                  "All day"
+                ) : (
+                  <>
+                    {new Date(b.starts_at).toLocaleTimeString("en-US", {
+                      timeZone: "America/Chicago",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                    {" – "}
+                    {new Date(b.ends_at).toLocaleTimeString("en-US", {
+                      timeZone: "America/Chicago",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </>
+                )}
+                {b.reason && (
+                  <span className="text-zinc-400"> · {b.reason}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {error && <p className="text-red-400 text-xs">{error}</p>}
       {slots === null && !error && (
         <p className="text-zinc-500 text-xs">Loading…</p>
