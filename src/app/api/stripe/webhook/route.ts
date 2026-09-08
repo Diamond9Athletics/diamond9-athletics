@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPurchaseReceipt } from "@/lib/booking/emails";
+import { sendEmail, shell } from "@/lib/email";
 import type Stripe from "stripe";
 
 // Stripe webhooks must read the raw body to verify the signature.
@@ -33,7 +34,12 @@ export async function POST(request: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    await handleCheckoutCompleted(session);
+    // Subscription checkouts and package checkouts follow different paths.
+    if (session.mode === "subscription") {
+      await handleSubscriptionCheckout(session);
+    } else {
+      await handleCheckoutCompleted(session);
+    }
   } else if (
     event.type === "charge.refunded" ||
     event.type === "refund.created"
@@ -158,6 +164,75 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     );
   } catch (e) {
     console.error("Failed to send purchase receipt:", e);
+  }
+}
+
+/**
+ * Fires when a Diamond membership Checkout is completed. Sends the
+ * athlete a welcome email; grants no credits (booking access is
+ * checked live against Stripe, so nothing else needs to happen).
+ */
+async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
+  const admin = createAdminClient();
+  const email =
+    (session.customer_details?.email ?? session.customer_email ?? "").trim();
+  if (!email) {
+    console.error("Sub checkout with no email", session.id);
+    return;
+  }
+
+  // Try to grab a first name for the greeting, from Supabase first,
+  // else from the checkout's collected name.
+  let firstName: string | null = null;
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("first_name")
+    .ilike("email", email)
+    .maybeSingle();
+  firstName = profile?.first_name ?? null;
+  if (!firstName && session.customer_details?.name) {
+    firstName = session.customer_details.name.split(/\s+/)[0] ?? null;
+  }
+
+  const greeting = firstName ? `Hey ${firstName},` : "Hey,";
+  const dashUrl = "https://diamond9athletics.com/book/dashboard";
+  const scheduleUrl = "https://diamond9athletics.com/book/schedule";
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: "Welcome to Diamond — you're in.",
+      html: shell({
+        title: "Welcome to Diamond",
+        body: `
+          <h1 style="margin:0 0 12px 0;font-size:24px;font-weight:800;color:#fff;">You're in.</h1>
+          <p style="margin:0 0 14px 0;color:#e4e4e7;font-size:15px;line-height:1.55;">${greeting}</p>
+          <p style="margin:0 0 14px 0;color:#a1a1aa;font-size:14px;line-height:1.6;">
+            Your Diamond membership is active. That means unlimited coached pitching
+            sessions — bullpens, high-intent throwing days, plyo, pulldowns, med ball,
+            all of it — up to 12 in a calendar month.
+          </p>
+          <p style="margin:0 0 14px 0;color:#a1a1aa;font-size:14px;line-height:1.6;">
+            Head to your dashboard to grab a time whenever the schedule is open.
+            If a slot is there, it's yours.
+          </p>
+          <p style="margin:0 0 20px 0;">
+            <a href="${scheduleUrl}" style="display:inline-block;background:linear-gradient(135deg,#9954d2,#7a40b0);color:#000;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:800;letter-spacing:0.1em;font-size:12px;">BOOK A SESSION →</a>
+          </p>
+          <p style="margin:0 0 14px 0;color:#a1a1aa;font-size:14px;line-height:1.6;">
+            You can manage the card on file, download invoices, or cancel anytime
+            from <a href="${dashUrl}" style="color:#b07adf;text-decoration:none;">your dashboard</a>.
+          </p>
+          <p style="margin:0;color:#71717a;font-size:13px;line-height:1.55;">
+            Any questions, just reply to this email.<br/>
+            — Wes
+          </p>
+        `,
+      }),
+      replyTo: "support@diamond9athletics.com",
+    });
+  } catch (e) {
+    console.error("Welcome email failed:", e);
   }
 }
 

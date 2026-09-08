@@ -111,9 +111,10 @@ export async function POST(request: NextRequest) {
   }
 
   // 2) Entitlement: either an active Diamond pitching subscription
-  //    (unlimited bookings) or a credit_bucket with credits left.
+  //    (up to 12 bookings/month) or a credit_bucket with credits left.
   //    Subscription check hits Stripe as the source of truth, so a
   //    lapsed card is caught even without our webhook running.
+  const SUBSCRIPTION_MONTHLY_CAP = 12;
   let hasSubscriptionEntitlement = false;
   if (service.category === "pitching" && user.email) {
     try {
@@ -125,6 +126,44 @@ export async function POST(request: NextRequest) {
       // Don't punish the athlete for a Stripe hiccup — fall through
       // to the credit bucket check.
       console.warn("Subscription check failed:", (e as Error).message);
+    }
+  }
+
+  // Enforce the monthly cap for subscribers. We count confirmed
+  // pitching bookings this athlete already has whose start falls in the
+  // same *calendar month* (America/Chicago) as the new booking. The
+  // cap is generous (12) so genuine daily-training athletes are fine.
+  if (hasSubscriptionEntitlement) {
+    const monthLabel = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Chicago",
+      year: "numeric",
+      month: "2-digit",
+    }).format(startDate);
+    const [y, m] = monthLabel.split("-").map(Number);
+    const monthStart = new Date(`${monthLabel}-01T00:00:00-05:00`);
+    const nextMonth = new Date(
+      `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01T00:00:00-05:00`,
+    );
+
+    const { count } = await admin
+      .from("bookings")
+      .select("id, service:services!inner(category)", {
+        count: "exact",
+        head: true,
+      })
+      .eq("user_id", user.id)
+      .eq("status", "confirmed")
+      .eq("service.category", "pitching")
+      .gte("starts_at", monthStart.toISOString())
+      .lt("starts_at", nextMonth.toISOString());
+
+    if ((count ?? 0) >= SUBSCRIPTION_MONTHLY_CAP) {
+      return NextResponse.json(
+        {
+          error: `You've hit your ${SUBSCRIPTION_MONTHLY_CAP}-session cap for the month. Your booking will open back up on the 1st.`,
+        },
+        { status: 402 },
+      );
     }
   }
 

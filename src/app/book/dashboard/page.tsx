@@ -217,7 +217,7 @@ export default async function Dashboard() {
           MY PROFILE →
         </Link>
 
-        <ManageSubscriptionLink />
+        <ManageSubscriptionLink prominent={isPitchingSubscriber} />
 
         <p className="text-zinc-700 text-xs text-center mt-4">
           Signed in as {profile?.email ?? user.email}
