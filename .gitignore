@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local scratch — do not commit
+.claude/worktrees/
+d9-all-emails.csv
