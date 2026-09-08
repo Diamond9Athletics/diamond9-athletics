@@ -534,20 +534,52 @@ function TimeStep({
 
   useEffect(() => {
     let canceled = false;
-    setSlots(null);
-    setError(null);
-    fetch(
-      `/api/booking/slots?trainer=${trainerId}&duration=${duration}&category=${category}&date=${date}`,
-    )
-      .then((r) => r.json())
-      .then((json) => {
+    let firstLoad = true;
+
+    async function loadSlots() {
+      if (firstLoad) {
+        setSlots(null);
+      }
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/booking/slots?trainer=${trainerId}&duration=${duration}&category=${category}&date=${date}`,
+        );
+        const json = await res.json();
         if (canceled) return;
-        if (json.error) setError(json.error);
-        else setSlots(json.slots ?? []);
-      })
-      .catch((err: Error) => !canceled && setError(err.message));
+        if (json.error) {
+          setError(json.error);
+        } else {
+          setSlots(json.slots ?? []);
+        }
+      } catch (err) {
+        if (!canceled) setError((err as Error).message);
+      } finally {
+        firstLoad = false;
+      }
+    }
+
+    loadSlots();
+
+    // Refresh every 30s while the tab is visible so someone who leaves
+    // the picker open doesn't see a stale slot fill up under them.
+    const interval = window.setInterval(() => {
+      if (!document.hidden) loadSlots();
+    }, 30_000);
+
+    // When the tab regains focus (opened yesterday, revisited now),
+    // force a fresh pull immediately.
+    function onFocus() {
+      if (!document.hidden) loadSlots();
+    }
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
     return () => {
       canceled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
     };
   }, [trainerId, duration, category, date]);
 
