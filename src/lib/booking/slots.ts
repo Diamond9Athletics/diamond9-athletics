@@ -72,8 +72,9 @@ export function computeSlots({
     ) {
       const slot: TimeRange = { start: cur, end: addMinutes(cur, durationMin) };
 
-      // Skip slots that start in the past (15-min cushion).
-      if (slot.start.getTime() < Date.now() + 15 * 60_000) continue;
+      // Same-day cutoff: enforce a 5-hour minimum lead time on every
+      // slot. Anything sooner than 5 hours from now is hidden.
+      if (slot.start.getTime() < Date.now() + 5 * 60 * 60_000) continue;
 
       // Hard blocks always win.
       if (busy.some((b) => overlaps(slot, b))) continue;

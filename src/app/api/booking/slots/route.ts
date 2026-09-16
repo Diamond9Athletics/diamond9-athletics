@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   categoryCapacity,
   computeSlots,
@@ -7,6 +8,7 @@ import {
 } from "@/lib/booking/slots";
 import { zonedWallToUtc } from "@/lib/booking/tz";
 import { getValidAccessToken, getBusy } from "@/lib/google/calendar";
+import { firstPitchingBookingUsers } from "@/lib/booking/first-session";
 
 /**
  * GET /api/booking/slots?trainer=ID&duration=30|60&date=YYYY-MM-DD
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest) {
       .eq("active", true),
     supabase
       .from("bookings")
-      .select("starts_at, ends_at, service:services(category)")
+      .select("starts_at, ends_at, user_id, service:services(category)")
       .eq("trainer_id", trainerId)
       .eq("status", "confirmed")
       .gte("starts_at", dayStart.toISOString())
@@ -82,6 +84,7 @@ export async function GET(request: NextRequest) {
   type BookingRow = {
     starts_at: string;
     ends_at: string;
+    user_id: string;
     // Supabase can return the joined row as either an object or a single-item
     // array depending on how the FK resolves — accept both.
     service:
@@ -90,6 +93,65 @@ export async function GET(request: NextRequest) {
       | null;
   };
   const bookingRows = (bookingsRes.data ?? []) as BookingRow[];
+
+  // First-session promotion: a pitching booking that is its athlete's
+  // earliest ever confirmed pitching booking claims the whole slot solo.
+  // Look up which of today's pitching bookings qualify, then treat those
+  // as hard blocks rather than shared bookings.
+  let firstSessionUsers = new Set<string>();
+  if (category === "pitching" && bookingRows.length > 0) {
+    const pitchingUserIds = [
+      ...new Set(
+        bookingRows
+          .filter((b) => {
+            const svc = Array.isArray(b.service) ? b.service[0] : b.service;
+            return svc?.category === "pitching";
+          })
+          .map((b) => b.user_id),
+      ),
+    ];
+    if (pitchingUserIds.length > 0) {
+      const admin = createAdminClient();
+      // Per booking, we ask: is the earliest confirmed pitching booking
+      // for this user on or before *this booking's* start? For the
+      // whole day we can approximate by using the day's latest pitching
+      // booking start as the ceiling — but that would over-promote.
+      // Instead, do it per unique start time.
+      const uniqueStarts = [
+        ...new Set(
+          bookingRows
+            .filter((b) => {
+              const svc = Array.isArray(b.service) ? b.service[0] : b.service;
+              return svc?.category === "pitching";
+            })
+            .map((b) => b.starts_at),
+        ),
+      ];
+      const perStart = await Promise.all(
+        uniqueStarts.map(async (iso) => {
+          const users = bookingRows
+            .filter((b) => {
+              const svc = Array.isArray(b.service) ? b.service[0] : b.service;
+              return svc?.category === "pitching" && b.starts_at === iso;
+            })
+            .map((b) => b.user_id);
+          const firsts = await firstPitchingBookingUsers(
+            admin,
+            users,
+            new Date(iso),
+          );
+          return { iso, firsts };
+        }),
+      );
+      firstSessionUsers = new Set();
+      for (const { iso, firsts } of perStart) {
+        for (const uid of firsts) {
+          firstSessionUsers.add(`${uid}|${iso}`);
+        }
+      }
+    }
+  }
+
   const sameCategoryBookings: TimeRange[] = [];
   const otherCategoryBookings: TimeRange[] = [];
   for (const b of bookingRows) {
@@ -99,7 +161,13 @@ export async function GET(request: NextRequest) {
       end: new Date(b.ends_at),
     };
     if (category && svc?.category === category) {
-      sameCategoryBookings.push(range);
+      // Solo first sessions are hard blocks even within the same category.
+      const key = `${b.user_id}|${b.starts_at}`;
+      if (category === "pitching" && firstSessionUsers.has(key)) {
+        otherCategoryBookings.push(range);
+      } else {
+        sameCategoryBookings.push(range);
+      }
     } else {
       otherCategoryBookings.push(range);
     }

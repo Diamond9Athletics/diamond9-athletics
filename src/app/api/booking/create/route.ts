@@ -12,6 +12,13 @@ import {
   DIAMOND_PITCHING_PRICE_ID,
   hasActiveSubscription,
 } from "@/lib/stripe/subscription";
+import {
+  firstPitchingBookingUsers,
+  wouldBeFirstPitching,
+} from "@/lib/booking/first-session";
+
+// Athletes must book at least this far ahead of the slot's start.
+const MIN_LEAD_MS = 5 * 60 * 60 * 1000;
 
 /**
  * POST /api/booking/create
@@ -100,6 +107,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
   const endDate = new Date(startDate.getTime() + service.duration_min * 60_000);
+
+  // Bookings must be at least 5 hours ahead of now — no last-minute
+  // scheduling. Rescheduling is exempt only when the original slot was
+  // in the future; we still enforce the cushion on the *new* slot.
+  if (startDate.getTime() < Date.now() + MIN_LEAD_MS) {
+    return NextResponse.json(
+      {
+        error:
+          "Sessions must be booked at least 5 hours before they start. Please pick a later time.",
+      },
+      { status: 400 },
+    );
+  }
 
   // Bookings must be within the next 31 days (matches credit-expiry rule).
   const maxBookableMs = Date.now() + 31 * 24 * 60 * 60 * 1000;
@@ -196,7 +216,7 @@ export async function POST(request: NextRequest) {
   //    just re-check for direct overlap here.
   const { data: clashing } = await admin
     .from("bookings")
-    .select("id, service:services(category)")
+    .select("id, user_id, service:services(category)")
     .eq("trainer_id", trainerId)
     .eq("status", "confirmed")
     .lt("starts_at", endDate.toISOString())
@@ -207,16 +227,62 @@ export async function POST(request: NextRequest) {
   const cap = categoryCapacity(service.category);
   let sameCategoryOverlap = 0;
   let otherCategoryOverlap = false;
+  const overlappingPitchingUserIds: string[] = [];
   for (const row of clashing ?? []) {
     const svc = Array.isArray(row.service) ? row.service[0] : row.service;
-    if (svc?.category === service.category) sameCategoryOverlap += 1;
-    else otherCategoryOverlap = true;
+    if (svc?.category === service.category) {
+      sameCategoryOverlap += 1;
+      if (service.category === "pitching") {
+        overlappingPitchingUserIds.push(row.user_id);
+      }
+    } else {
+      otherCategoryOverlap = true;
+    }
   }
   if (otherCategoryOverlap || sameCategoryOverlap >= cap) {
     return NextResponse.json(
       { error: "That slot was just taken. Please pick another." },
       { status: 409 },
     );
+  }
+
+  // First-session solo policy (pitching only). Hoisted here so the
+  // Google Calendar event below can tag the booking as a first session:
+  //  - If this booking would be *this athlete's* first pitching session,
+  //    the slot must be totally empty of other pitching bookings.
+  //  - If any overlapping pitching booking is *another* athlete's
+  //    first session, that other athlete owns the slot solo — block.
+  const isFirstPitchingSession =
+    service.category === "pitching"
+      ? await wouldBeFirstPitching(admin, user.id, startDate)
+      : false;
+
+  if (service.category === "pitching") {
+    if (isFirstPitchingSession && sameCategoryOverlap > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "First-session athletes get the slot to themselves — please pick a time no one else has booked.",
+        },
+        { status: 409 },
+      );
+    }
+    if (overlappingPitchingUserIds.length > 0) {
+      const others = await firstPitchingBookingUsers(
+        admin,
+        overlappingPitchingUserIds,
+        startDate,
+      );
+      if (others.size > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "That slot is reserved for a first-time athlete. Please pick another.",
+          },
+          { status: 409 },
+        );
+      }
+    }
   }
 
   // 4) Insert booking. When the subscription covers it, no bucket is
@@ -296,17 +362,21 @@ export async function POST(request: NextRequest) {
       .single();
     const athleteName =
       `${athlete?.first_name ?? ""} ${athlete?.last_name ?? ""}`.trim() || "Athlete";
+    const soloTag = isFirstPitchingSession ? " · 1st session (solo)" : "";
     const eventId = await createEvent({
       accessToken,
       calendarId,
       startsAt: startDate,
       endsAt: endDate,
-      summary: `${athleteName} — ${service.category === "pitching" ? "Pitching" : "Hitting"}`,
+      summary: `${athleteName} — ${service.category === "pitching" ? "Pitching" : "Hitting"}${soloTag}`,
       description:
         `Diamond Nine Athletics booking\n\n` +
         `Athlete: ${athleteName}\n` +
         `Email: ${athlete?.email ?? "—"}\n` +
-        (athlete?.phone ? `Phone: ${athlete.phone}\n` : ""),
+        (athlete?.phone ? `Phone: ${athlete.phone}\n` : "") +
+        (isFirstPitchingSession
+          ? "\nFIRST PITCHING SESSION — slot is solo, no other bookings will join.\n"
+          : ""),
       attendeeEmail: athlete?.email ?? undefined,
     });
     await admin
