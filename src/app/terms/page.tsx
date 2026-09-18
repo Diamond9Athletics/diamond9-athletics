@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "support@diamond9athletics.com";
-const LAST_UPDATED = "November 7, 2026";
+const LAST_UPDATED = "September 18, 2026";
 
 export default function Terms() {
   return (
@@ -74,6 +74,31 @@ export default function Terms() {
               videos, is owned by Diamond Nine Athletics or its licensors and is protected by
               intellectual property laws. You may not copy, distribute, or create derivative works
               without our written permission.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl text-white mb-3">THIRD-PARTY TRADEMARKS &amp; INDEPENDENCE</h2>
+            <p className="mb-3">
+              This application is an independent training tool developed by Diamond Nine Athletics
+              LLC and is <span className="text-white">not affiliated with, endorsed by, sponsored by,
+              or partnered with</span> Trackman A/S, Rapsodo Inc., or any of their subsidiaries or
+              affiliates.
+            </p>
+            <p className="mb-3">
+              The App may import, display, or analyze data files that you export from Trackman® or
+              Rapsodo® devices you own or have lawful access to. All processing of that data happens
+              only at your request and on data you supply. Diamond Nine Athletics LLC does not
+              access, receive, or store any data directly from Trackman A/S or Rapsodo Inc.&rsquo;s
+              systems.
+            </p>
+            <p>
+              All product, brand, and company names referenced in the App —
+              including <span className="text-white">Trackman®</span> and{" "}
+              <span className="text-white">Rapsodo®</span> —
+              are trademarks&trade; or registered&reg; trademarks of their respective holders. Use
+              of these names is for identification and interoperability purposes only and does not
+              imply any affiliation with, endorsement by, or sponsorship from those holders.
             </p>
           </div>
 

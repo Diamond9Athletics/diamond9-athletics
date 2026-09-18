@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "privacy@diamond9athletics.com";
-const LAST_UPDATED = "November 7, 2026";
+const LAST_UPDATED = "September 18, 2026";
 
 export default function Privacy() {
   return (
@@ -99,6 +99,23 @@ export default function Privacy() {
             <p>
               The App is intended for athletes age 13 and older. If you believe a child under 13 has
               provided personal information to us, please contact us so we can remove it.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl text-white mb-3">THIRD-PARTY DATA &amp; TRADEMARKS</h2>
+            <p className="mb-3">
+              The App is an independent training tool developed by Diamond Nine Athletics LLC and
+              is <span className="text-white">not affiliated with, endorsed by, or partnered with</span>{" "}
+              Trackman A/S or Rapsodo Inc. When you import a Trackman® or Rapsodo® data export
+              into the App, that file is processed only to display analytics back to you; we do not
+              send it to those companies or receive anything from them on your behalf.
+            </p>
+            <p>
+              All product and company names, including <span className="text-white">Trackman®</span>{" "}
+              and <span className="text-white">Rapsodo®</span>, are trademarks&trade; or registered&reg;
+              trademarks of their respective holders. Use of them does not imply any affiliation
+              with or endorsement by them.
             </p>
           </div>
 
