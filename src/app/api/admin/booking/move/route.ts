@@ -1,12 +1,14 @@
 /**
- * Admin: move a booking to a new time.
+ * Admin/trainer: move a booking to a new time.
  *
- * Body: { bookingId, newStartIso }
+ * Body: { bookingId, date (YYYY-MM-DD), time (HH:MM) } — both in
+ * America/Chicago wall-clock.
  *
  * Keeps the same booking row, service, and credit assignment — just
- * changes starts_at / ends_at. Fails if the new slot overlaps another
- * confirmed booking with the same trainer. If a Google Calendar event
- * exists for the booking, it's patched in place.
+ * changes starts_at / ends_at. Coaches can drop a booking onto any
+ * slot they want, including one that already has other confirmed
+ * bookings (no overlap check). If a Google Calendar event exists for
+ * the booking, it's patched in place.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
