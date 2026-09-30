@@ -70,22 +70,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not your booking" }, { status: 403 });
   }
 
-  // Overlap check — same trainer, another confirmed booking, not this one.
-  const { data: clashing } = await admin
-    .from("bookings")
-    .select("id")
-    .eq("trainer_id", booking.trainer_id)
-    .eq("status", "confirmed")
-    .neq("id", booking.id)
-    .lt("starts_at", newEnd.toISOString())
-    .gt("ends_at", newStart.toISOString())
-    .limit(1);
-  if (clashing && clashing.length > 0) {
-    return NextResponse.json(
-      { error: "That new time overlaps another booking." },
-      { status: 409 },
-    );
-  }
+  // Overlap check intentionally skipped for coach moves — the coach is
+  // reshuffling their own schedule and has already decided the new time
+  // is fine, even if it happens to sit on top of another confirmed
+  // booking. Athletes can't reach this endpoint (is_trainer/is_admin
+  // gate above), so this only affects manual coach reshuffling.
 
   const { error: updErr } = await admin
     .from("bookings")
