@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MoveBookingButton } from "./MoveBookingButton";
+import {
+  AddSessionPanel,
+  type ClientOption,
+  type ServiceOption,
+} from "./AddSessionPanel";
+import {
+  DIAMOND_PITCHING_PRICE_ID,
+  activeSubscriberEmails,
+} from "@/lib/stripe/subscription";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Trainer Dashboard" };
@@ -14,6 +23,7 @@ type BookingRow = {
   starts_at: string;
   ends_at: string;
   status: string;
+  notes: string | null;
   service: { name: string } | { name: string }[] | null;
   athlete: {
     first_name: string | null;
@@ -42,7 +52,7 @@ export default async function TrainerPage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("first_name, is_trainer")
+    .select("first_name, is_trainer, trainer_categories")
     .eq("id", user.id)
     .single();
 
@@ -63,14 +73,23 @@ export default async function TrainerPage({
   // trainer_google_oauth is locked to service_role only — use admin
   // client to fetch just the non-secret metadata.
   const admin = createAdminClient();
-  const [{ data: bookings }, { data: gOAuth }] = await Promise.all([
+  const today = now.toISOString().slice(0, 10);
+  const [
+    { data: bookings },
+    { data: gOAuth },
+    { data: serviceRows },
+    { data: profileRows },
+    { data: historyRows },
+    { data: bucketRows },
+    subscriberEmails,
+  ] = await Promise.all([
     // Use admin client — RLS blocks trainers from reading the athlete's
     // profile row directly, which nulls out the joined athlete fields.
     // The is_trainer check above already gates access to this data.
     admin
       .from("bookings")
       .select(
-        "id, starts_at, ends_at, status, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
+        "id, starts_at, ends_at, status, notes, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
       )
       .eq("trainer_id", user.id)
       .eq("status", "confirmed")
@@ -82,10 +101,84 @@ export default async function TrainerPage({
       .select("calendar_id, connected_at")
       .eq("trainer_id", user.id)
       .maybeSingle(),
+    // Everything below feeds the "Add a session" panel.
+    admin
+      .from("services")
+      .select("id, name, category, duration_min")
+      .eq("active", true)
+      .order("category")
+      .order("duration_min", { ascending: false }),
+    admin
+      .from("profiles")
+      .select("id, first_name, last_name, email")
+      .neq("id", user.id),
+    admin
+      .from("bookings")
+      .select("user_id, starts_at")
+      .eq("trainer_id", user.id)
+      .eq("status", "confirmed"),
+    admin
+      .from("credit_buckets")
+      .select("user_id, service_id, credits_remaining")
+      .gt("credits_remaining", 0)
+      .or(`expires_at.is.null,expires_at.gte.${today}`),
+    activeSubscriberEmails(DIAMOND_PITCHING_PRICE_ID).catch(() => new Set<string>()),
   ]);
 
   const rows = (bookings ?? []) as unknown as BookingRow[];
   const grouped = groupByDayInCT(rows);
+
+  const myCategories = (me.trainer_categories ?? []) as string[];
+  const services: ServiceOption[] = [...(serviceRows ?? [])].sort(
+    (a, b) =>
+      Number(!myCategories.includes(a.category)) -
+      Number(!myCategories.includes(b.category)),
+  );
+  const defaultServiceId = services[0]?.id ?? "";
+
+  // Session history per client with this trainer.
+  const history = new Map<string, { sessions: number; lastSession: string | null }>();
+  for (const h of historyRows ?? []) {
+    const entry = history.get(h.user_id) ?? { sessions: 0, lastSession: null };
+    entry.sessions += 1;
+    if (
+      new Date(h.starts_at) <= now &&
+      (!entry.lastSession || h.starts_at > entry.lastSession)
+    ) {
+      entry.lastSession = h.starts_at;
+    }
+    history.set(h.user_id, entry);
+  }
+
+  const credits = new Map<string, Record<string, number>>();
+  for (const b of bucketRows ?? []) {
+    const byService = credits.get(b.user_id) ?? {};
+    byService[b.service_id] = (byService[b.service_id] ?? 0) + b.credits_remaining;
+    credits.set(b.user_id, byService);
+  }
+
+  const clients: ClientOption[] = (profileRows ?? [])
+    .filter((p) => p.email)
+    .map((p) => {
+      const h = history.get(p.id);
+      return {
+        id: p.id,
+        name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.email,
+        email: p.email,
+        sessions: h?.sessions ?? 0,
+        lastSession: h?.lastSession ?? null,
+        isDiamond: subscriberEmails.has(p.email.trim().toLowerCase()),
+        creditsByService: credits.get(p.id) ?? {},
+      };
+    })
+    // Past clients first, most recently seen at the top; then everyone else A–Z.
+    .sort((a, b) => {
+      if ((a.sessions > 0) !== (b.sessions > 0)) return a.sessions > 0 ? -1 : 1;
+      const al = a.lastSession ?? "";
+      const bl = b.lastSession ?? "";
+      if (al !== bl) return bl.localeCompare(al);
+      return a.name.localeCompare(b.name);
+    });
 
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">
@@ -155,6 +248,12 @@ export default async function TrainerPage({
           )}
         </div>
 
+        <AddSessionPanel
+          clients={clients}
+          services={services}
+          defaultServiceId={defaultServiceId}
+        />
+
         {grouped.length === 0 ? (
           <div className="card-modern rounded-2xl p-8 text-center text-zinc-400 text-sm">
             No bookings on the calendar.
@@ -193,6 +292,9 @@ export default async function TrainerPage({
                               </a>
                             )}
                           </div>
+                          {b.notes && (
+                            <p className="text-[#b07adf]/80 text-xs mt-1.5">{b.notes}</p>
+                          )}
                         </div>
                         <div className="shrink-0">
                           <MoveBookingButton

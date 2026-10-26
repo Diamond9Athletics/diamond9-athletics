@@ -16,7 +16,10 @@ export type BookingEmailData = {
   trainerEmail: string;
 };
 
-export async function sendBookingConfirmedEmails(d: BookingEmailData) {
+export async function sendBookingConfirmedEmails(
+  d: BookingEmailData,
+  opts: { notifyTrainer?: boolean } = {},
+) {
   const when = fmtCT(d.startsAtIso);
   const athleteName =
     `${d.athleteFirstName ?? ""} ${d.athleteLastName ?? ""}`.trim() || "Athlete";
@@ -49,7 +52,8 @@ export async function sendBookingConfirmedEmails(d: BookingEmailData) {
     replyTo: "support@diamond9athletics.com",
   });
 
-  // 2) Trainer heads-up.
+  // 2) Trainer heads-up. Skipped when the trainer made the booking.
+  if (opts.notifyTrainer === false) return;
   const trainerHtml = shell({
     title: "New booking",
     body: `
