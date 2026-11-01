@@ -49,6 +49,7 @@ export default function Footer() {
               <Link href="/support" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">App Support</Link>
               <Link href="/privacy" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Privacy Policy</Link>
               <Link href="/terms"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Terms of Service</Link>
+              <Link href="/waiver"  className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Participant Agreement</Link>
             </div>
           </div>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BuyButton } from "./BuyButton";
+import { requireWaiver } from "@/lib/legal/waiver";
 
 // The pitching Diamond bundle is no longer sold as a package — it's now
 // a monthly membership handled by /book/subscribe. Hide any DB rows that
@@ -43,6 +44,7 @@ export default async function Packages() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/book/login");
+  await requireWaiver(supabase, user, "/book/packages");
 
   const { data, error } = await supabase
     .from("packages")

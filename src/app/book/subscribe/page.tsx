@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SubscribeRedirector } from "./SubscribeRedirector";
+import { requireWaiver } from "@/lib/legal/waiver";
 
 /**
  * Gate for the Diamond membership. If not signed in, bounce to signup
@@ -17,6 +18,7 @@ export default async function SubscribePage() {
   if (!user) {
     redirect("/book/signup?next=/book/subscribe");
   }
+  await requireWaiver(supabase, user, "/book/subscribe");
 
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">

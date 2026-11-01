@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CancelButton } from "./CancelButton";
 import { ManageSubscriptionLink } from "./ManageSubscriptionLink";
+import { requireWaiver } from "@/lib/legal/waiver";
 import {
   DIAMOND_PITCHING_PRICE_ID,
   hasActiveSubscription,
@@ -19,6 +20,7 @@ export default async function Dashboard() {
   if (!user) {
     redirect("/book/login");
   }
+  await requireWaiver(supabase, user, "/book/dashboard");
 
   const [{ data: profile }, { data: buckets }, { data: bookings }] =
     await Promise.all([

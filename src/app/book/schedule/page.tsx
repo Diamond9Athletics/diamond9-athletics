@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BookingFlow, type Trainer, type Bucket, type Service } from "./BookingFlow";
+import { requireWaiver } from "@/lib/legal/waiver";
 import {
   DIAMOND_PITCHING_PRICE_ID,
   hasActiveSubscription,
@@ -24,6 +25,11 @@ export default async function BookPage({
   if (!user) redirect("/book/login");
 
   const { reschedule: rescheduleId } = await searchParams;
+  await requireWaiver(
+    supabase,
+    user,
+    rescheduleId ? `/book/schedule?reschedule=${rescheduleId}` : "/book/schedule",
+  );
 
   // If this is a reschedule, fetch the original booking so the flow
   // can pre-pick the service and trainer.

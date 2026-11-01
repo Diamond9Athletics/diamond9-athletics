@@ -16,6 +16,7 @@ import {
   firstPitchingBookingUsers,
   wouldBeFirstPitching,
 } from "@/lib/booking/first-session";
+import { needsWaiver } from "@/lib/legal/waiver";
 
 // Athletes must book at least this far ahead of the slot's start.
 const MIN_LEAD_MS = 5 * 60 * 60 * 1000;
@@ -52,6 +53,15 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+  if (await needsWaiver(supabase, user)) {
+    return NextResponse.json(
+      {
+        error: "Please accept the Participant Agreement before booking.",
+        needsWaiver: true,
+      },
+      { status: 403 },
+    );
   }
 
   const admin = createAdminClient();

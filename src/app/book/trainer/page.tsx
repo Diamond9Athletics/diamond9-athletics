@@ -12,6 +12,7 @@ import {
   DIAMOND_PITCHING_PRICE_ID,
   activeSubscriberEmails,
 } from "@/lib/stripe/subscription";
+import { hasAcceptedWaiver } from "@/lib/legal/waiver";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Trainer Dashboard" };
@@ -20,6 +21,7 @@ const TZ = "America/Chicago";
 
 type BookingRow = {
   id: string;
+  user_id: string;
   starts_at: string;
   ends_at: string;
   status: string;
@@ -82,6 +84,7 @@ export default async function TrainerPage({
     { data: historyRows },
     { data: bucketRows },
     subscriberEmails,
+    { data: authUsers },
   ] = await Promise.all([
     // Use admin client — RLS blocks trainers from reading the athlete's
     // profile row directly, which nulls out the joined athlete fields.
@@ -89,7 +92,7 @@ export default async function TrainerPage({
     admin
       .from("bookings")
       .select(
-        "id, starts_at, ends_at, status, notes, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
+        "id, user_id, starts_at, ends_at, status, notes, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
       )
       .eq("trainer_id", user.id)
       .eq("status", "confirmed")
@@ -123,7 +126,13 @@ export default async function TrainerPage({
       .gt("credits_remaining", 0)
       .or(`expires_at.is.null,expires_at.gte.${today}`),
     activeSubscriberEmails(DIAMOND_PITCHING_PRICE_ID).catch(() => new Set<string>()),
+    // Participant Agreement acceptances live on the auth user record.
+    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
   ]);
+
+  const acceptedWaiver = new Set(
+    (authUsers?.users ?? []).filter((u) => hasAcceptedWaiver(u)).map((u) => u.id),
+  );
 
   const rows = (bookings ?? []) as unknown as BookingRow[];
   const grouped = groupByDayInCT(rows);
@@ -168,6 +177,7 @@ export default async function TrainerPage({
         sessions: h?.sessions ?? 0,
         lastSession: h?.lastSession ?? null,
         isDiamond: subscriberEmails.has(p.email.trim().toLowerCase()),
+        waiverAccepted: acceptedWaiver.has(p.id),
         creditsByService: credits.get(p.id) ?? {},
       };
     })
@@ -294,6 +304,11 @@ export default async function TrainerPage({
                           </div>
                           {b.notes && (
                             <p className="text-[#b07adf]/80 text-xs mt-1.5">{b.notes}</p>
+                          )}
+                          {!acceptedWaiver.has(b.user_id) && (
+                            <p className="text-amber-400 text-xs mt-1.5">
+                              Hasn&rsquo;t accepted the Participant Agreement yet
+                            </p>
                           )}
                         </div>
                         <div className="shrink-0">

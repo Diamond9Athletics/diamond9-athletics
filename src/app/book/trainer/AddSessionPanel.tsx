@@ -12,6 +12,7 @@ export type ClientOption = {
   sessions: number;
   lastSession: string | null;
   isDiamond: boolean;
+  waiverAccepted: boolean;
   creditsByService: Record<string, number>;
 };
 
@@ -242,6 +243,12 @@ export function AddSessionPanel({
                 )}
               </p>
               <p className="text-zinc-500 text-xs truncate">{selected.email}</p>
+              {!selected.waiverAccepted && (
+                <p className="text-amber-400 text-xs mt-1">
+                  Hasn&rsquo;t accepted the Participant Agreement. They&rsquo;ll be asked to when
+                  they next sign in.
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -291,7 +298,12 @@ export function AddSessionPanel({
                             <span className="text-[#b07adf] text-[10px] ml-2">◆</span>
                           )}
                         </span>
-                        <span className="block text-zinc-500 text-xs truncate">{c.email}</span>
+                        <span className="block text-zinc-500 text-xs truncate">
+                          {c.email}
+                          {!c.waiverAccepted && (
+                            <span className="text-amber-400"> · no agreement</span>
+                          )}
+                        </span>
                       </span>
                       <span className="text-zinc-500 text-[11px] shrink-0 text-right">
                         {c.sessions > 0
