@@ -171,6 +171,14 @@ export default async function AdminPage() {
             <span className="block gradient-text">CONTROL ROOM</span>
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
+          <div className="mt-5">
+            <Link
+              href="/book/trainer?coach=all"
+              className="btn-outline inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-bold"
+            >
+              ALL COACHES&rsquo; SCHEDULES →
+            </Link>
+          </div>
         </div>
 
         {/* Snapshot */}

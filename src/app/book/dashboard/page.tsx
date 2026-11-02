@@ -11,6 +11,12 @@ import {
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "My Account",
+};
+
+const TZ = "America/Chicago";
+
 export default async function Dashboard() {
   const supabase = await createClient();
   const {
@@ -70,10 +76,15 @@ export default async function Dashboard() {
   const displayName =
     profile?.first_name || user.email?.split("@")[0] || "Athlete";
 
+  // The next session gets the spotlight up top; the rest list below it.
+  const [next, ...later] = bookings ?? [];
+  const nextService = next && (Array.isArray(next.service) ? next.service[0] : next.service);
+  const nextTrainer = next && (Array.isArray(next.trainer) ? next.trainer[0] : next.trainer);
+
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">
-      <section className="max-w-4xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
+      <section className="max-w-4xl mx-auto px-6 py-12 sm:py-16">
+        <div className="text-center mb-10">
           <p className="section-label mb-3">YOUR DASHBOARD</p>
           <h1 className="font-display text-5xl sm:text-7xl text-white leading-none">
             WELCOME<span className="text-[#b07adf]">,</span>
@@ -82,7 +93,53 @@ export default async function Dashboard() {
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+        {/* What's next, and the one button most people come here for */}
+        <div className="card-modern-amber rounded-2xl p-6 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
+          <div className="flex-1 min-w-0">
+            {next ? (
+              <>
+                <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">YOUR NEXT SESSION</p>
+                <p className="font-display text-4xl sm:text-5xl text-white leading-none">
+                  {sessionDay(next.starts_at).toUpperCase()}
+                  {/* Time drops to its own line on phones instead of wrapping mid-time. */}
+                  <span className="hidden sm:inline gradient-text"> · </span>
+                  <br className="sm:hidden" />
+                  <span className="gradient-text whitespace-nowrap">{sessionTime(next.starts_at)}</span>
+                </p>
+                <p className="text-zinc-400 text-sm mt-2">
+                  {nextService?.name ?? "Session"}
+                  {nextTrainer?.first_name && (
+                    <>
+                      {" "}with {nextTrainer.first_name} {nextTrainer.last_name}
+                    </>
+                  )}
+                </p>
+                <div className="mt-3">
+                  <CancelButton bookingId={next.id} />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">NO SESSIONS BOOKED</p>
+                <p className="text-zinc-300 text-sm leading-relaxed">
+                  {canBook
+                    ? "Pick a day and time that works for you."
+                    : "Join Diamond or grab a package, then book any open time."}
+                </p>
+              </>
+            )}
+          </div>
+          <Link
+            href={canBook ? "/book/schedule" : "/book/packages"}
+            className="btn-gold shrink-0 text-center px-10 py-4 rounded-full text-sm tracking-widest font-black"
+          >
+            {canBook ? "BOOK A SESSION" : "SEE PACKAGES"}
+          </Link>
+        </div>
+
+        {/* Without credits the big button above already says SEE PACKAGES,
+            so the package card only shows for people who can book. */}
+        <div className={`grid grid-cols-1 ${canBook ? "md:grid-cols-2" : ""} gap-5 mb-6`}>
           <div className="card-modern rounded-2xl p-6 sm:p-7">
             {isPitchingSubscriber ? (
               <>
@@ -122,118 +179,139 @@ export default async function Dashboard() {
                 })}
               </div>
             )}
-            {canBook && (
-              <Link
-                href="/book/schedule"
-                className="btn-gold inline-block mt-5 px-6 py-3 rounded-full text-xs tracking-widest font-black"
-              >
-                BOOK A SESSION
-              </Link>
-            )}
           </div>
 
-          <div className="card-modern-amber rounded-2xl p-6 sm:p-7 flex flex-col">
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">BUY A PACKAGE</p>
-            <p className="text-zinc-300 text-sm leading-relaxed mb-5 flex-1">
-              Pick a Diamond, Gold, Single, or Half package — then use credits to book without paying again.
-            </p>
-            <Link
-              href="/book/packages"
-              className="btn-outline px-6 py-3 rounded-full text-xs tracking-widest font-black text-center"
-            >
-              SEE PACKAGES
-            </Link>
-          </div>
+          {canBook && (
+            <div className="card-modern rounded-2xl p-6 sm:p-7 flex flex-col">
+              <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">BUY A PACKAGE</p>
+              <p className="text-zinc-300 text-sm leading-relaxed mb-5 flex-1">
+                Join Diamond for unlimited pitching, or grab a session package for pitching or
+                hitting — then book without paying again.
+              </p>
+              <Link
+                href="/book/packages"
+                className="btn-outline px-6 py-3 rounded-full text-xs tracking-widest font-black text-center"
+              >
+                SEE PACKAGES
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* Upcoming sessions */}
-        <div className="card-modern rounded-2xl p-6 sm:p-7 mb-6">
-          <p className="text-zinc-500 text-[10px] tracking-widest mb-3 font-bold">UPCOMING SESSIONS</p>
-          {!bookings || bookings.length === 0 ? (
-            <p className="text-zinc-500 text-sm">No upcoming sessions.</p>
-          ) : (
+        {later.length > 0 && (
+          <div className="card-modern rounded-2xl p-6 sm:p-7 mb-6">
+            <p className="text-zinc-500 text-[10px] tracking-widest mb-3 font-bold">ALSO ON YOUR CALENDAR</p>
             <ul className="space-y-3">
-              {bookings.map((b) => {
+              {later.map((b) => {
                 const svc = Array.isArray(b.service) ? b.service[0] : b.service;
                 const trn = Array.isArray(b.trainer) ? b.trainer[0] : b.trainer;
-                const d = new Date(b.starts_at);
                 return (
                   <li
                     key={b.id}
-                    className="flex items-center justify-between gap-3 border-b border-white/5 pb-2"
+                    className="flex items-start justify-between gap-3 border-b border-white/5 pb-3 last:border-0 last:pb-0"
                   >
                     <div className="min-w-0">
-                      <p className="text-white text-sm truncate">{svc?.name ?? "Session"}</p>
+                      <p className="text-[#b07adf] text-sm font-bold">
+                        {sessionDay(b.starts_at)} · {sessionTime(b.starts_at)}
+                      </p>
+                      <p className="text-zinc-300 text-sm mt-0.5">{svc?.name ?? "Session"}</p>
                       <p className="text-zinc-500 text-xs">
                         with {trn?.first_name} {trn?.last_name}
                       </p>
                     </div>
-                    <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                      <p className="text-[#b07adf] text-sm font-bold">
-                        {d.toLocaleString("en-US", {
-                          timeZone: "America/Chicago",
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      <CancelButton bookingId={b.id} />
-                    </div>
+                    <CancelButton bookingId={b.id} />
                   </li>
                 );
               })}
             </ul>
-          )}
+          </div>
+        )}
+
+        {(profile?.is_trainer || profile?.is_admin) && (
+          <div className="card-modern rounded-2xl p-6 sm:p-7 mb-6">
+            <p className="text-zinc-500 text-[10px] tracking-widest mb-3 font-bold">COACH TOOLS</p>
+            <div className="flex flex-wrap gap-3">
+              {profile.is_trainer && (
+                <Link
+                  href="/book/trainer"
+                  className="btn-outline px-5 py-2.5 rounded-full text-[11px] tracking-widest font-bold"
+                >
+                  MY SCHEDULE
+                </Link>
+              )}
+              {profile.is_admin && (
+                <>
+                  <Link
+                    href="/book/trainer?coach=all"
+                    className="btn-outline px-5 py-2.5 rounded-full text-[11px] tracking-widest font-bold"
+                  >
+                    ALL COACHES&rsquo; SCHEDULES
+                  </Link>
+                  <Link
+                    href="/book/admin"
+                    className="btn-outline px-5 py-2.5 rounded-full text-[11px] tracking-widest font-bold"
+                  >
+                    ADMIN PANEL
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Account housekeeping lives at the bottom */}
+        <div className="mt-10">
+          <p className="text-zinc-500 text-[10px] tracking-widest font-bold text-center">ACCOUNT</p>
+          <ManageSubscriptionLink prominent={isPitchingSubscriber} />
+          <div className="card-modern rounded-2xl p-5 sm:p-6 mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <p className="text-zinc-500 text-xs min-w-0 truncate">
+              Signed in as <span className="text-zinc-300">{profile?.email ?? user.email}</span>
+            </p>
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/book/profile"
+                className="btn-outline px-5 py-2.5 rounded-full text-[11px] tracking-widest font-bold"
+              >
+                MY PROFILE
+              </Link>
+              <form action="/book/logout" method="post">
+                <button
+                  type="submit"
+                  className="btn-outline px-5 py-2.5 rounded-full text-[11px] tracking-widest font-bold"
+                >
+                  SIGN OUT
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
-
-        {profile?.is_trainer && (
-          <Link
-            href="/book/trainer"
-            className="block card-modern-amber rounded-2xl p-6 mb-4 hover:opacity-90 transition"
-          >
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">TRAINER VIEW</p>
-            <p className="text-white text-sm">
-              See your schedule, athletes, and availability →
-            </p>
-          </Link>
-        )}
-
-        {profile?.is_admin && (
-          <Link
-            href="/book/admin"
-            className="block card-modern rounded-2xl p-6 mb-4 hover:opacity-90 transition border border-[#9954d2]/20"
-          >
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">ADMIN PANEL</p>
-            <p className="text-white text-sm">
-              Athletes, credits, revenue, and account tools →
-            </p>
-          </Link>
-        )}
-
-        <Link
-          href="/book/profile"
-          className="block text-center text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider mt-6"
-        >
-          MY PROFILE →
-        </Link>
-
-        <ManageSubscriptionLink prominent={isPitchingSubscriber} />
-
-        <p className="text-zinc-700 text-xs text-center mt-4">
-          Signed in as {profile?.email ?? user.email}
-        </p>
-
-        <form action="/book/logout" method="post" className="mt-4 text-center">
-          <button
-            type="submit"
-            className="btn-outline px-8 py-3 rounded-full text-xs tracking-widest font-bold"
-          >
-            SIGN OUT
-          </button>
-        </form>
       </section>
     </main>
   );
+}
+
+function dayKey(d: Date) {
+  return d.toLocaleDateString("en-CA", { timeZone: TZ });
+}
+
+/** "Today", "Tomorrow", or "Tue, Nov 4" — in studio (Central) time. */
+function sessionDay(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  if (dayKey(d) === dayKey(now)) return "Today";
+  if (dayKey(d) === dayKey(new Date(now.getTime() + 24 * 60 * 60 * 1000))) return "Tomorrow";
+  return d.toLocaleDateString("en-US", {
+    timeZone: TZ,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function sessionTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    timeZone: TZ,
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
