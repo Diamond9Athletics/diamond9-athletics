@@ -78,20 +78,26 @@ export function AddSessionPanel({
   clients,
   services,
   defaultServiceId,
+  initialDate,
+  initialTime,
+  onClose,
 }: {
   clients: ClientOption[];
   services: ServiceOption[];
   defaultServiceId: string;
+  /** Pre-filled from the calendar hour that was clicked; else the next whole hour. */
+  initialDate?: string;
+  initialTime?: string;
+  onClose: () => void;
 }) {
   const router = useRouter();
   const initial = defaultDateTime();
 
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<ClientOption | null>(null);
   const [serviceId, setServiceId] = useState(defaultServiceId);
-  const [date, setDate] = useState(initial.date);
-  const [time, setTime] = useState(initial.time);
+  const [date, setDate] = useState(initialDate ?? initial.date);
+  const [time, setTime] = useState(initialTime ?? initial.time);
   const [useCredit, setUseCredit] = useState(true);
   const [sendEmail, setSendEmail] = useState(true);
   const [note, setNote] = useState("");
@@ -174,45 +180,24 @@ export function AddSessionPanel({
     router.refresh();
   }
 
-  if (!open) {
-    return (
-      <div className="card-modern rounded-2xl p-5 mb-6 flex items-center justify-between gap-4 flex-wrap">
-        <div className="min-w-0">
-          <p className="text-zinc-500 text-[10px] tracking-widest font-bold mb-1">
-            ADD A SESSION
-          </p>
-          <p className="text-zinc-300 text-sm">
-            Put any client on your schedule at any time. Slot limits and booking
-            cutoffs don&rsquo;t apply.
-          </p>
-          {notice && <p className="text-emerald-400 text-xs mt-2">{notice}</p>}
-        </div>
-        <button
-          onClick={() => {
-            setOpen(true);
-            setNotice(null);
-          }}
-          className="btn-gold px-5 py-2 rounded-full text-[11px] tracking-widest font-black"
-        >
-          + ADD SESSION
-        </button>
-      </div>
-    );
-  }
-
   const inputCls =
     "w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#9954d2]/60";
   const labelCls = "block text-zinc-500 text-[10px] tracking-widest font-bold mb-1.5";
 
   return (
-    <form onSubmit={submit} className="card-modern rounded-2xl p-5 sm:p-6 mb-6 space-y-5">
+    <form onSubmit={submit} className="card-modern rounded-2xl p-5 sm:p-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-zinc-500 text-[10px] tracking-widest font-bold">ADD A SESSION</p>
+        <div>
+          <p className="text-zinc-500 text-[10px] tracking-widest font-bold">ADD A SESSION</p>
+          <p className="text-zinc-500 text-xs mt-1">
+            Any client, any time — slot limits and booking cutoffs don&rsquo;t apply.
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => {
-            setOpen(false);
             reset();
+            onClose();
           }}
           className="text-zinc-500 hover:text-zinc-300 text-[10px] tracking-widest font-bold"
         >

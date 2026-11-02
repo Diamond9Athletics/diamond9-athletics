@@ -47,6 +47,33 @@ export async function firstPitchingBookingUsers(
   return result;
 }
 
+/** The id of each user's earliest-ever confirmed pitching booking — their
+ *  solo first session. The coach calendar shows those hours as full, the
+ *  same way the booking page treats them. */
+export async function firstPitchingBookingIds(
+  admin: SupabaseClient,
+  userIds: string[],
+): Promise<Set<string>> {
+  if (userIds.length === 0) return new Set();
+
+  const { data } = await admin
+    .from("bookings")
+    .select("id, user_id, starts_at, service:services!inner(category)")
+    .in("user_id", userIds)
+    .eq("service.category", "pitching")
+    .eq("status", "confirmed")
+    .order("starts_at", { ascending: true });
+
+  const seen = new Set<string>();
+  const ids = new Set<string>();
+  for (const row of data ?? []) {
+    if (seen.has(row.user_id)) continue;
+    seen.add(row.user_id);
+    ids.add(row.id);
+  }
+  return ids;
+}
+
 /** Would this specific booking be the given user's first pitching
  *  session? True iff they have no confirmed pitching booking with a
  *  starts_at strictly earlier than `newStart`. */
