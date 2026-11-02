@@ -16,7 +16,9 @@ export function SubscribeRedirector() {
         setError(json.error ?? "Could not start checkout. Please try again.");
         return;
       }
-      window.location.assign(json.url);
+      // replace, not assign — Back from Stripe returns to the plans page
+      // instead of bouncing straight back into checkout.
+      window.location.replace(json.url);
     })();
     return () => {
       cancelled = true;

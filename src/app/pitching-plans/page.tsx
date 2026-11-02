@@ -53,7 +53,7 @@ const plans: Plan[] = [
     featured: false,
     jersey: "3",
     bar: 60,
-    href: "/book",
+    href: "/book/buy/pitching-gold",
     cta: "SELECT PLAN",
   },
   {
@@ -65,7 +65,7 @@ const plans: Plan[] = [
     featured: false,
     jersey: "1",
     bar: 35,
-    href: "/book",
+    href: "/book/buy/pitching-single",
     cta: "SELECT PLAN",
   },
 ];

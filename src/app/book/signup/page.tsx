@@ -111,7 +111,8 @@ function SignupPageInner() {
     }
 
     // Session cookie is set — land on the next page (or dashboard).
-    router.push(next);
+    // replace, not push — Back shouldn't land on the signup form again.
+    router.replace(next);
     router.refresh();
   }
 

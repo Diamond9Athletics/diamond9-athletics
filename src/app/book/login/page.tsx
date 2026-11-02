@@ -24,6 +24,7 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNext(searchParams.get("next"));
+  const signupHref = `/book/signup${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`;
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,13 +58,14 @@ function LoginPageInner() {
       return;
     }
 
-    router.push(next);
+    // replace, not push — Back shouldn't land on the sign-in form again.
+    router.replace(next);
     router.refresh();
   }
 
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">
-      <section className="max-w-md mx-auto px-6 py-16">
+      <section className="max-w-md mx-auto px-6 pt-8 pb-16 sm:py-16">
         <div className="text-center mb-8">
           <span className="badge-amber mb-4 inline-flex">◆ ATHLETE LOGIN</span>
           <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
@@ -109,7 +111,7 @@ function LoginPageInner() {
                 <p>{error}</p>
                 {showSignupNudge && (
                   <Link
-                    href={`/book/signup${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
+                    href={signupHref}
                     className="inline-block bg-[#9954d2] hover:bg-[#b07adf] text-black px-4 py-2 rounded-full text-[11px] tracking-widest font-black no-underline"
                   >
                     CREATE AN ACCOUNT →
@@ -128,16 +130,24 @@ function LoginPageInner() {
           </form>
         </div>
 
-        <p className="text-center text-zinc-500 text-xs mt-6">
-          New here?{" "}
+        {/* Lots of athletes who trained with D9 before online booking try
+            to sign in without ever having made an account — make the way
+            in impossible to miss. */}
+        <div className="card-modern rounded-2xl p-6 sm:p-8 mt-4 text-center">
+          <p className="text-[#b07adf] text-[10px] tracking-widest font-bold mb-2">
+            FIRST TIME BOOKING ONLINE?
+          </p>
+          <p className="text-zinc-400 text-sm leading-relaxed mb-5">
+            Create your free account first &mdash; even if you&rsquo;ve trained with D9 before.
+            It takes about a minute.
+          </p>
           <Link
-            href={`/book/signup${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
-            className="text-[#b07adf] hover:underline"
+            href={signupHref}
+            className="btn-outline block w-full py-3.5 rounded-full text-sm tracking-widest font-black"
           >
-            Create an account
+            CREATE AN ACCOUNT
           </Link>
-          .
-        </p>
+        </div>
       </section>
 
       <style>{`

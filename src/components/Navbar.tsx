@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import { img } from "@/lib/config";
 
-export const BUILD_VERSION = "v1.6.0";
+export const BUILD_VERSION = "v1.7.0";
 
 const navLinks = [
   { href: "/app", label: "D9 App" },
@@ -17,9 +17,69 @@ const navLinks = [
   { href: "/about", label: "About" },
 ];
 
+// BOOK NOW for someone who isn't signed in: sign in (or create an account
+// from the sign-in page), then straight back to the calendar.
+const SIGNED_OUT_BOOK_HREF = `/book/login?next=${encodeURIComponent("/book/schedule")}`;
+
+type Account = { userId: string; isTrainer: boolean };
+
+/**
+ * Who's signed in, for the menu buttons. undefined while the session is
+ * still being read, null when signed out. Re-checked on every navigation
+ * so a sign-in that happened server-side (signup, waiver) shows up
+ * without a reload. The Supabase client is loaded lazily so public pages
+ * don't pay for it up front.
+ */
+function useAccount(pathname: string) {
+  const [account, setAccount] = useState<Account | null | undefined>(undefined);
+  const known = useRef<Account | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const userId = session?.user.id;
+        if (!userId) {
+          known.current = null;
+        } else if (known.current?.userId !== userId) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("is_trainer")
+            .eq("id", userId)
+            .maybeSingle();
+          known.current = { userId, isTrainer: Boolean(data?.is_trainer) };
+        }
+      } catch {
+        known.current = null;
+      }
+      if (!cancelled) setAccount(known.current);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  return account;
+}
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const account = useAccount(pathname);
+
+  // Until we know, BOOK NOW goes through /book, which routes server-side.
+  const bookHref =
+    account === undefined ? "/book" : account ? "/book/schedule" : SIGNED_OUT_BOOK_HREF;
+  const accountHref = account ? "/book/dashboard" : "/book/login";
+  const accountLabel = account ? "MY ACCOUNT" : "SIGN IN";
+  // Hold the button's space while checking so signed-in visitors never
+  // see a flash of SIGN IN.
+  const accountHidden = account === undefined ? "invisible" : "";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
@@ -40,7 +100,7 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop Nav Links */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden xl:flex items-center gap-8">
               {navLinks.map((link) => (
                 link.external ? (
                   <a
@@ -66,17 +126,25 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Theme Toggle + Sign In + Book Now */}
-            <div className="hidden md:flex items-center gap-3">
+            {/* Theme Toggle + Account + Book Now */}
+            <div className="hidden xl:flex items-center gap-3">
               <ThemeToggle />
+              {account?.isTrainer && (
+                <Link
+                  href="/book/trainer"
+                  className="btn-outline px-5 py-2.5 rounded-full text-sm tracking-wider inline-block"
+                >
+                  MY SCHEDULE
+                </Link>
+              )}
               <Link
-                href="/book/login"
-                className="btn-outline px-5 py-2.5 rounded-full text-sm tracking-wider inline-block"
+                href={accountHref}
+                className={`btn-outline px-5 py-2.5 rounded-full text-sm tracking-wider inline-block ${accountHidden}`}
               >
-                SIGN IN
+                {accountLabel}
               </Link>
               <Link
-                href="/book"
+                href={bookHref}
                 className="btn-gold px-6 py-2.5 rounded-full text-sm tracking-wider inline-block"
               >
                 BOOK NOW
@@ -86,7 +154,7 @@ export default function Navbar() {
             {/* Mobile Hamburger */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden text-white p-2"
+              className="xl:hidden text-white p-2"
               aria-label="Toggle menu"
             >
               <div className="w-6 h-5 relative flex flex-col justify-between">
@@ -112,7 +180,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ${
+          className={`xl:hidden overflow-hidden transition-all duration-300 ${
             isOpen ? "max-h-[640px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
@@ -146,15 +214,24 @@ export default function Navbar() {
                 </Link>
               )
             ))}
+            {account?.isTrainer && (
+              <Link
+                href="/book/trainer"
+                onClick={() => setIsOpen(false)}
+                className="block mt-2 btn-outline px-4 py-3 rounded-full text-sm tracking-wider text-center"
+              >
+                MY SCHEDULE
+              </Link>
+            )}
             <Link
-              href="/book/login"
+              href={accountHref}
               onClick={() => setIsOpen(false)}
-              className="block mt-2 btn-outline px-4 py-3 rounded-full text-sm tracking-wider text-center"
+              className={`block mt-2 btn-outline px-4 py-3 rounded-full text-sm tracking-wider text-center ${accountHidden}`}
             >
-              SIGN IN
+              {accountLabel}
             </Link>
             <Link
-              href="/book"
+              href={bookHref}
               onClick={() => setIsOpen(false)}
               className="block mt-2 btn-gold px-4 py-3 rounded-full text-sm tracking-wider text-center"
             >

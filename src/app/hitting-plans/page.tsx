@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 const plans = [
   {
     name: "DIAMOND",
+    slug: "hitting-diamond",
     tag: "MOST POPULAR",
     price: "$300",
     sub: "4 sessions",
@@ -20,6 +21,7 @@ const plans = [
   },
   {
     name: "GOLD",
+    slug: "hitting-gold",
     tag: "GREAT VALUE",
     price: "$275",
     sub: "3 sessions",
@@ -30,6 +32,7 @@ const plans = [
   },
   {
     name: "SINGLE",
+    slug: "hitting-single",
     tag: "ONE TIME",
     price: "$100",
     sub: "60 min session",
@@ -108,7 +111,7 @@ export default function HittingPlans() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/book" className={`text-center py-3.5 rounded-full text-sm tracking-widest font-bold block ${plan.featured ? "btn-gold" : "btn-outline"}`}>
+                <Link href={`/book/buy/${plan.slug}`} className={`text-center py-3.5 rounded-full text-sm tracking-widest font-bold block ${plan.featured ? "btn-gold" : "btn-outline"}`}>
                   SELECT PLAN
                 </Link>
               </div>

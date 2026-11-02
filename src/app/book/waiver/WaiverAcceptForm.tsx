@@ -42,7 +42,7 @@ export function WaiverAcceptForm({
       setError(json.error ?? "Couldn't save your acceptance. Try again.");
       return;
     }
-    router.push(next);
+    router.replace(next);
     router.refresh();
   }
 
