@@ -17,6 +17,44 @@ const SCOPES = [
   "email",
 ];
 
+/** A failed call to Google's token endpoint, with Google's own error code. */
+export class GoogleTokenError extends Error {
+  constructor(
+    public code: string,
+    public detail: string,
+  ) {
+    super(detail ? `${code} (${detail})` : code);
+  }
+}
+
+async function tokenError(res: Response): Promise<GoogleTokenError> {
+  const text = await res.text();
+  try {
+    const json = JSON.parse(text);
+    return new GoogleTokenError(json.error ?? `http_${res.status}`, json.error_description ?? "");
+  } catch {
+    return new GoogleTokenError(`http_${res.status}`, text.slice(0, 200));
+  }
+}
+
+/** Plain-English next step for the trainer, keeping Google's code for debugging. */
+export function describeTokenError(e: unknown, redirectUri: string): string {
+  if (!(e instanceof GoogleTokenError)) {
+    return `Couldn't reach Google — try again (${e instanceof Error ? e.message : "unknown error"})`;
+  }
+  switch (e.code) {
+    case "invalid_client":
+    case "unauthorized_client":
+      return `Google rejected the site's client ID or secret — check GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in Vercel, then redeploy [${e.message}]`;
+    case "redirect_uri_mismatch":
+      return `Add ${redirectUri} to the OAuth client's Authorized redirect URIs in Google Cloud [${e.message}]`;
+    case "invalid_grant":
+      return `Google said the sign-in expired or was already used — connect again [${e.message}]`;
+    default:
+      return `Google said: ${e.message}`;
+  }
+}
+
 function clientId() {
   const id = process.env.GOOGLE_OAUTH_CLIENT_ID;
   if (!id) throw new Error("GOOGLE_OAUTH_CLIENT_ID is not set");
@@ -73,11 +111,29 @@ export async function exchangeCodeForTokens({
       grant_type: "authorization_code",
     }),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Google token exchange failed: ${text}`);
-  }
+  if (!res.ok) throw await tokenError(res);
   return res.json();
+}
+
+/**
+ * Does Google accept our client ID + secret? Trades a deliberately fake
+ * code: Google authenticates the client before it looks at the code, so
+ * "invalid_client" means the credentials are wrong and anything else
+ * (normally "invalid_grant") means they're fine. Returns the problem, or
+ * null when the credentials look good or Google couldn't be reached.
+ */
+export async function checkClientCredentials(redirectUri: string): Promise<GoogleTokenError | null> {
+  try {
+    await exchangeCodeForTokens({ code: "d9-credential-check", redirectUri });
+  } catch (e) {
+    if (
+      e instanceof GoogleTokenError &&
+      (e.code === "invalid_client" || e.code === "unauthorized_client")
+    ) {
+      return e;
+    }
+  }
+  return null;
 }
 
 /** Use a stored refresh_token to get a fresh access_token. */
@@ -94,9 +150,6 @@ export async function refreshAccessToken(
       grant_type: "refresh_token",
     }),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Google token refresh failed: ${text}`);
-  }
+  if (!res.ok) throw await tokenError(res);
   return res.json();
 }

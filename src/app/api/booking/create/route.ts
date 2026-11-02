@@ -376,6 +376,7 @@ export async function POST(request: NextRequest) {
     const eventId = await createEvent({
       accessToken,
       calendarId,
+      bookingId: booking.id,
       startsAt: startDate,
       endsAt: endDate,
       summary: `${athleteName} — ${service.category === "pitching" ? "Pitching" : "Hitting"}${soloTag}`,

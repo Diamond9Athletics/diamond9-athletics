@@ -4,7 +4,11 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { buildAuthUrl } from "@/lib/google/oauth";
+import {
+  buildAuthUrl,
+  checkClientCredentials,
+  describeTokenError,
+} from "@/lib/google/oauth";
 
 export const dynamic = "force-dynamic";
 
@@ -56,10 +60,16 @@ export async function GET(request: NextRequest) {
       return errorRedirect(request, "GOOGLE_OAUTH_CLIENT_SECRET missing");
     }
 
-    const url = buildAuthUrl({
-      redirectUri: redirectUriFromRequest(request),
-      state: user.id,
-    });
+    const redirectUri = redirectUriFromRequest(request);
+
+    // Catch a wrong client ID/secret now, before the trainer clicks
+    // through Google's consent screens only to fail at the very end.
+    const credentialProblem = await checkClientCredentials(redirectUri);
+    if (credentialProblem) {
+      return errorRedirect(request, describeTokenError(credentialProblem, redirectUri));
+    }
+
+    const url = buildAuthUrl({ redirectUri, state: user.id });
     return NextResponse.redirect(url);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown_error";

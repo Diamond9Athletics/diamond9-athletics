@@ -5,6 +5,7 @@
  * for refreshing it if needed via getValidAccessToken).
  */
 import { createAdminClient } from "@/lib/supabase/admin";
+import { zonedWallToUtc } from "@/lib/booking/tz";
 import { refreshAccessToken } from "./oauth";
 
 /** Refreshes the access token if it's within 60s of expiry. Returns a valid token. */
@@ -56,7 +57,22 @@ export async function listCalendars(accessToken: string): Promise<
 
 export type BusyRange = { start: Date; end: Date };
 
-/** freeBusy query — returns the busy ranges on the trainer's calendar in [timeMin, timeMax). */
+type CalendarEvent = {
+  status?: string;
+  transparency?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+  attendees?: { self?: boolean; responseStatus?: string }[];
+  extendedProperties?: { private?: Record<string, string> };
+};
+
+/**
+ * Busy ranges on the trainer's calendar in [timeMin, timeMax) — their own
+ * appointments. Our session events are skipped (createEvent tags them
+ * with d9BookingId); otherwise a pitching slot would look full after its
+ * first athlete. Otherwise follows Google's free/busy rules: "Show as:
+ * Free" events, cancelled events and declined invites don't count.
+ */
 export async function getBusy({
   accessToken,
   calendarId,
@@ -68,34 +84,54 @@ export async function getBusy({
   timeMin: Date;
   timeMax: Date;
 }): Promise<BusyRange[]> {
-  const res = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const busy: BusyRange[] = [];
+  let pageToken: string | undefined;
+  do {
+    const params = new URLSearchParams({
       timeMin: timeMin.toISOString(),
       timeMax: timeMax.toISOString(),
-      items: [{ id: calendarId }],
-    }),
-  });
-  if (!res.ok) {
-    console.error("freeBusy failed:", await res.text());
-    return []; // Don't break booking if Google hiccups.
-  }
-  const json = await res.json();
-  const busy = json.calendars?.[calendarId]?.busy ?? [];
-  return busy.map((b: { start: string; end: string }) => ({
-    start: new Date(b.start),
-    end: new Date(b.end),
-  }));
+      singleEvents: "true",
+      maxResults: "250",
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (!res.ok) {
+      console.error("Calendar events list failed:", await res.text());
+      return []; // Don't break booking if Google hiccups.
+    }
+    const json = await res.json();
+    for (const ev of (json.items ?? []) as CalendarEvent[]) {
+      if (ev.status === "cancelled" || ev.transparency === "transparent") continue;
+      if (ev.extendedProperties?.private?.d9BookingId) continue;
+      if (ev.attendees?.some((a) => a.self && a.responseStatus === "declined")) continue;
+      const start = eventTime(ev.start);
+      const end = eventTime(ev.end);
+      if (start && end) busy.push({ start, end });
+    }
+    pageToken = json.nextPageToken;
+  } while (pageToken);
+  return busy;
 }
 
-/** Create an event. Returns the Google event id. */
+/** Timed events carry an instant; all-day events a date, read as studio midnight. */
+function eventTime(t: CalendarEvent["start"]): Date | null {
+  if (t?.dateTime) return new Date(t.dateTime);
+  if (t?.date) return zonedWallToUtc(t.date, "00:00");
+  return null;
+}
+
+/**
+ * Create the event for a booking. Returns the Google event id. The event
+ * is tagged with the booking id so getBusy can tell our sessions apart
+ * from the trainer's own appointments.
+ */
 export async function createEvent({
   accessToken,
   calendarId,
+  bookingId,
   startsAt,
   endsAt,
   summary,
@@ -104,6 +140,7 @@ export async function createEvent({
 }: {
   accessToken: string;
   calendarId: string;
+  bookingId: string;
   startsAt: Date;
   endsAt: Date;
   summary: string;
@@ -125,6 +162,7 @@ export async function createEvent({
         end: { dateTime: endsAt.toISOString() },
         attendees: attendeeEmail ? [{ email: attendeeEmail }] : undefined,
         reminders: { useDefault: true },
+        extendedProperties: { private: { d9BookingId: bookingId } },
       }),
     },
   );

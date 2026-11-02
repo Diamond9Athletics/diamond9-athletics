@@ -13,6 +13,7 @@ import {
   activeSubscriberEmails,
 } from "@/lib/stripe/subscription";
 import { hasAcceptedWaiver } from "@/lib/legal/waiver";
+import { getValidAccessToken } from "@/lib/google/calendar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Trainer Dashboard" };
@@ -44,7 +45,12 @@ type BookingRow = {
 export default async function TrainerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ google_connected?: string; google_error?: string; coach?: string }>;
+  searchParams: Promise<{
+    google_connected?: string;
+    google_error?: string;
+    synced?: string;
+    coach?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
@@ -191,6 +197,18 @@ export default async function TrainerPage({
     : [];
   const activeTab = view.kind === "coach" ? view.id : view.kind;
 
+  // A saved connection can still be dead (Google expired or revoked the
+  // refresh token), so prove it works by getting a usable access token.
+  let googleWorking = false;
+  if (gOAuth && view.kind === "mine") {
+    try {
+      await getValidAccessToken(user.id);
+      googleWorking = true;
+    } catch (e) {
+      console.warn("Google connection check failed:", (e as Error).message);
+    }
+  }
+
   const myCategories = (me.trainer_categories ?? []) as string[];
   const services: ServiceOption[] = [...(serviceRows ?? [])].sort(
     (a, b) =>
@@ -297,11 +315,16 @@ export default async function TrainerPage({
                 <p className="text-zinc-500 text-[10px] tracking-widest font-bold mb-1">
                   GOOGLE CALENDAR
                 </p>
-                {gOAuth ? (
+                {gOAuth && googleWorking ? (
                   <p className="text-zinc-300 text-sm">
                     ✓ Connected — bookings auto-appear on{" "}
                     <span className="text-white truncate">{gOAuth.calendar_id}</span>.
                     Your Google busy times block bookings too.
+                  </p>
+                ) : gOAuth ? (
+                  <p className="text-amber-300 text-sm">
+                    Google stopped accepting the connection, so new bookings aren&rsquo;t
+                    reaching your calendar. Reconnect to fix it.
                   </p>
                 ) : (
                   <p className="text-zinc-400 text-sm">
@@ -309,7 +332,11 @@ export default async function TrainerPage({
                   </p>
                 )}
                 {sp.google_connected === "1" && (
-                  <p className="text-green-400 text-xs mt-1">Connection successful.</p>
+                  <p className="text-green-400 text-xs mt-1">
+                    Connection successful.
+                    {Number(sp.synced) > 0 &&
+                      ` Added ${sp.synced} upcoming session${sp.synced === "1" ? "" : "s"} to your calendar.`}
+                  </p>
                 )}
                 {sp.google_error && (
                   <p className="text-red-400 text-xs mt-1">
@@ -317,7 +344,7 @@ export default async function TrainerPage({
                   </p>
                 )}
               </div>
-              {gOAuth ? (
+              {gOAuth && googleWorking ? (
                 <form action="/api/google/disconnect" method="post">
                   <button
                     type="submit"
@@ -331,7 +358,7 @@ export default async function TrainerPage({
                   href="/api/google/connect"
                   className="btn-gold px-5 py-2 rounded-full text-[11px] tracking-widest font-black"
                 >
-                  CONNECT GOOGLE CALENDAR
+                  {gOAuth ? "RECONNECT" : "CONNECT"} GOOGLE CALENDAR
                 </a>
               )}
             </div>
