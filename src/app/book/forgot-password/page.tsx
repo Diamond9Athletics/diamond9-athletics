@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
+  return (
+    <Suspense fallback={null}>
+      <ForgotPasswordInner />
+    </Suspense>
+  );
+}
+
+function ForgotPasswordInner() {
+  // /book/auth/confirm sends people back here when a reset link has expired.
+  const expired = useSearchParams().get("expired") === "1";
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,17 +25,20 @@ export default function ForgotPasswordPage() {
     setError(null);
     setSubmitting(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/book/reset-password`,
-    });
+    // Our own endpoint (not Supabase's mailer) so the link works on any device.
+    const res = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    }).catch(() => null);
+    const json = await res?.json().catch(() => ({}));
 
     setSubmitting(false);
-    if (error) {
-      setError(error.message);
+    if (!res?.ok) {
+      setError(json?.error ?? "Couldn't send the link. Check your connection and try again.");
       return;
     }
-    // Supabase intentionally succeeds whether or not the email exists —
-    // just show the confirmation screen either way.
+    // Same answer whether or not the email has an account.
     setSent(true);
   }
 
@@ -37,10 +49,26 @@ export default function ForgotPasswordPage() {
           <span className="badge-amber mb-5 inline-flex">◆ CHECK YOUR EMAIL</span>
           <h1 className="font-display text-5xl text-white mb-4">RESET LINK SENT</h1>
           <div className="divider-glow max-w-[80px] mx-auto mb-6" />
-          <p className="text-zinc-400 text-sm leading-relaxed mb-8">
-            If <span className="text-white">{email}</span> is an account here, you&rsquo;ll
-            get a password-reset link within a minute. Check your spam folder too.
+          <p className="text-zinc-400 text-sm leading-relaxed mb-6">
+            If <span className="text-white">{email}</span> has an account here, a link to set a
+            new password is on its way. It works on any phone or computer — check your spam
+            folder too.
           </p>
+          <div className="card-modern rounded-2xl p-5 text-left mb-8">
+            <p className="text-[#b07adf] text-[10px] tracking-widest font-bold mb-1.5">
+              NO EMAIL AFTER A FEW MINUTES?
+            </p>
+            <p className="text-zinc-400 text-sm leading-relaxed mb-4">
+              You may not have an account on the website yet — even if you&rsquo;ve trained with
+              D9 before. Creating one takes about a minute.
+            </p>
+            <Link
+              href="/book/signup"
+              className="btn-outline block w-full text-center py-3 rounded-full text-xs tracking-widest font-black"
+            >
+              CREATE AN ACCOUNT
+            </Link>
+          </div>
           <p className="text-zinc-600 text-xs">
             <Link href="/book/login" className="text-[#b07adf] hover:underline">
               Back to sign in
@@ -65,6 +93,12 @@ export default function ForgotPasswordPage() {
 
         <div className="card-modern rounded-2xl p-6 sm:p-8">
           <form onSubmit={onSubmit} className="space-y-4">
+            {expired && (
+              <p className="text-amber-500 text-xs bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2.5 leading-relaxed">
+                That link expired or was already used. Enter your email and we&rsquo;ll send a
+                fresh one.
+              </p>
+            )}
             <p className="text-zinc-400 text-xs leading-relaxed">
               Enter your account email and we&rsquo;ll send you a link to set a new password.
             </p>

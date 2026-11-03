@@ -4,8 +4,8 @@
  *
  * Body: { userId, action, ...actionArgs? }
  * Actions:
- *  - send_reset      : trigger Supabase recovery email
- *  - send_magic      : generate a magic sign-in link and email it via Resend
+ *  - send_reset      : email a set-a-new-password link via Resend
+ *  - send_magic      : email a one-click sign-in link via Resend
  *  - promote_trainer : set is_trainer=true and (optional) trainer_categories
  *  - demote_trainer  : set is_trainer=false, clear trainer_* fields
  *  - delete          : delete the auth user (cascades to profile via FK)
@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, shell } from "@/lib/email";
+import { passwordResetEmail, signInLink } from "@/lib/auth/sign-in-link";
 
 function esc(s: string) {
   return s
@@ -69,89 +70,40 @@ export async function POST(request: NextRequest) {
 
   switch (body.action) {
     case "send_reset": {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/generate_link`,
-        {
-          method: "POST",
-          headers: {
-            apikey: process.env.SUPABASE_SECRET_KEY!,
-            Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: "recovery",
-            email: target.email,
-            options: {
-              redirect_to:
-                "https://www.diamond9athletics.com/book/reset-password",
-            },
-          }),
-        },
+      // We send it ourselves (not Supabase) so the link works on any
+      // device — see lib/auth/sign-in-link.
+      const link = await signInLink(
+        admin,
+        target.email,
+        request.nextUrl.origin,
+        "/book/reset-password",
       );
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: `Reset generate failed: ${res.status}` },
-          { status: 500 },
-        );
+      if (!link) {
+        return NextResponse.json({ error: "Couldn't create a reset link." }, { status: 500 });
       }
-      // Supabase's generate_link does NOT send an email — we do it ourselves
-      // so we control the copy and it doesn't stomp on the standard reset flow.
-      const json = await res.json();
-      const link = json.action_link ?? json.properties?.action_link;
-      if (!link) return NextResponse.json({ ok: true });
-
       try {
         await sendEmail({
           to: target.email,
-          subject: "Reset your Diamond Nine Athletics password",
-          html: shell({
-            title: "Password reset",
-            body: `
-              <h1 style="margin:0 0 8px 0;font-size:24px;font-weight:800;color:#fff;">Password reset</h1>
-              <p style="margin:0 0 14px 0;color:#a1a1aa;font-size:14px;">Click below to set a new password. This link expires in 1 hour.</p>
-              <p style="margin:0 0 12px 0;">
-                <a href="${esc(link)}" style="display:inline-block;background:linear-gradient(135deg,#9954d2,#7a40b0);color:#000;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:800;letter-spacing:0.1em;font-size:12px;">SET NEW PASSWORD</a>
-              </p>
-              <p style="margin:0;color:#71717a;font-size:12px;">If you didn't request this, ignore this email.</p>
-            `,
-          }),
+          ...passwordResetEmail(link),
           replyTo: "support@diamond9athletics.com",
         });
       } catch (e) {
         console.error("reset send failed:", e);
+        return NextResponse.json({ error: "The email didn't send. Try again." }, { status: 502 });
       }
       return NextResponse.json({ ok: true });
     }
 
     case "send_magic": {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/generate_link`,
-        {
-          method: "POST",
-          headers: {
-            apikey: process.env.SUPABASE_SECRET_KEY!,
-            Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: "recovery",
-            email: target.email,
-            options: {
-              redirect_to:
-                "https://www.diamond9athletics.com/book/dashboard",
-            },
-          }),
-        },
+      const link = await signInLink(
+        admin,
+        target.email,
+        request.nextUrl.origin,
+        "/book/dashboard",
       );
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: `Magic generate failed: ${res.status}` },
-          { status: 500 },
-        );
+      if (!link) {
+        return NextResponse.json({ error: "Couldn't create a sign-in link." }, { status: 500 });
       }
-      const json = await res.json();
-      const link = json.action_link ?? json.properties?.action_link;
-      if (!link) return NextResponse.json({ ok: true });
 
       const first = (target.first_name ?? "Athlete").trim();
       try {
@@ -173,6 +125,7 @@ export async function POST(request: NextRequest) {
         });
       } catch (e) {
         console.error("magic send failed:", e);
+        return NextResponse.json({ error: "The email didn't send. Try again." }, { status: 502 });
       }
       return NextResponse.json({ ok: true });
     }

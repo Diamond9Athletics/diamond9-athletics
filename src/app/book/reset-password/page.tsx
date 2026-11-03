@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * The email link from resetPasswordForEmail lands here.
- * Supabase's /auth/v1/verify sets a session cookie first, then
- * redirects here — so the user is signed in "recovery" mode and can
- * call auth.updateUser({ password }) to set a new one.
+ * Reset emails land here already signed in: /book/auth/confirm verified
+ * the link on the server and set the session cookie (any device works).
+ * The user then calls auth.updateUser({ password }) to set a new one.
+ * Older Supabase-style links (?code= or #access_token=) still work too.
  */
 export default function ResetPasswordPage() {
   const supabase = createClient();
@@ -53,15 +53,24 @@ export default function ResetPasswordPage() {
         if (exErr) {
           if (cancelled) return;
           setError(
-            `${exErr.message}. Reset links only work in the same browser that requested them — if you opened the email on a different device, request a new one there.`,
+            "This older link only works in the browser that asked for it. Head back to Forgot Password for a new one — new links work on any device.",
           );
           setReady(true);
           return;
         }
       }
 
-      // 3) Older/implicit flow: `#access_token=…` hash — the SDK
-      //    picks that up automatically. Either way, verify we now have a user.
+      // 3) Implicit flow: `#access_token=…` hash (older admin emails). Our
+      //    PKCE client won't pick that up on its own, so set it here.
+      const hash = new URLSearchParams(url.hash.slice(1));
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+      if (accessToken && refreshToken) {
+        await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        window.history.replaceState({}, "", "/book/reset-password");
+      }
+
+      // Whichever way we got here, check that we're now signed in.
       const { data, error: userErr } = await supabase.auth.getUser();
       if (cancelled) return;
       if (userErr || !data.user) {
