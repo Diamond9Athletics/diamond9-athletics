@@ -17,11 +17,13 @@ export async function sendEmail({
   subject,
   html,
   replyTo,
+  attachments,
 }: {
   to: string;
   subject: string;
   html: string;
   replyTo?: string;
+  attachments?: { filename: string; content: string | Buffer; contentType?: string }[];
 }) {
   const r = await client().emails.send({
     from: FROM,
@@ -29,6 +31,7 @@ export async function sendEmail({
     subject,
     html,
     replyTo,
+    attachments,
   });
   if (r.error) {
     console.error("Resend send failed:", r.error);

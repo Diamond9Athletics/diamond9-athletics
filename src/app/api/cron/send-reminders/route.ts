@@ -15,8 +15,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, shell, fmtCT } from "@/lib/email";
 import { sendSms } from "@/lib/sms";
+import { addDays, todayInStudio } from "@/lib/booking/coach-calendar";
+import { zonedWallToUtc } from "@/lib/booking/tz";
+import { FREE_CANCEL_HOURS, freeCancelDeadline } from "@/lib/booking/policy";
 
 export const runtime = "nodejs";
+
+/** What the reminder says about changing plans, given the 24-hour rule. */
+function changeLine(startsAt: string): string {
+  const deadline = freeCancelDeadline(startsAt);
+  if (deadline.getTime() > Date.now()) {
+    const time = deadline.toLocaleTimeString("en-US", {
+      timeZone: "America/Chicago",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `Can't make it? Cancel or reschedule from your dashboard at diamond9athletics.com — free until ${time} today.`;
+  }
+  return `Can't make it? Let us know from your dashboard at diamond9athletics.com. It's within ${FREE_CANCEL_HOURS} hours, so it counts as a used session.`;
+}
 
 function escapeHtml(s: string) {
   return s
@@ -35,11 +52,12 @@ export async function GET(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // 22-26h ahead — a wide-enough band that a cron that fires slightly
-  // early/late still catches tomorrow's sessions.
-  const now = Date.now();
-  const from = new Date(now + 22 * 3600_000);
-  const to = new Date(now + 26 * 3600_000);
+  // Every session tomorrow, studio time. The cron fires once a day around
+  // 9–10am Central; the old 22–26h-ahead window only ever caught tomorrow
+  // *morning*, so afternoon and evening athletes never got a reminder.
+  const tomorrow = addDays(todayInStudio(), 1);
+  const from = zonedWallToUtc(tomorrow, "00:00");
+  const to = zonedWallToUtc(addDays(tomorrow, 1), "00:00");
 
   const { data: bookings, error } = await admin
     .from("bookings")
@@ -93,7 +111,7 @@ export async function GET(request: NextRequest) {
               <tr><td style="padding:4px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Trainer</td></tr>
               <tr><td style="padding:0;color:#fff;font-size:16px;">${escapeHtml(trainerName)}</td></tr>
             </table>
-            <p style="margin:0;color:#71717a;font-size:12px;">Need to reschedule or cancel? Sign in at diamond9athletics.com.</p>
+            <p style="margin:0;color:#71717a;font-size:12px;">${escapeHtml(changeLine(b.starts_at))}</p>
           `,
         }),
         replyTo: "support@diamond9athletics.com",

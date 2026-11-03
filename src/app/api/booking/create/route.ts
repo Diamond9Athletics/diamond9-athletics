@@ -17,6 +17,7 @@ import {
   wouldBeFirstPitching,
 } from "@/lib/booking/first-session";
 import { needsWaiver } from "@/lib/legal/waiver";
+import { LATE_CANCELLED, isLateCancel } from "@/lib/booking/policy";
 
 // Athletes must book at least this far ahead of the slot's start.
 const MIN_LEAD_MS = 5 * 60 * 60 * 1000;
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
   if (rescheduleFor) {
     const { data: oldBooking } = await admin
       .from("bookings")
-      .select("id, user_id, credit_bucket_id, status")
+      .select("id, user_id, credit_bucket_id, status, starts_at")
       .eq("id", rescheduleFor)
       .single();
     if (!oldBooking || oldBooking.user_id !== user.id) {
@@ -82,11 +83,14 @@ export async function POST(request: NextRequest) {
       );
     }
     if (oldBooking.status === "confirmed") {
+      // Same rule as cancelling: inside the free-cancel window the old
+      // session counts as used and its credit stays spent.
+      const late = isLateCancel(oldBooking.starts_at);
       await admin
         .from("bookings")
-        .update({ status: "cancelled" })
+        .update({ status: late ? LATE_CANCELLED : "cancelled" })
         .eq("id", oldBooking.id);
-      if (oldBooking.credit_bucket_id) {
+      if (oldBooking.credit_bucket_id && !late) {
         const { data: bk } = await admin
           .from("credit_buckets")
           .select("credits_remaining")
@@ -140,6 +144,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // One athlete can't hold two sessions at once — a second try or a
+  // second tab used to double-book and take another athlete's spot.
+  const { data: alreadyBooked } = await admin
+    .from("bookings")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("status", "confirmed")
+    .lt("starts_at", endDate.toISOString())
+    .gt("ends_at", startDate.toISOString())
+    .limit(1);
+  if (alreadyBooked && alreadyBooked.length > 0) {
+    return NextResponse.json(
+      { error: "You already have a session booked at that time — check your dashboard." },
+      { status: 409 },
+    );
+  }
+
   // 2) Entitlement: either an active Diamond pitching subscription
   //    (up to 12 bookings/month) or a credit_bucket with credits left.
   //    Subscription check hits Stripe as the source of truth, so a
@@ -159,10 +180,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Enforce the monthly cap for subscribers. We count confirmed
-  // pitching bookings this athlete already has whose start falls in the
-  // same *calendar month* (America/Chicago) as the new booking. The
-  // cap is generous (12) so genuine daily-training athletes are fine.
+  // Enforce the monthly cap for subscribers. We count confirmed (and
+  // late-cancelled) pitching bookings this athlete already has whose
+  // start falls in the same *calendar month* (America/Chicago) as the
+  // new booking. The cap is generous (12) so daily trainers are fine.
   if (hasSubscriptionEntitlement) {
     const monthLabel = new Intl.DateTimeFormat("en-CA", {
       timeZone: "America/Chicago",
@@ -182,7 +203,7 @@ export async function POST(request: NextRequest) {
         head: true,
       })
       .eq("user_id", user.id)
-      .eq("status", "confirmed")
+      .in("status", ["confirmed", LATE_CANCELLED])
       .eq("service.category", "pitching")
       .gte("starts_at", monthStart.toISOString())
       .lt("starts_at", nextMonth.toISOString());
@@ -421,6 +442,7 @@ export async function POST(request: NextRequest) {
       await sendBookingConfirmedEmails({
         bookingId: booking.id,
         startsAtIso: booking.starts_at,
+        endsAtIso: booking.ends_at,
         serviceName: svcRow.name,
         athleteFirstName: athlete.first_name,
         athleteLastName: athlete.last_name,

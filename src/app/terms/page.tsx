@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FREE_CANCEL_HOURS } from "@/lib/booking/policy";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "support@diamond9athletics.com";
-const LAST_UPDATED = "September 18, 2026";
+const LAST_UPDATED = "November 3, 2026";
 
 export default function Terms() {
   return (
@@ -64,6 +65,18 @@ export default function Terms() {
               subscription plans in future versions. Any such changes will be announced in advance
               through the App, and pricing terms will be presented for your acceptance before any
               charge is made.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl text-white mb-3">TRAINING SESSIONS &amp; CANCELLATIONS</h2>
+            <p>
+              Sessions booked on our website can be cancelled or rescheduled from your dashboard
+              for free up to {FREE_CANCEL_HOURS} hours before they start. Inside{" "}
+              {FREE_CANCEL_HOURS} hours, a cancellation or reschedule counts as a used session: a
+              package credit isn&rsquo;t returned, and for Diamond members it counts toward the
+              month&rsquo;s sessions. We may make exceptions at our discretion — reach out if
+              something comes up.
             </p>
           </div>
 

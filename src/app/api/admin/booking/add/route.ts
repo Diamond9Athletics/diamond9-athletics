@@ -232,6 +232,7 @@ export async function POST(request: NextRequest) {
         {
           bookingId: booking.id,
           startsAtIso: booking.starts_at,
+          endsAtIso: endDate.toISOString(),
           serviceName: service.name,
           athleteFirstName: athlete.first_name,
           athleteLastName: athlete.last_name,

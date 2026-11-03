@@ -3,14 +3,16 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, shell, fmtCT } from "@/lib/email";
 import { deleteEvent, getValidAccessToken } from "@/lib/google/calendar";
+import { FREE_CANCEL_HOURS, LATE_CANCELLED, isLateCancel } from "@/lib/booking/policy";
 
 /**
  * POST /api/booking/cancel
  * Body: { bookingId }
  *
  * - Verifies the user owns the booking (or is admin).
- * - Marks it cancelled.
- * - Refunds a credit to the bucket the booking pulled from.
+ * - Marks it cancelled — or late_cancelled inside the free-cancel window
+ *   (see lib/booking/policy), which frees the slot but counts as used.
+ * - Refunds the credit unless it's a late cancellation.
  * - Sends a cancellation email to both the athlete and the trainer.
  */
 export async function POST(request: NextRequest) {
@@ -56,14 +58,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Booking is not active" }, { status: 400 });
   }
 
+  // Inside the free-cancel window it's a late cancellation — unless an
+  // admin is cancelling someone else's booking, which is never charged.
+  const byStaff = booking.user_id !== user.id && Boolean(me?.is_admin);
+  const late = !byStaff && isLateCancel(booking.starts_at);
+
   // Mark cancelled.
   await admin
     .from("bookings")
-    .update({ status: "cancelled" })
+    .update({ status: late ? LATE_CANCELLED : "cancelled" })
     .eq("id", booking.id);
 
-  // Refund the credit.
-  if (booking.credit_bucket_id) {
+  // Refund the credit (not for late cancellations).
+  if (booking.credit_bucket_id && !late) {
     const { data: bucket } = await admin
       .from("credit_buckets")
       .select("credits_remaining")
@@ -100,6 +107,11 @@ export async function POST(request: NextRequest) {
     const trn = Array.isArray(booking.trainer) ? booking.trainer[0] : booking.trainer;
     const when = fmtCT(booking.starts_at);
     const athleteName = `${ath?.first_name ?? ""} ${ath?.last_name ?? ""}`.trim() || "Athlete";
+    const outcome = late
+      ? `Because it was less than ${FREE_CANCEL_HOURS} hours before the session, it counts as a used session${booking.credit_bucket_id ? " — the credit isn't returned" : ""}.`
+      : booking.credit_bucket_id
+        ? "The credit is back on your account."
+        : "Book another time whenever you're ready.";
 
     if (ath?.email) {
       await sendEmail({
@@ -110,7 +122,7 @@ export async function POST(request: NextRequest) {
           body: `
             <h1 style="margin:0 0 8px 0;font-size:24px;font-weight:800;color:#fff;">Session cancelled.</h1>
             <p style="margin:0 0 18px 0;color:#a1a1aa;font-size:14px;">
-              Your ${escape(svc?.name ?? "session")} on <b style="color:#fff;">${escape(when)}</b> has been cancelled. The credit is back on your account.
+              Your ${escape(svc?.name ?? "session")} on <b style="color:#fff;">${escape(when)}</b> has been cancelled. ${escape(outcome)}
             </p>
             <p style="margin:0;color:#71717a;font-size:13px;">Ready to rebook? Sign in at diamond9athletics.com.</p>
           `,
@@ -121,13 +133,15 @@ export async function POST(request: NextRequest) {
     if (trn?.email) {
       await sendEmail({
         to: trn.email,
-        subject: `Cancellation — ${athleteName} — ${when}`,
+        subject: `${late ? "Late cancellation" : "Cancellation"} — ${athleteName} — ${when}`,
         html: shell({
           title: "Booking cancelled",
           body: `
-            <h1 style="margin:0 0 8px 0;font-size:22px;font-weight:800;color:#fff;">Booking cancelled.</h1>
+            <h1 style="margin:0 0 8px 0;font-size:22px;font-weight:800;color:#fff;">${late ? "Late cancellation." : "Booking cancelled."}</h1>
             <p style="margin:0;color:#a1a1aa;font-size:14px;">
-              ${escape(athleteName)} cancelled their ${escape(svc?.name ?? "session")} on <b style="color:#fff;">${escape(when)}</b>.
+              ${escape(athleteName)} cancelled their ${escape(svc?.name ?? "session")} on <b style="color:#fff;">${escape(when)}</b>${
+                late ? ` — less than ${FREE_CANCEL_HOURS} hours before, so it counts as used` : ""
+              }.
             </p>
           `,
         }),
@@ -138,7 +152,7 @@ export async function POST(request: NextRequest) {
     console.error("Cancellation email failed:", e);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, late });
 }
 
 function escape(s: string) {

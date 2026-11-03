@@ -77,7 +77,7 @@ export type CreditBucket = {
   created_at: string;
 };
 
-export type BookingStatus = "confirmed" | "cancelled" | "completed" | "no_show";
+export type BookingStatus = "confirmed" | "cancelled" | "late_cancelled" | "completed" | "no_show";
 
 export type Booking = {
   id: string;

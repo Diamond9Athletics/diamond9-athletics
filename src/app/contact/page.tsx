@@ -1,11 +1,49 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { img } from "@/lib/config";
 
-const plans = ["Diamond Plan ($300)","Gold Plan ($275)","Single Session ($100)","Half Session ($50)","College Summer ($1,100)","Hitting Plans"];
+// No prices here — they live on the plan pages, so this list can't go stale.
+const plans = [
+  "Diamond Membership (pitching)",
+  "Gold Pitching Plan",
+  "Single Pitching Session",
+  "Diamond Hitting Plan",
+  "Gold Hitting Plan",
+  "Single Hitting Session",
+  "Not sure yet",
+];
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", plan: "", message: "", honey: "" });
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // When the form appeared — bots fill it in instantly.
+  const startedAt = useRef(0);
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
+  const set = (k: keyof typeof form) => (e: { target: { value: string } }) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setSending(true);
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...form, startedAt: startedAt.current }),
+    }).catch(() => null);
+    const json = await res?.json().catch(() => ({}));
+    setSending(false);
+    if (!res?.ok) {
+      setError(json?.error ?? "Your message didn't send. Check your connection and try again.");
+      return;
+    }
+    setSubmitted(true);
+  }
+
   return (
     <main className="pt-24 bg-[#040200]">
       {/* Hero */}
@@ -38,34 +76,42 @@ export default function Contact() {
                 <p className="text-zinc-500 text-sm">We&apos;ll be in touch shortly.</p>
               </div>
             ) : (
-              <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }} className="space-y-4">
+              <form onSubmit={onSubmit} className="space-y-4">
+                {/* Honeypot — invisible to people, tempting to bots. */}
+                <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, overflow: "hidden" }}>
+                  <label htmlFor="company">Company (leave blank)</label>
+                  <input id="company" type="text" tabIndex={-1} autoComplete="off" value={form.honey} onChange={set("honey")} />
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">NAME</label>
-                    <input type="text" required placeholder="Your name" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
+                    <input type="text" required autoComplete="name" value={form.name} onChange={set("name")} placeholder="Your name" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
                   </div>
                   <div>
                     <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">EMAIL</label>
-                    <input type="email" required placeholder="your@email.com" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
+                    <input type="email" required autoComplete="email" value={form.email} onChange={set("email")} placeholder="your@email.com" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">PHONE</label>
-                  <input type="tel" placeholder="(555) 000-0000" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
+                  <input type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} placeholder="(555) 000-0000" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">PLAN INTEREST</label>
-                  <select className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all">
+                  <select value={form.plan} onChange={set("plan")} className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all">
                     <option value="">Select a plan...</option>
                     {plans.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">MESSAGE</label>
-                  <textarea rows={4} placeholder="Tell us about your goals..." className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700 resize-none" />
+                  <textarea rows={4} value={form.message} onChange={set("message")} placeholder="Tell us about your goals..." className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700 resize-none" />
                 </div>
-                <button type="submit" className="btn-gold w-full py-4 rounded-full text-sm tracking-wider font-bold">
-                  SEND MESSAGE
+                {error && (
+                  <p className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">{error}</p>
+                )}
+                <button type="submit" disabled={sending} className="btn-gold w-full py-4 rounded-full text-sm tracking-wider font-bold disabled:opacity-60">
+                  {sending ? "SENDING…" : "SEND MESSAGE"}
                 </button>
               </form>
             )}

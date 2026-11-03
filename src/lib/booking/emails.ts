@@ -2,10 +2,12 @@
  * Booking-specific email templates.
  */
 import { fmtCT, sendEmail, shell } from "@/lib/email";
+import { FREE_CANCEL_HOURS } from "./policy";
 
 export type BookingEmailData = {
   bookingId: string;
   startsAtIso: string;
+  endsAtIso: string;
   serviceName: string;
   athleteFirstName: string | null;
   athleteLastName: string | null;
@@ -15,6 +17,54 @@ export type BookingEmailData = {
   trainerLastName: string | null;
   trainerEmail: string;
 };
+
+const STUDIO = "Diamond Nine Athletics, Austin, TX";
+const DASHBOARD = "https://www.diamond9athletics.com/book/dashboard";
+
+/** 20261104T230000Z — the UTC stamp calendars expect. */
+function calStamp(iso: string) {
+  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+/** "Add to Google Calendar" link for a session. */
+function googleCalendarUrl(d: BookingEmailData, trainerName: string) {
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${d.serviceName} — Diamond Nine Athletics`,
+    dates: `${calStamp(d.startsAtIso)}/${calStamp(d.endsAtIso)}`,
+    details: `With ${trainerName}. Manage your booking: ${DASHBOARD}`,
+    location: STUDIO,
+  });
+  return `https://calendar.google.com/calendar/render?${q}`;
+}
+
+/** Calendar file Apple Calendar, Outlook and Gmail can all add. */
+function sessionIcs(d: BookingEmailData, trainerName: string): string {
+  const text = (s: string) =>
+    s.replace(/\\/g, "\\\\").replace(/[,;]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
+  // Long lines are folded (CRLF + space) per the iCalendar spec.
+  const fold = (line: string) => (line.match(/.{1,60}/g) ?? [line]).join("\r\n ");
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Diamond Nine Athletics//Bookings//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${d.bookingId}@diamond9athletics.com`,
+    `DTSTAMP:${calStamp(new Date().toISOString())}`,
+    `DTSTART:${calStamp(d.startsAtIso)}`,
+    `DTEND:${calStamp(d.endsAtIso)}`,
+    `SUMMARY:${text(`${d.serviceName} — Diamond Nine Athletics`)}`,
+    `DESCRIPTION:${text(`With ${trainerName}. Manage your booking at ${DASHBOARD}`)}`,
+    `LOCATION:${text(STUDIO)}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+    "",
+  ]
+    .map(fold)
+    .join("\r\n");
+}
 
 export async function sendBookingConfirmedEmails(
   d: BookingEmailData,
@@ -42,7 +92,12 @@ export async function sendBookingConfirmedEmails(
         <tr><td style="padding:0;color:#fff;font-size:16px;">${escape(trainerName)}</td></tr>
       </table>
 
-      <p style="margin:0 0 8px 0;color:#a1a1aa;font-size:13px;">Need to cancel or reschedule? Reply to this email and we'll take care of it.</p>
+      <p style="margin:0 0 10px 0;">
+        <a href="${escape(googleCalendarUrl(d, trainerName))}" style="display:inline-block;background:linear-gradient(135deg,#9954d2,#7a40b0);color:#000;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:800;letter-spacing:0.1em;font-size:12px;">ADD TO GOOGLE CALENDAR</a>
+      </p>
+      <p style="margin:0 0 22px 0;color:#71717a;font-size:12px;">On an iPhone or using Outlook? Open the attached invite to add it to your calendar.</p>
+
+      <p style="margin:0 0 8px 0;color:#a1a1aa;font-size:13px;">Need to change it? Cancel or reschedule from your <a href="${DASHBOARD}" style="color:#b07adf;text-decoration:none;">dashboard</a> — free up to ${FREE_CANCEL_HOURS} hours before the session. After that it counts as a used session.</p>
     `,
   });
   await sendEmail({
@@ -50,6 +105,13 @@ export async function sendBookingConfirmedEmails(
     subject: `Session booked — ${when}`,
     html: athleteHtml,
     replyTo: "support@diamond9athletics.com",
+    attachments: [
+      {
+        filename: "session.ics",
+        content: Buffer.from(sessionIcs(d, trainerName)),
+        contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+      },
+    ],
   });
 
   // 2) Trainer heads-up. Skipped when the trainer made the booking.

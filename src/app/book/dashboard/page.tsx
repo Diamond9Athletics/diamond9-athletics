@@ -115,7 +115,7 @@ export default async function Dashboard() {
                   )}
                 </p>
                 <div className="mt-3">
-                  <CancelButton bookingId={next.id} />
+                  <CancelButton bookingId={next.id} startsAt={next.starts_at} />
                 </div>
               </>
             ) : (
@@ -219,7 +219,7 @@ export default async function Dashboard() {
                         with {trn?.first_name} {trn?.last_name}
                       </p>
                     </div>
-                    <CancelButton bookingId={b.id} />
+                    <CancelButton bookingId={b.id} startsAt={b.starts_at} />
                   </li>
                 );
               })}
