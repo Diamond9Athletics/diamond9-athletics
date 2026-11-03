@@ -3,11 +3,17 @@
  */
 import { fmtCT, sendEmail, shell } from "@/lib/email";
 import { FREE_CANCEL_HOURS } from "./policy";
+import { STUDIO_TZ } from "./tz";
 
-export type BookingEmailData = {
+export type BookedSession = {
   bookingId: string;
   startsAtIso: string;
   endsAtIso: string;
+};
+
+export type BookingEmailData = {
+  /** Everything booked in one go, in date order: one session, or a weekly run. */
+  sessions: BookedSession[];
   serviceName: string;
   athleteFirstName: string | null;
   athleteLastName: string | null;
@@ -26,39 +32,68 @@ function calStamp(iso: string) {
   return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
-/** "Add to Google Calendar" link for a session. */
-function googleCalendarUrl(d: BookingEmailData, trainerName: string) {
+/** "Wednesdays at 5:00 PM" when every session is the same weekday and time. */
+function weeklySlot(sessions: BookedSession[]): string | null {
+  const part = (s: BookedSession, opts: Intl.DateTimeFormatOptions) =>
+    new Date(s.startsAtIso).toLocaleString("en-US", { timeZone: STUDIO_TZ, ...opts });
+  const weekday = (s: BookedSession) => part(s, { weekday: "long" });
+  const time = (s: BookedSession) => part(s, { hour: "numeric", minute: "2-digit" });
+  const [first] = sessions;
+  if (!sessions.every((s) => weekday(s) === weekday(first) && time(s) === time(first))) {
+    return null;
+  }
+  return `${weekday(first)}s at ${time(first)}`;
+}
+
+/** True when the sessions run every week with none missing in between. */
+function everyWeek(sessions: BookedSession[]): boolean {
+  const day = (s: BookedSession) =>
+    Date.parse(new Date(s.startsAtIso).toLocaleDateString("en-CA", { timeZone: STUDIO_TZ }));
+  return sessions.every((s, i) => i === 0 || day(s) - day(sessions[i - 1]) === 7 * 86_400_000);
+}
+
+/** "Add to Google Calendar" link. A weekly run is one repeating event, kept
+ *  in studio time so a DST change can't shift it. */
+function googleCalendarUrl(d: BookingEmailData, trainerName: string, s: BookedSession, weeks = 1) {
   const q = new URLSearchParams({
     action: "TEMPLATE",
     text: `${d.serviceName} — Diamond Nine Athletics`,
-    dates: `${calStamp(d.startsAtIso)}/${calStamp(d.endsAtIso)}`,
+    dates: `${calStamp(s.startsAtIso)}/${calStamp(s.endsAtIso)}`,
     details: `With ${trainerName}. Manage your booking: ${DASHBOARD}`,
     location: STUDIO,
   });
+  if (weeks > 1) {
+    q.set("ctz", STUDIO_TZ);
+    q.set("recur", `RRULE:FREQ=WEEKLY;COUNT=${weeks}`);
+  }
   return `https://calendar.google.com/calendar/render?${q}`;
 }
 
-/** Calendar file Apple Calendar, Outlook and Gmail can all add. */
+/** Calendar file Apple Calendar, Outlook and Gmail can all add — one event
+ *  per session. */
 function sessionIcs(d: BookingEmailData, trainerName: string): string {
   const text = (s: string) =>
     s.replace(/\\/g, "\\\\").replace(/[,;]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
   // Long lines are folded (CRLF + space) per the iCalendar spec.
   const fold = (line: string) => (line.match(/.{1,60}/g) ?? [line]).join("\r\n ");
+  const stamp = calStamp(new Date().toISOString());
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Diamond Nine Athletics//Bookings//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `UID:${d.bookingId}@diamond9athletics.com`,
-    `DTSTAMP:${calStamp(new Date().toISOString())}`,
-    `DTSTART:${calStamp(d.startsAtIso)}`,
-    `DTEND:${calStamp(d.endsAtIso)}`,
-    `SUMMARY:${text(`${d.serviceName} — Diamond Nine Athletics`)}`,
-    `DESCRIPTION:${text(`With ${trainerName}. Manage your booking at ${DASHBOARD}`)}`,
-    `LOCATION:${text(STUDIO)}`,
-    "END:VEVENT",
+    ...d.sessions.flatMap((s) => [
+      "BEGIN:VEVENT",
+      `UID:${s.bookingId}@diamond9athletics.com`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${calStamp(s.startsAtIso)}`,
+      `DTEND:${calStamp(s.endsAtIso)}`,
+      `SUMMARY:${text(`${d.serviceName} — Diamond Nine Athletics`)}`,
+      `DESCRIPTION:${text(`With ${trainerName}. Manage your booking at ${DASHBOARD}`)}`,
+      `LOCATION:${text(STUDIO)}`,
+      "END:VEVENT",
+    ]),
     "END:VCALENDAR",
     "",
   ]
@@ -66,48 +101,91 @@ function sessionIcs(d: BookingEmailData, trainerName: string): string {
     .join("\r\n");
 }
 
+/** "Wed, Nov 4" — a session's date in a list of several. */
+function shortDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    timeZone: STUDIO_TZ,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export async function sendBookingConfirmedEmails(
   d: BookingEmailData,
   opts: { notifyTrainer?: boolean } = {},
 ) {
-  const when = fmtCT(d.startsAtIso);
+  const [first] = d.sessions;
+  const count = d.sessions.length;
+  const series = count > 1;
+  const slot = series ? weeklySlot(d.sessions) : null;
+  const when = fmtCT(first.startsAtIso);
+  // For subject lines: the weekly pattern, or where a run starts.
+  const pattern = slot ?? `starting ${when}`;
   const athleteName =
     `${d.athleteFirstName ?? ""} ${d.athleteLastName ?? ""}`.trim() || "Athlete";
   const trainerName =
     `${d.trainerFirstName ?? ""} ${d.trainerLastName ?? ""}`.trim() || "your trainer";
 
+  // A weekly run with no gaps adds to Google as one repeating event; with a
+  // gap, each date gets its own link instead.
+  const oneLink = !series || everyWeek(d.sessions);
+  const dateRows = (withLinks: boolean) =>
+    d.sessions
+      .map(
+        (s) => `<tr><td style="padding:2px 0;color:#fff;font-size:15px;">${escape(shortDate(s.startsAtIso))}${
+          withLinks
+            ? ` <a href="${escape(googleCalendarUrl(d, trainerName, s))}" style="color:#b07adf;text-decoration:none;font-size:12px;">· Add to Google Calendar</a>`
+            : ""
+        }</td></tr>`,
+      )
+      .join("");
+  const whenRows = (labelStyle: string, valueStyle: string, withLinks: boolean) =>
+    series
+      ? `<tr><td style="${labelStyle}">When</td></tr>
+        <tr><td style="padding:0 0 6px 0;color:#fff;font-size:16px;font-weight:600;">${escape(slot ? `${slot} (Central)` : `${count} sessions`)}</td></tr>
+        ${dateRows(withLinks)}
+        <tr><td style="padding:0 0 14px 0;"></td></tr>`
+      : `<tr><td style="${labelStyle}">When</td></tr>
+        <tr><td style="${valueStyle}font-weight:600;">${escape(when)}</td></tr>`;
+
   // 1) Athlete confirmation.
+  const label = "padding:6px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;";
+  const value = "padding:0 0 14px 0;color:#fff;font-size:16px;";
   const athleteHtml = shell({
-    title: "Session booked",
+    title: series ? "Sessions booked" : "Session booked",
     body: `
-      <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.01em;">Session booked.</h1>
+      <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.01em;">${series ? `${count} sessions booked.` : "Session booked."}</h1>
       <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">Looking forward to seeing you, ${escape(athleteName.split(" ")[0])}.</p>
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(153,84,210,0.06);border:1px solid rgba(153,84,210,0.15);border-radius:12px;padding:18px;margin:0 0 22px 0;">
-        <tr><td style="padding:6px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">When</td></tr>
-        <tr><td style="padding:0 0 14px 0;color:#fff;font-size:16px;font-weight:600;">${escape(when)}</td></tr>
-        <tr><td style="padding:6px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Service</td></tr>
-        <tr><td style="padding:0 0 14px 0;color:#fff;font-size:16px;">${escape(d.serviceName)}</td></tr>
-        <tr><td style="padding:6px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Trainer</td></tr>
+        ${whenRows(label, value, !oneLink)}
+        <tr><td style="${label}">Service</td></tr>
+        <tr><td style="${value}">${escape(d.serviceName)}</td></tr>
+        <tr><td style="${label}">Trainer</td></tr>
         <tr><td style="padding:0;color:#fff;font-size:16px;">${escape(trainerName)}</td></tr>
       </table>
 
-      <p style="margin:0 0 10px 0;">
-        <a href="${escape(googleCalendarUrl(d, trainerName))}" style="display:inline-block;background:linear-gradient(135deg,#9954d2,#7a40b0);color:#000;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:800;letter-spacing:0.1em;font-size:12px;">ADD TO GOOGLE CALENDAR</a>
-      </p>
-      <p style="margin:0 0 22px 0;color:#71717a;font-size:12px;">On an iPhone or using Outlook? Open the attached invite to add it to your calendar.</p>
+      ${
+        oneLink
+          ? `<p style="margin:0 0 10px 0;">
+        <a href="${escape(googleCalendarUrl(d, trainerName, first, count))}" style="display:inline-block;background:linear-gradient(135deg,#9954d2,#7a40b0);color:#000;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:800;letter-spacing:0.1em;font-size:12px;">ADD TO GOOGLE CALENDAR</a>
+      </p>`
+          : ""
+      }
+      <p style="margin:0 0 22px 0;color:#71717a;font-size:12px;">On an iPhone or using Outlook? Open the attached invite to add ${series ? "them" : "it"} to your calendar.</p>
 
-      <p style="margin:0 0 8px 0;color:#a1a1aa;font-size:13px;">Need to change it? Cancel or reschedule from your <a href="${DASHBOARD}" style="color:#b07adf;text-decoration:none;">dashboard</a> — free up to ${FREE_CANCEL_HOURS} hours before the session. After that it counts as a used session.</p>
+      <p style="margin:0 0 8px 0;color:#a1a1aa;font-size:13px;">Need to change ${series ? "one" : "it"}? Cancel or reschedule from your <a href="${DASHBOARD}" style="color:#b07adf;text-decoration:none;">dashboard</a> — free up to ${FREE_CANCEL_HOURS} hours before the session. After that it counts as a used session.</p>
     `,
   });
   await sendEmail({
     to: d.athleteEmail,
-    subject: `Session booked — ${when}`,
+    subject: series ? `${count} sessions booked — ${pattern}` : `Session booked — ${when}`,
     html: athleteHtml,
     replyTo: "support@diamond9athletics.com",
     attachments: [
       {
-        filename: "session.ics",
+        filename: series ? "sessions.ics" : "session.ics",
         content: Buffer.from(sessionIcs(d, trainerName)),
         contentType: "text/calendar; charset=utf-8; method=PUBLISH",
       },
@@ -116,18 +194,19 @@ export async function sendBookingConfirmedEmails(
 
   // 2) Trainer heads-up. Skipped when the trainer made the booking.
   if (opts.notifyTrainer === false) return;
+  const tLabel = "padding:4px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;";
+  const tValue = "padding:0 0 10px 0;color:#fff;font-size:15px;";
   const trainerHtml = shell({
     title: "New booking",
     body: `
       <h1 style="margin:0 0 8px 0;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.01em;">New booking</h1>
-      <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">${escape(athleteName)} just booked a session.</p>
+      <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">${escape(athleteName)} just booked ${series ? `${count} weekly sessions` : "a session"}.</p>
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;margin:0 0 14px 0;">
-        <tr><td style="padding:4px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">When</td></tr>
-        <tr><td style="padding:0 0 10px 0;color:#fff;font-size:15px;font-weight:600;">${escape(when)}</td></tr>
-        <tr><td style="padding:4px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Service</td></tr>
-        <tr><td style="padding:0 0 10px 0;color:#fff;font-size:15px;">${escape(d.serviceName)}</td></tr>
-        <tr><td style="padding:4px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Athlete</td></tr>
+        ${whenRows(tLabel, tValue, false)}
+        <tr><td style="${tLabel}">Service</td></tr>
+        <tr><td style="${tValue}">${escape(d.serviceName)}</td></tr>
+        <tr><td style="${tLabel}">Athlete</td></tr>
         <tr><td style="padding:0;color:#fff;font-size:15px;">
           ${escape(athleteName)}<br>
           <a href="mailto:${escape(d.athleteEmail)}" style="color:#b07adf;text-decoration:none;">${escape(d.athleteEmail)}</a>
@@ -138,7 +217,9 @@ export async function sendBookingConfirmedEmails(
   });
   await sendEmail({
     to: d.trainerEmail,
-    subject: `New booking — ${athleteName} — ${when}`,
+    subject: series
+      ? `New booking — ${athleteName} — ${count} sessions, ${pattern}`
+      : `New booking — ${athleteName} — ${when}`,
     html: trainerHtml,
     replyTo: d.athleteEmail,
   });

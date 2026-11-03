@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MAX_REPEAT_WEEKS, inBookingWindow, weeklyStarts } from "@/lib/booking/repeat";
 
 export type Service = {
   id: string;
@@ -205,6 +206,9 @@ export function BookingFlow({
       {step === "confirm" && bucket && trainer && slot && (
         <ConfirmStep
           bucket={bucket}
+          credits={buckets
+            .filter((b) => b.service.id === bucket.service.id && !b.isSubscription)
+            .reduce((n, b) => n + b.credits_remaining, 0)}
           trainer={trainer}
           slot={slot}
           rescheduleFor={rescheduleFor}
@@ -665,8 +669,14 @@ function TimeStep({
   );
 }
 
+type BookingResult = {
+  bookings: { id: string; starts_at: string }[];
+  skipped: { startsAt: string; reason: string }[];
+};
+
 function ConfirmStep({
   bucket,
+  credits,
   trainer,
   slot,
   rescheduleFor,
@@ -675,6 +685,8 @@ function ConfirmStep({
   onSuccess,
 }: {
   bucket: Bucket;
+  /** Credits left for this service (a membership isn't limited by these). */
+  credits: number;
   trainer: Trainer;
   slot: string;
   rescheduleFor: RescheduleFor;
@@ -683,7 +695,27 @@ function ConfirmStep({
   onSuccess: (id: string) => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
+  const [weeks, setWeeks] = useState(1);
+  // Set when some weeks of a repeat couldn't be booked.
+  const [result, setResult] = useState<BookingResult | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const start = new Date(slot);
+
+  // The results card is shorter than the form it replaces — bring it into view.
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [result]);
+
+  // Same time each week, as far as the booking window reaches — and no
+  // more sessions than credits left. A reschedule moves one session.
+  const weekly = useMemo(
+    () => weeklyStarts(new Date(slot), MAX_REPEAT_WEEKS).filter((w) => inBookingWindow(w.start)),
+    [slot],
+  );
+  const maxWeeks = rescheduleFor
+    ? 1
+    : Math.min(weekly.length, bucket.isSubscription ? MAX_REPEAT_WEEKS : credits);
+  const dates = weekly.slice(0, weeks).map((w) => w.start);
 
   async function confirm() {
     setSubmitting(true);
@@ -695,6 +727,7 @@ function ConfirmStep({
         trainerId: trainer.id,
         serviceId: bucket.service.id,
         startsAt: slot,
+        repeatWeeks: weeks,
         rescheduleFor: rescheduleFor?.bookingId ?? null,
       }),
     });
@@ -704,50 +737,170 @@ function ConfirmStep({
       onError(json.error ?? "Could not confirm booking.");
       return;
     }
+    if (json.skipped?.length > 0) {
+      setResult({ bookings: json.bookings, skipped: json.skipped });
+      return;
+    }
     onSuccess(json.booking.id);
   }
+
+  if (result) {
+    const rows = [
+      ...result.bookings.map((b) => ({ at: b.starts_at, reason: null as string | null })),
+      ...result.skipped.map((s) => ({ at: s.startsAt, reason: s.reason })),
+    ].sort((x, y) => x.at.localeCompare(y.at));
+    return (
+      <div ref={resultRef} className="card-modern-amber rounded-2xl p-6 sm:p-8 space-y-4">
+        <h2 className="font-display text-2xl text-white">
+          Booked {result.bookings.length} of {rows.length}
+        </h2>
+        <ul className="space-y-2">
+          {rows.map((r) => (
+            <li
+              key={r.at}
+              className="flex justify-between items-start gap-4 border-b border-white/5 pb-2 text-sm"
+            >
+              <span className={r.reason ? "text-zinc-500 line-through" : "text-white"}>
+                {fmtSessionDate(r.at)}
+              </span>
+              <span className={`text-right text-xs ${r.reason ? "text-amber-400" : "text-[#b07adf] font-bold"}`}>
+                {r.reason ?? "BOOKED"}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-zinc-400 text-xs">
+          Weeks that didn&rsquo;t book weren&rsquo;t charged. Pick another time for them
+          whenever you&rsquo;re ready.
+        </p>
+        <Link
+          href="/book/dashboard"
+          className="btn-gold block text-center w-full py-4 rounded-full text-sm tracking-widest font-black"
+        >
+          GO TO MY ACCOUNT
+        </Link>
+      </div>
+    );
+  }
+
+  const when = start.toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const weeklyWhen = `${start.toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    weekday: "long",
+  })}s at ${start.toLocaleTimeString("en-US", {
+    timeZone: "America/Chicago",
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
 
   return (
     <div className="card-modern-amber rounded-2xl p-6 sm:p-8 space-y-4">
       <h2 className="font-display text-2xl text-white mb-2">
         {rescheduleFor ? "Confirm reschedule" : "Confirm your booking"}
       </h2>
+      {maxWeeks > 1 && (
+        <div>
+          <p className="text-zinc-500 text-xs tracking-widest uppercase mb-2">
+            How many weeks?
+          </p>
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${maxWeeks}, minmax(0, 1fr))` }}>
+            {Array.from({ length: maxWeeks }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setWeeks(n)}
+                aria-pressed={weeks === n}
+                className={`rounded-xl py-2.5 border text-sm font-bold transition ${
+                  weeks === n
+                    ? "border-[#9954d2] bg-[#9954d2]/15 text-white"
+                    : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-[#9954d2]/50"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <p className="text-zinc-500 text-xs mt-2">
+            {weeks === 1
+              ? "Book the same time on following weeks in one go."
+              : `Same time each week — ${weeks} sessions in a row.`}
+          </p>
+        </div>
+      )}
       <div className="text-zinc-300 text-sm space-y-2">
         <Row label="Service" value={bucket.service.name} />
         <Row
           label="Trainer"
           value={`${trainer.first_name ?? ""} ${trainer.last_name ?? ""}`.trim()}
         />
+        <Row label="When" value={weeks > 1 ? weeklyWhen : when} />
+        {weeks > 1 && (
+          <Row
+            label="Dates"
+            value={dates
+              .map((d) =>
+                d.toLocaleDateString("en-US", {
+                  timeZone: "America/Chicago",
+                  month: "short",
+                  day: "numeric",
+                }),
+              )
+              .join(" · ")}
+          />
+        )}
         <Row
-          label="When"
-          value={start.toLocaleString("en-US", {
-            timeZone: "America/Chicago",
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          })}
+          label="Cost"
+          value={
+            rescheduleFor
+              ? "No charge (reusing credit)"
+              : bucket.isSubscription
+                ? "Included in your membership"
+                : `${weeks} ${weeks === 1 ? "credit" : "credits"}`
+          }
         />
-        <Row label="Cost" value={rescheduleFor ? "No charge (reusing credit)" : "1 credit"} />
       </div>
       <button
         onClick={confirm}
         disabled={submitting}
         className="btn-gold w-full py-4 rounded-full text-sm tracking-widest font-black disabled:opacity-60"
       >
-        {submitting ? "BOOKING…" : rescheduleFor ? "CONFIRM RESCHEDULE" : "CONFIRM BOOKING"}
+        {submitting
+          ? "BOOKING…"
+          : rescheduleFor
+            ? "CONFIRM RESCHEDULE"
+            : weeks > 1
+              ? `BOOK ${weeks} SESSIONS`
+              : "CONFIRM BOOKING"}
       </button>
       <BackButton onClick={onBack} />
     </div>
   );
 }
 
+/** "Wed, Nov 11 · 5:00 PM" */
+function fmtSessionDate(iso: string) {
+  return new Date(iso).toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center border-b border-white/5 pb-2">
-      <span className="text-zinc-500 text-xs tracking-widest uppercase">{label}</span>
-      <span className="text-white">{value}</span>
+    <div className="flex justify-between items-center gap-4 border-b border-white/5 pb-2">
+      <span className="text-zinc-500 text-xs tracking-widest uppercase shrink-0">{label}</span>
+      <span className="text-white text-right">{value}</span>
     </div>
   );
 }

@@ -230,9 +230,9 @@ export async function POST(request: NextRequest) {
     try {
       await sendBookingConfirmedEmails(
         {
-          bookingId: booking.id,
-          startsAtIso: booking.starts_at,
-          endsAtIso: endDate.toISOString(),
+          sessions: [
+            { bookingId: booking.id, startsAtIso: booking.starts_at, endsAtIso: endDate.toISOString() },
+          ],
           serviceName: service.name,
           athleteFirstName: athlete.first_name,
           athleteLastName: athlete.last_name,
