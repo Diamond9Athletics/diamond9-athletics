@@ -8,7 +8,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { passwordResetEmail, signInLink } from "@/lib/auth/sign-in-link";
+import { passwordResetEmail, resetLink } from "@/lib/auth/sign-in-link";
 import { sendEmail } from "@/lib/email";
 
 const MIN_GAP_MS = 60_000;
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const user = data?.user;
     const lastSent = Date.parse(String(user?.app_metadata?.recovery_sent_at ?? ""));
     if (user?.email && !(Date.now() - lastSent < MIN_GAP_MS)) {
-      const link = await signInLink(admin, user.email, request.nextUrl.origin, "/book/reset-password");
+      const link = await resetLink(admin, user.email, request.nextUrl.origin);
       if (link) {
         await admin.auth.admin.updateUserById(user.id, {
           app_metadata: { recovery_sent_at: new Date().toISOString() },

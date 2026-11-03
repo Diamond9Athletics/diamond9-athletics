@@ -11,6 +11,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { shell } from "@/lib/email";
 
+/** A one-time token for this account; null when there's no account. */
+async function recoveryToken(admin: SupabaseClient, email: string): Promise<string | null> {
+  const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
+  const tokenHash = data?.properties?.hashed_token;
+  return error || !tokenHash ? null : tokenHash;
+}
+
 /** Returns null when there's no account for that email. */
 export async function signInLink(
   admin: SupabaseClient,
@@ -18,11 +25,27 @@ export async function signInLink(
   origin: string,
   next: string,
 ): Promise<string | null> {
-  const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
-  const tokenHash = data?.properties?.hashed_token;
-  if (error || !tokenHash) return null;
+  const tokenHash = await recoveryToken(admin, email);
+  if (!tokenHash) return null;
   const q = new URLSearchParams({ token_hash: tokenHash, type: "recovery", next });
   return `${origin}/book/auth/confirm?${q}`;
+}
+
+/**
+ * Password-reset link straight to the set-a-new-password page. Its token
+ * is only used up when the new password is saved (/api/auth/reset-password),
+ * not when the link is opened — so a mail or text app previewing the link,
+ * a security scanner, or switching from the Gmail app to Safari can't spoil
+ * it. Returns null when there's no account for that email.
+ */
+export async function resetLink(
+  admin: SupabaseClient,
+  email: string,
+  origin: string,
+): Promise<string | null> {
+  const tokenHash = await recoveryToken(admin, email);
+  if (!tokenHash) return null;
+  return `${origin}/book/reset-password?${new URLSearchParams({ token_hash: tokenHash })}`;
 }
 
 /** The password-reset email — used by "Forgot password?" and the admin panel. */

@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, shell } from "@/lib/email";
-import { passwordResetEmail, signInLink } from "@/lib/auth/sign-in-link";
+import { passwordResetEmail, resetLink, signInLink } from "@/lib/auth/sign-in-link";
 
 function esc(s: string) {
   return s
@@ -72,12 +72,7 @@ export async function POST(request: NextRequest) {
     case "send_reset": {
       // We send it ourselves (not Supabase) so the link works on any
       // device — see lib/auth/sign-in-link.
-      const link = await signInLink(
-        admin,
-        target.email,
-        request.nextUrl.origin,
-        "/book/reset-password",
-      );
+      const link = await resetLink(admin, target.email, request.nextUrl.origin);
       if (!link) {
         return NextResponse.json({ error: "Couldn't create a reset link." }, { status: 500 });
       }

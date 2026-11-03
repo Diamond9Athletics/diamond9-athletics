@@ -6,10 +6,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Reset emails land here already signed in: /book/auth/confirm verified
- * the link on the server and set the session cookie (any device works).
- * The user then calls auth.updateUser({ password }) to set a new one.
- * Older Supabase-style links (?code= or #access_token=) still work too.
+ * Reset emails link here with ?token_hash=… (lib/auth/sign-in-link). The
+ * token is only checked when the new password is saved — through
+ * /api/auth/reset-password — so opening or previewing the link can't use
+ * it up, and it still works after switching from an in-app browser.
+ *
+ * Without a token we need a session instead: earlier reset emails went
+ * through /book/auth/confirm, which signs people in first, and older
+ * Supabase-style links (?code= or #access_token=) still work too. Then the
+ * page calls auth.updateUser({ password }) itself.
  */
 export default function ResetPasswordPage() {
   const supabase = createClient();
@@ -19,7 +24,11 @@ export default function ResetPasswordPage() {
   const [confirmPw, setConfirmPw] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The link was already used or is too old: offer a fresh one.
+  const [expired, setExpired] = useState(false);
   const [done, setDone] = useState(false);
+  // The reset link's token, checked when the new password is saved.
+  const [tokenHash, setTokenHash] = useState<string | null>(null);
 
   // Establish the recovery session from the URL before showing the form.
   useEffect(() => {
@@ -28,6 +37,15 @@ export default function ResetPasswordPage() {
     async function init() {
       const url = new URL(window.location.href);
       const params = url.searchParams;
+
+      // 0) Current reset emails: nothing to verify until they save.
+      const token = params.get("token_hash");
+      if (token) {
+        if (cancelled) return;
+        setTokenHash(token);
+        setReady(true);
+        return;
+      }
 
       // 1) Supabase can bounce back with error params on failure.
       const errParam =
@@ -74,9 +92,8 @@ export default function ResetPasswordPage() {
       const { data, error: userErr } = await supabase.auth.getUser();
       if (cancelled) return;
       if (userErr || !data.user) {
-        setError(
-          "This reset link is expired or invalid. Head back to Forgot Password to send a fresh one.",
-        );
+        setError("This reset link has expired or was already used.");
+        setExpired(true);
       }
       setReady(true);
     }
@@ -101,6 +118,26 @@ export default function ResetPasswordPage() {
     }
 
     setSubmitting(true);
+    if (tokenHash) {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenHash, password }),
+      }).catch(() => null);
+      const json = await res?.json().catch(() => ({}));
+      setSubmitting(false);
+      if (!res?.ok) {
+        setError(json?.error ?? "Couldn't save your password. Check your connection and try again.");
+        setExpired(Boolean(json?.expired));
+        // The link is used up but they're signed in, so a retry needs no token.
+        if (json?.signedIn) setTokenHash(null);
+        return;
+      }
+      window.history.replaceState({}, "", "/book/reset-password");
+      setDone(true);
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password });
     setSubmitting(false);
 
@@ -181,6 +218,14 @@ export default function ResetPasswordPage() {
               {error && (
                 <p className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">
                   {error}
+                  {expired && (
+                    <>
+                      {" "}
+                      <Link href="/book/forgot-password" className="text-white underline">
+                        Send me a new link
+                      </Link>
+                    </>
+                  )}
                 </p>
               )}
 
