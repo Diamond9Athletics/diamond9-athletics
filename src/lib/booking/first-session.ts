@@ -3,6 +3,8 @@
  *
  * The first pitching booking any athlete has ever made is a solo slot —
  * they get the whole slot to themselves, and no one else can join it.
+ * "Athlete" means the account's own athlete or a sibling on a family
+ * account (bookings.athlete_id), so each sibling gets their own first.
  *
  * This is derived purely from booking history; no schema column is
  * needed. Anything that treats bookings as "shared" (up to the cap)
@@ -10,46 +12,13 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-/** Returns the set of user_ids whose *earliest ever* confirmed pitching
- *  booking is on or before `maxStart`. Used to decide whether one of
- *  today's overlapping pitching bookings is a first-timer's solo slot. */
-export async function firstPitchingBookingUsers(
-  admin: SupabaseClient,
-  userIds: string[],
-  maxStart: Date,
-): Promise<Set<string>> {
-  if (userIds.length === 0) return new Set();
-
-  // For each user, pull their earliest confirmed pitching booking on or
-  // before `maxStart`. If that earliest one is ON `maxStart`, they're a
-  // first-timer that day; if it's earlier, they aren't. We fetch a
-  // small window and reduce in memory.
-  const { data } = await admin
-    .from("bookings")
-    .select("user_id, starts_at, service:services!inner(category)")
-    .in("user_id", userIds)
-    .eq("service.category", "pitching")
-    .eq("status", "confirmed")
-    .lte("starts_at", maxStart.toISOString())
-    .order("starts_at", { ascending: true });
-
-  const earliestByUser = new Map<string, string>();
-  for (const row of data ?? []) {
-    if (!earliestByUser.has(row.user_id)) {
-      earliestByUser.set(row.user_id, row.starts_at);
-    }
-  }
-
-  const result = new Set<string>();
-  for (const [uid, earliest] of earliestByUser) {
-    if (new Date(earliest).getTime() === maxStart.getTime()) result.add(uid);
-  }
-  return result;
+/** Who a booking is for: the account's own athlete, or a sibling on it. */
+export function athleteKey(userId: string, athleteId: string | null | undefined): string {
+  return `${userId}:${athleteId ?? "primary"}`;
 }
 
-/** The id of each user's earliest-ever confirmed pitching booking — their
- *  solo first session. The coach calendar shows those hours as full, the
- *  same way the booking page treats them. */
+/** The id of each athlete's earliest-ever confirmed pitching booking — their
+ *  solo first session. Pass the account ids whose bookings you care about. */
 export async function firstPitchingBookingIds(
   admin: SupabaseClient,
   userIds: string[],
@@ -58,7 +27,7 @@ export async function firstPitchingBookingIds(
 
   const { data } = await admin
     .from("bookings")
-    .select("id, user_id, starts_at, service:services!inner(category)")
+    .select("id, user_id, athlete_id, starts_at, service:services!inner(category)")
     .in("user_id", userIds)
     .eq("service.category", "pitching")
     .eq("status", "confirmed")
@@ -67,28 +36,33 @@ export async function firstPitchingBookingIds(
   const seen = new Set<string>();
   const ids = new Set<string>();
   for (const row of data ?? []) {
-    if (seen.has(row.user_id)) continue;
-    seen.add(row.user_id);
+    const key = athleteKey(row.user_id, row.athlete_id);
+    if (seen.has(key)) continue;
+    seen.add(key);
     ids.add(row.id);
   }
   return ids;
 }
 
-/** Would this specific booking be the given user's first pitching
- *  session? True iff they have no confirmed pitching booking with a
- *  starts_at strictly earlier than `newStart`. */
+/** Would a booking at `newStart` be this athlete's first pitching session?
+ *  True iff they have no confirmed pitching booking that starts earlier —
+ *  not counting `replacingId`, a booking being rescheduled. */
 export async function wouldBeFirstPitching(
   admin: SupabaseClient,
   userId: string,
   newStart: Date,
+  athleteId: string | null = null,
+  replacingId: string | null = null,
 ): Promise<boolean> {
-  const { data } = await admin
+  let query = admin
     .from("bookings")
     .select("id, service:services!inner(category)")
     .eq("user_id", userId)
     .eq("service.category", "pitching")
     .eq("status", "confirmed")
-    .lt("starts_at", newStart.toISOString())
-    .limit(1);
+    .lt("starts_at", newStart.toISOString());
+  query = athleteId ? query.eq("athlete_id", athleteId) : query.is("athlete_id", null);
+  if (replacingId) query = query.neq("id", replacingId);
+  const { data } = await query.limit(1);
   return !data || data.length === 0;
 }

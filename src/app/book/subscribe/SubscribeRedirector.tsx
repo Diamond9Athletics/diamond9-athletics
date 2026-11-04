@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-export function SubscribeRedirector() {
+export function SubscribeRedirector({ athleteKey }: { athleteKey: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch("/api/stripe/subscribe", { method: "POST" });
+      const res = await fetch("/api/stripe/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athleteKey }),
+      });
       const json = await res.json().catch(() => ({}));
       if (cancelled) return;
       if (!res.ok || !json.url) {
@@ -23,7 +27,7 @@ export function SubscribeRedirector() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [athleteKey]);
 
   if (!error) return null;
 

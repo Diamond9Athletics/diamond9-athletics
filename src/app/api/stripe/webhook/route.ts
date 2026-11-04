@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPurchaseReceipt } from "@/lib/booking/emails";
 import { sendEmail, shell } from "@/lib/email";
+import { PRIMARY } from "@/lib/booking/athletes";
 import type Stripe from "stripe";
 
 // Stripe webhooks must read the raw body to verify the signature.
@@ -195,6 +196,18 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
   }
 
   const greeting = firstName ? `Hey ${firstName},` : "Hey,";
+
+  // A membership for a brother or sister on a family account names them.
+  let forName: string | null = null;
+  const athleteId = session.metadata?.athlete_id;
+  if (athleteId && athleteId !== PRIMARY) {
+    const { data: athlete } = await admin
+      .from("athletes")
+      .select("first_name")
+      .eq("id", athleteId)
+      .maybeSingle();
+    forName = athlete?.first_name ?? null;
+  }
   const dashUrl = "https://diamond9athletics.com/book/dashboard";
   const scheduleUrl = "https://diamond9athletics.com/book/schedule";
 
@@ -208,7 +221,7 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
           <h1 style="margin:0 0 12px 0;font-size:24px;font-weight:800;color:#fff;">You're in.</h1>
           <p style="margin:0 0 14px 0;color:#e4e4e7;font-size:15px;line-height:1.55;">${greeting}</p>
           <p style="margin:0 0 14px 0;color:#a1a1aa;font-size:14px;line-height:1.6;">
-            Your Diamond membership is active. That means unlimited coached pitching
+            ${forName ? `${forName.replace(/[<>&"]/g, "")}&rsquo;s` : "Your"} Diamond membership is active. That means unlimited coached pitching
             sessions — bullpens, high-intent throwing days, plyo, pulldowns, med ball,
             all of it — up to 12 in a calendar month.
           </p>

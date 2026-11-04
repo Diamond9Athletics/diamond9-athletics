@@ -7,7 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { categoryCapacity, computeSlots, type TimeRange } from "./slots";
 import { zonedWallToUtc } from "./tz";
 import { getValidAccessToken, getBusy } from "@/lib/google/calendar";
-import { firstPitchingBookingUsers } from "./first-session";
+import { firstPitchingBookingIds } from "./first-session";
 
 export async function openSlotStarts({
   db,
@@ -42,7 +42,7 @@ export async function openSlotStarts({
       .eq("active", true),
     db
       .from("bookings")
-      .select("starts_at, ends_at, user_id, service:services(category)")
+      .select("id, starts_at, ends_at, user_id, service:services(category)")
       .eq("trainer_id", trainerId)
       .eq("status", "confirmed")
       .gte("starts_at", dayStart.toISOString())
@@ -61,6 +61,7 @@ export async function openSlotStarts({
   // bookings only fill a slot once its capacity is reached; other-category
   // bookings block the trainer entirely.
   type BookingRow = {
+    id: string;
     starts_at: string;
     ends_at: string;
     user_id: string;
@@ -73,75 +74,28 @@ export async function openSlotStarts({
   };
   const bookingRows = (bookingsRes.data ?? []) as BookingRow[];
 
+  const categoryOf = (b: BookingRow) =>
+    (Array.isArray(b.service) ? b.service[0] : b.service)?.category ?? null;
+
   // First-session promotion: a pitching booking that is its athlete's
-  // earliest ever confirmed pitching booking claims the whole slot solo.
-  // Look up which of today's pitching bookings qualify, then treat those
-  // as hard blocks rather than shared bookings.
-  let firstSessionUsers = new Set<string>();
-  if (category === "pitching" && bookingRows.length > 0) {
-    const pitchingUserIds = [
-      ...new Set(
-        bookingRows
-          .filter((b) => {
-            const svc = Array.isArray(b.service) ? b.service[0] : b.service;
-            return svc?.category === "pitching";
-          })
-          .map((b) => b.user_id),
-      ),
-    ];
-    if (pitchingUserIds.length > 0) {
-      // Per booking, we ask: is the earliest confirmed pitching booking
-      // for this user on or before *this booking's* start? For the
-      // whole day we can approximate by using the day's latest pitching
-      // booking start as the ceiling — but that would over-promote.
-      // Instead, do it per unique start time.
-      const uniqueStarts = [
-        ...new Set(
-          bookingRows
-            .filter((b) => {
-              const svc = Array.isArray(b.service) ? b.service[0] : b.service;
-              return svc?.category === "pitching";
-            })
-            .map((b) => b.starts_at),
-        ),
-      ];
-      const perStart = await Promise.all(
-        uniqueStarts.map(async (iso) => {
-          const users = bookingRows
-            .filter((b) => {
-              const svc = Array.isArray(b.service) ? b.service[0] : b.service;
-              return svc?.category === "pitching" && b.starts_at === iso;
-            })
-            .map((b) => b.user_id);
-          const firsts = await firstPitchingBookingUsers(
-            admin,
-            users,
-            new Date(iso),
-          );
-          return { iso, firsts };
-        }),
-      );
-      firstSessionUsers = new Set();
-      for (const { iso, firsts } of perStart) {
-        for (const uid of firsts) {
-          firstSessionUsers.add(`${uid}|${iso}`);
-        }
-      }
-    }
-  }
+  // earliest ever confirmed pitching booking claims the whole slot solo,
+  // so it's treated as a hard block rather than a shared booking.
+  const pitchingUserIds =
+    category === "pitching"
+      ? [...new Set(bookingRows.filter((b) => categoryOf(b) === "pitching").map((b) => b.user_id))]
+      : [];
+  const firstSessions = await firstPitchingBookingIds(admin, pitchingUserIds);
 
   const sameCategoryBookings: TimeRange[] = [];
   const otherCategoryBookings: TimeRange[] = [];
   for (const b of bookingRows) {
-    const svc = Array.isArray(b.service) ? b.service[0] : b.service;
     const range: TimeRange = {
       start: new Date(b.starts_at),
       end: new Date(b.ends_at),
     };
-    if (category && svc?.category === category) {
+    if (category && categoryOf(b) === category) {
       // Solo first sessions are hard blocks even within the same category.
-      const key = `${b.user_id}|${b.starts_at}`;
-      if (category === "pitching" && firstSessionUsers.has(key)) {
+      if (firstSessions.has(b.id)) {
         otherCategoryBookings.push(range);
       } else {
         sameCategoryBookings.push(range);

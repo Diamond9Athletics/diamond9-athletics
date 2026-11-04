@@ -1,11 +1,16 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BookingFlow, type Trainer, type Bucket, type Service } from "./BookingFlow";
-import { requireWaiver } from "@/lib/legal/waiver";
 import {
-  DIAMOND_PITCHING_PRICE_ID,
-  hasActiveSubscription,
-} from "@/lib/stripe/subscription";
+  BookingFlow,
+  type AthleteOption,
+  type Trainer,
+  type Bucket,
+  type RescheduleFor,
+  type Service,
+} from "./BookingFlow";
+import { requireWaiver } from "@/lib/legal/waiver";
+import { diamondMemberships } from "@/lib/stripe/subscription";
+import { fullName, keyOf, loadFamily } from "@/lib/booking/athletes";
 
 export const dynamic = "force-dynamic";
 
@@ -33,29 +38,40 @@ export default async function BookPage({
 
   // If this is a reschedule, fetch the original booking so the flow
   // can pre-pick the service and trainer.
-  let rescheduleFor: {
-    bookingId: string;
-    serviceId: string;
-    trainerId: string;
-    startsAt: string;
-  } | null = null;
+  let rescheduleFor: RescheduleFor = null;
   if (rescheduleId) {
     const { data: orig } = await supabase
       .from("bookings")
-      .select("id, service_id, trainer_id, starts_at, user_id, status")
+      .select(
+        "id, trainer_id, starts_at, user_id, athlete_id, status, service:services(id, name, category, duration_min)",
+      )
       .eq("id", rescheduleId)
       .single();
-    if (orig && orig.user_id === user.id && orig.status === "confirmed") {
+    const service = Array.isArray(orig?.service) ? orig.service[0] : orig?.service;
+    if (orig && service && orig.user_id === user.id && orig.status === "confirmed") {
       rescheduleFor = {
         bookingId: orig.id,
-        serviceId: orig.service_id,
+        service: service as Service,
         trainerId: orig.trainer_id,
         startsAt: orig.starts_at,
+        athleteKey: keyOf(orig.athlete_id),
       };
     }
   }
 
-  // What can this athlete book? Pull their non-empty credit buckets.
+  // Everyone on the account; a family books for one of them at a time.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", user.id)
+    .single();
+  const family = await loadFamily(supabase, user.id, {
+    first_name: profile?.first_name ?? null,
+    last_name: profile?.last_name ?? null,
+    email: user.email,
+  });
+
+  // What can the family book? Credits are on the account and shared.
   const { data: bucketRows } = await supabase
     .from("credit_buckets")
     .select(
@@ -77,29 +93,27 @@ export default async function BookPage({
     ];
   });
 
-  // Diamond pitching subscribers get a synthetic "unlimited" bucket for
-  // any pitching service so the booking flow treats them as entitled.
-  // The booking POST re-verifies against Stripe and inserts with no
-  // credit_bucket_id, so no credits get consumed.
-  let hasPitchingSubscription = false;
+  // A Diamond membership covers one named athlete: they get a synthetic
+  // "unlimited" bucket for any pitching service so the booking flow
+  // treats them as entitled. The booking POST re-verifies against Stripe
+  // and inserts with no credit_bucket_id, so no credits get consumed.
+  let members = new Set<string>();
   if (user.email) {
     try {
-      hasPitchingSubscription = await hasActiveSubscription(
-        user.email,
-        DIAMOND_PITCHING_PRICE_ID,
-      );
+      members = new Set((await diamondMemberships(user.email)).map((m) => m.athleteKey));
     } catch (e) {
       console.warn("Schedule subscription check failed:", (e as Error).message);
     }
   }
 
-  if (hasPitchingSubscription) {
+  const memberBuckets: Bucket[] = [];
+  if (members.size > 0) {
     const { data: pitchingServices } = await supabase
       .from("services")
       .select("id, name, category, duration_min")
       .eq("category", "pitching");
     for (const svc of pitchingServices ?? []) {
-      buckets.push({
+      memberBuckets.push({
         id: `sub-${svc.id}`,
         credits_remaining: Number.MAX_SAFE_INTEGER,
         expires_at: null,
@@ -108,6 +122,14 @@ export default async function BookPage({
       });
     }
   }
+
+  const athletes: AthleteOption[] = family.map((a) => ({
+    key: a.key,
+    name: fullName(a) || a.firstName,
+    firstName: a.firstName,
+    member: members.has(a.key),
+    agreementCurrent: a.agreementCurrent,
+  }));
 
   // Pull active trainers.
   const { data: trainerRows } = await supabase
@@ -137,7 +159,9 @@ export default async function BookPage({
         </div>
 
         <BookingFlow
+          athletes={athletes}
           buckets={buckets}
+          memberBuckets={memberBuckets}
           trainers={trainers}
           rescheduleFor={rescheduleFor}
         />

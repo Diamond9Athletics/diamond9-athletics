@@ -17,8 +17,12 @@ export type BookingEmailData = {
   serviceName: string;
   athleteFirstName: string | null;
   athleteLastName: string | null;
+  /** Where the athlete's emails go — the account's email and phone. */
   athleteEmail: string;
   athletePhone: string | null;
+  /** Set when a parent booked for a brother or sister on their account:
+   *  the account holder's name. The email goes to them. */
+  bookedBy?: string | null;
   trainerFirstName: string | null;
   trainerLastName: string | null;
   trainerEmail: string;
@@ -126,6 +130,12 @@ export async function sendBookingConfirmedEmails(
     `${d.athleteFirstName ?? ""} ${d.athleteLastName ?? ""}`.trim() || "Athlete";
   const trainerName =
     `${d.trainerFirstName ?? ""} ${d.trainerLastName ?? ""}`.trim() || "your trainer";
+  const athleteFirst = athleteName.split(" ")[0];
+  const parentFirst = d.bookedBy?.trim().split(" ")[0] ?? "";
+  const greeting =
+    d.bookedBy != null
+      ? `${parentFirst ? `Hi ${parentFirst} — ` : ""}${athleteFirst} is all set. Looking forward to seeing them.`
+      : `Looking forward to seeing you, ${athleteFirst}.`;
 
   // A weekly run with no gaps adds to Google as one repeating event; with a
   // gap, each date gets its own link instead.
@@ -156,7 +166,7 @@ export async function sendBookingConfirmedEmails(
     title: series ? "Sessions booked" : "Session booked",
     body: `
       <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.01em;">${series ? `${count} sessions booked.` : "Session booked."}</h1>
-      <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">Looking forward to seeing you, ${escape(athleteName.split(" ")[0])}.</p>
+      <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">${escape(greeting)}</p>
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(153,84,210,0.06);border:1px solid rgba(153,84,210,0.15);border-radius:12px;padding:18px;margin:0 0 22px 0;">
         ${whenRows(label, value, !oneLink)}
@@ -200,7 +210,9 @@ export async function sendBookingConfirmedEmails(
     title: "New booking",
     body: `
       <h1 style="margin:0 0 8px 0;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.01em;">New booking</h1>
-      <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">${escape(athleteName)} just booked ${series ? `${count} weekly sessions` : "a session"}.</p>
+      <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">${escape(athleteName)} just booked ${series ? `${count} weekly sessions` : "a session"}${
+        d.bookedBy ? ` (booked by ${escape(d.bookedBy)})` : ""
+      }.</p>
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;margin:0 0 14px 0;">
         ${whenRows(tLabel, tValue, false)}

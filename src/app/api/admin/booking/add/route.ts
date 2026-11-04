@@ -2,7 +2,9 @@
  * Trainer: add a session for any client at any time.
  *
  * Body: {
- *   athleteId, serviceId,
+ *   athleteId (the client's account), athleteKey? (a brother or sister
+ *   on that account; "primary" or left out = the account holder),
+ *   serviceId,
  *   date (YYYY-MM-DD), time (HH:MM) — America/Chicago wall-clock,
  *   useCredit?: boolean   (default true)
  *   sendEmail?: boolean   (default true; only sent for future sessions)
@@ -25,10 +27,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { zonedWallToUtc } from "@/lib/booking/tz";
 import { sendBookingConfirmedEmails } from "@/lib/booking/emails";
 import { createEvent, getValidAccessToken } from "@/lib/google/calendar";
-import {
-  DIAMOND_PITCHING_PRICE_ID,
-  hasActiveSubscription,
-} from "@/lib/stripe/subscription";
+import { diamondMemberships } from "@/lib/stripe/subscription";
+import { bookingAthlete, fullName, keyOf } from "@/lib/booking/athletes";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
@@ -93,6 +93,11 @@ export async function POST(request: NextRequest) {
   if (!athlete) {
     return NextResponse.json({ error: "Client not found." }, { status: 404 });
   }
+  // Who on the client's account the session is for.
+  const forAthlete = await bookingAthlete(admin, athlete.id, body.athleteKey);
+  if (!forAthlete) {
+    return NextResponse.json({ error: "Athlete not found on that account." }, { status: 404 });
+  }
   if (!service || !service.active) {
     return NextResponse.json({ error: "Session type not found." }, { status: 404 });
   }
@@ -107,9 +112,9 @@ export async function POST(request: NextRequest) {
     let coveredByMembership = false;
     if (service.category === "pitching" && athlete.email) {
       try {
-        coveredByMembership = await hasActiveSubscription(
-          athlete.email,
-          DIAMOND_PITCHING_PRICE_ID,
+        const memberships = await diamondMemberships(athlete.email);
+        coveredByMembership = memberships.some(
+          (m) => m.athleteKey === keyOf(forAthlete.id),
         );
       } catch (e) {
         console.warn("Add session: subscription check failed:", (e as Error).message);
@@ -167,6 +172,7 @@ export async function POST(request: NextRequest) {
     .from("bookings")
     .insert({
       user_id: athlete.id,
+      athlete_id: forAthlete.id,
       trainer_id: user.id,
       service_id: service.id,
       credit_bucket_id: creditBucketId,
@@ -199,8 +205,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const athleteName =
-    `${athlete.first_name ?? ""} ${athlete.last_name ?? ""}`.trim() || "Athlete";
+  const athleteName = fullName(forAthlete) || "Athlete";
 
   // ── Google Calendar (skipped quietly if not connected) ───────────────
   try {
@@ -234,8 +239,11 @@ export async function POST(request: NextRequest) {
             { bookingId: booking.id, startsAtIso: booking.starts_at, endsAtIso: endDate.toISOString() },
           ],
           serviceName: service.name,
-          athleteFirstName: athlete.first_name,
-          athleteLastName: athlete.last_name,
+          athleteFirstName: forAthlete.firstName,
+          athleteLastName: forAthlete.lastName,
+          bookedBy: forAthlete.id
+            ? `${athlete.first_name ?? ""} ${athlete.last_name ?? ""}`.trim()
+            : null,
           athleteEmail: athlete.email,
           athletePhone: athlete.phone,
           trainerFirstName: me.first_name,

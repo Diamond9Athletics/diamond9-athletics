@@ -6,8 +6,14 @@ import { useRouter } from "next/navigation";
 const TZ = "America/Chicago";
 
 export type ClientOption = {
+  /** The client's account. */
   id: string;
+  /** Who on that account: "primary" for the account holder, or a brother's
+   *  or sister's athletes row id. */
+  athleteKey: string;
   name: string;
+  /** For a brother or sister: the account holder's name. */
+  accountName: string | null;
   email: string;
   sessions: number;
   lastSession: string | null;
@@ -113,7 +119,9 @@ export function AddSessionPanel({
     return clients
       .filter(
         (c) =>
-          c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q),
+          c.name.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q) ||
+          (c.accountName ?? "").toLowerCase().includes(q),
       )
       .slice(0, 8);
   }, [clients, query]);
@@ -157,6 +165,7 @@ export function AddSessionPanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         athleteId: selected.id,
+        athleteKey: selected.athleteKey,
         serviceId,
         date,
         time,
@@ -227,7 +236,10 @@ export function AddSessionPanel({
                   </span>
                 )}
               </p>
-              <p className="text-zinc-500 text-xs truncate">{selected.email}</p>
+              <p className="text-zinc-500 text-xs truncate">
+                {selected.accountName && `${selected.accountName}'s family · `}
+                {selected.email}
+              </p>
               {!selected.waiverAccepted && (
                 <p className="text-amber-400 text-xs mt-1">
                   Hasn&rsquo;t accepted the Participant Agreement. They&rsquo;ll be asked to when
@@ -267,7 +279,7 @@ export function AddSessionPanel({
             ) : (
               <ul className="space-y-1.5">
                 {matches.map((c) => (
-                  <li key={c.id}>
+                  <li key={`${c.id}:${c.athleteKey}`}>
                     <button
                       type="button"
                       onClick={() => {
@@ -284,6 +296,7 @@ export function AddSessionPanel({
                           )}
                         </span>
                         <span className="block text-zinc-500 text-xs truncate">
+                          {c.accountName && `${c.accountName}'s family · `}
                           {c.email}
                           {!c.waiverAccepted && (
                             <span className="text-amber-400"> · no agreement</span>

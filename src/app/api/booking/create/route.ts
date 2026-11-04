@@ -15,14 +15,12 @@ import {
   deleteEvent,
   getValidAccessToken,
 } from "@/lib/google/calendar";
+import { diamondMemberships } from "@/lib/stripe/subscription";
 import {
-  DIAMOND_PITCHING_PRICE_ID,
-  hasActiveSubscription,
-} from "@/lib/stripe/subscription";
-import {
-  firstPitchingBookingUsers,
+  firstPitchingBookingIds,
   wouldBeFirstPitching,
 } from "@/lib/booking/first-session";
+import { bookingAthlete, fullName, keyOf } from "@/lib/booking/athletes";
 import { needsWaiver } from "@/lib/legal/waiver";
 import { LATE_CANCELLED, isLateCancel } from "@/lib/booking/policy";
 
@@ -40,7 +38,12 @@ type Attempt =
 
 /**
  * POST /api/booking/create
- * Body: { trainerId, serviceId, startsAt (ISO), repeatWeeks?, rescheduleFor? }
+ * Body: { trainerId, serviceId, startsAt (ISO), athleteKey?, repeatWeeks?, rescheduleFor? }
+ *
+ * athleteKey says who on a family account the session is for ("primary"
+ * or left out = the account holder). Credits are shared by the family;
+ * a Diamond membership, the monthly cap, the double-booking check and
+ * the first-session rule all go by the athlete.
  *
  * - Verifies the user has a credit_bucket with credits_remaining > 0 for
  *   the matching service.
@@ -90,44 +93,67 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // If this is a reschedule, atomically cancel the old booking and refund
-  // its credit first.  Then continue with normal booking creation, which
-  // will consume that refunded credit.
+  // A reschedule keeps the session with the athlete it was booked for.
+  let oldBooking: {
+    id: string;
+    user_id: string;
+    athlete_id: string | null;
+    credit_bucket_id: string | null;
+    status: string;
+    starts_at: string;
+  } | null = null;
   if (rescheduleFor) {
-    const { data: oldBooking } = await admin
+    const { data } = await admin
       .from("bookings")
-      .select("id, user_id, credit_bucket_id, status, starts_at")
+      .select("id, user_id, athlete_id, credit_bucket_id, status, starts_at")
       .eq("id", rescheduleFor)
       .single();
-    if (!oldBooking || oldBooking.user_id !== user.id) {
+    if (!data || data.user_id !== user.id) {
       return NextResponse.json(
         { error: "Original booking not found" },
         { status: 404 },
       );
     }
-    if (oldBooking.status === "confirmed") {
-      // Same rule as cancelling: inside the free-cancel window the old
-      // session counts as used and its credit stays spent.
-      const late = isLateCancel(oldBooking.starts_at);
-      await admin
-        .from("bookings")
-        .update({ status: late ? LATE_CANCELLED : "cancelled" })
-        .eq("id", oldBooking.id);
-      if (oldBooking.credit_bucket_id && !late) {
-        const { data: bk } = await admin
-          .from("credit_buckets")
-          .select("credits_remaining")
-          .eq("id", oldBooking.credit_bucket_id)
-          .single();
-        if (bk) {
-          await admin
-            .from("credit_buckets")
-            .update({ credits_remaining: bk.credits_remaining + 1 })
-            .eq("id", oldBooking.credit_bucket_id);
-        }
-      }
-    }
+    oldBooking = data;
   }
+
+  const athlete = await bookingAthlete(
+    admin,
+    user.id,
+    oldBooking ? keyOf(oldBooking.athlete_id) : body?.athleteKey,
+  );
+  if (!athlete) {
+    return NextResponse.json(
+      { error: "We couldn't find that athlete on your account." },
+      { status: 404 },
+    );
+  }
+  if (!athlete.agreementCurrent) {
+    return NextResponse.json(
+      {
+        error: `Accept the Participant Agreement for ${athlete.firstName} on your account page before booking for them.`,
+        needsAthleteAgreement: true,
+      },
+      { status: 403 },
+    );
+  }
+  // PostgREST filter for this athlete's own sessions on the account.
+  const ownSessions: [string, string | null] = athlete.id
+    ? ["eq", athlete.id]
+    : ["is", null];
+
+  // A reschedule replaces the old booking, which is cancelled only once
+  // the new one is in — a time that doesn't work out leaves it alone.
+  // Outside the free-cancel window its credit moves to the new booking;
+  // inside it, the old session counts as used and the new one is paid for.
+  const replacing =
+    oldBooking && oldBooking.status === "confirmed"
+      ? {
+          id: oldBooking.id,
+          creditBucketId: oldBooking.credit_bucket_id,
+          late: isLateCancel(oldBooking.starts_at),
+        }
+      : null;
 
   // 1) Look up the service to know its duration.
   const { data: service, error: svcErr } = await admin
@@ -165,16 +191,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 2) Entitlement: either an active Diamond pitching subscription
+  // 2) Entitlement: either a Diamond pitching membership for this athlete
   //    (up to 12 bookings/month) or a credit_bucket with credits left.
-  //    Subscription check hits Stripe as the source of truth, so a
+  //    The membership check hits Stripe as the source of truth, so a
   //    lapsed card is caught even without our webhook running.
   let hasSubscriptionEntitlement = false;
   if (service.category === "pitching" && user.email) {
     try {
-      hasSubscriptionEntitlement = await hasActiveSubscription(
-        user.email,
-        DIAMOND_PITCHING_PRICE_ID,
+      const memberships = await diamondMemberships(user.email);
+      hasSubscriptionEntitlement = memberships.some(
+        (m) => m.athleteKey === keyOf(athlete.id),
       );
     } catch (e) {
       // Don't punish the athlete for a Stripe hiccup — fall through
@@ -199,19 +225,24 @@ export async function POST(request: NextRequest) {
 
     // One athlete can't hold two sessions at once — a second try or a
     // second tab used to double-book and take another athlete's spot.
-    const { data: alreadyBooked } = await admin
+    // (Brothers and sisters can train side by side.)
+    let sameTime = admin
       .from("bookings")
       .select("id")
       .eq("user_id", user.id)
+      .filter("athlete_id", ...ownSessions)
       .eq("status", "confirmed")
       .lt("starts_at", end.toISOString())
-      .gt("ends_at", start.toISOString())
-      .limit(1);
+      .gt("ends_at", start.toISOString());
+    if (replacing) sameTime = sameTime.neq("id", replacing.id);
+    const { data: alreadyBooked } = await sameTime.limit(1);
     if (alreadyBooked && alreadyBooked.length > 0) {
       return fail(
         409,
-        "You already have a session booked at that time — check your dashboard.",
-        "You already have a session then",
+        athlete.id
+          ? `${athlete.firstName} already has a session booked at that time — check your dashboard.`
+          : "You already have a session booked at that time — check your dashboard.",
+        athlete.id ? `${athlete.firstName} already has a session then` : "You already have a session then",
       );
     }
 
@@ -246,17 +277,21 @@ export async function POST(request: NextRequest) {
         `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01T00:00:00-05:00`,
       );
 
-      const { count } = await admin
+      let monthSessions = admin
         .from("bookings")
         .select("id, service:services!inner(category)", {
           count: "exact",
           head: true,
         })
         .eq("user_id", user.id)
+        .filter("athlete_id", ...ownSessions)
         .in("status", ["confirmed", LATE_CANCELLED])
         .eq("service.category", "pitching")
         .gte("starts_at", monthStart.toISOString())
         .lt("starts_at", nextMonth.toISOString());
+      // A late reschedule's original still counts; a free one's won't.
+      if (replacing && !replacing.late) monthSessions = monthSessions.neq("id", replacing.id);
+      const { count } = await monthSessions;
 
       if ((count ?? 0) >= SUBSCRIPTION_MONTHLY_CAP) {
         return fail(
@@ -266,6 +301,9 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+
+    // A free reschedule moves the original booking's credit over.
+    const movedCredit = replacing && !replacing.late ? replacing.creditBucketId : null;
 
     const { data: buckets, error: bucketErr } = await admin
       .from("credit_buckets")
@@ -282,7 +320,7 @@ export async function POST(request: NextRequest) {
 
     const bucket = buckets?.[0] ?? null;
 
-    if (!hasSubscriptionEntitlement && !bucket) {
+    if (!hasSubscriptionEntitlement && !bucket && !movedCredit) {
       return fail(
         402,
         "You don't have credits for this service. Buy a package first.",
@@ -294,26 +332,28 @@ export async function POST(request: NextRequest) {
     //    existing booking, and it falls inside an availability rule.
     //    For MVP we trust the client's /slots query did most of this; we
     //    just re-check for direct overlap here.
-    const { data: clashing } = await admin
+    let overlapping = admin
       .from("bookings")
       .select("id, user_id, service:services(category)")
       .eq("trainer_id", trainerId)
       .eq("status", "confirmed")
       .lt("starts_at", end.toISOString())
       .gt("ends_at", start.toISOString());
+    if (replacing) overlapping = overlapping.neq("id", replacing.id);
+    const { data: clashing } = await overlapping;
 
     // Same-category overlaps only fill the slot once capacity is hit
     // (pitching = 2, hitting = 1). Any other-category overlap still blocks.
     const cap = categoryCapacity(service.category);
     let sameCategoryOverlap = 0;
     let otherCategoryOverlap = false;
-    const overlappingPitchingUserIds: string[] = [];
+    const overlappingPitching: { id: string; user_id: string }[] = [];
     for (const row of clashing ?? []) {
       const svc = Array.isArray(row.service) ? row.service[0] : row.service;
       if (svc?.category === service.category) {
         sameCategoryOverlap += 1;
         if (service.category === "pitching") {
-          overlappingPitchingUserIds.push(row.user_id);
+          overlappingPitching.push(row);
         }
       } else {
         otherCategoryOverlap = true;
@@ -331,7 +371,7 @@ export async function POST(request: NextRequest) {
     //    first session, that other athlete owns the slot solo — block.
     const isFirstPitchingSession =
       service.category === "pitching"
-        ? await wouldBeFirstPitching(admin, user.id, start)
+        ? await wouldBeFirstPitching(admin, user.id, start, athlete.id, replacing?.id)
         : false;
 
     if (service.category === "pitching") {
@@ -342,13 +382,11 @@ export async function POST(request: NextRequest) {
           "That time is full",
         );
       }
-      if (overlappingPitchingUserIds.length > 0) {
-        const others = await firstPitchingBookingUsers(
-          admin,
-          overlappingPitchingUserIds,
-          start,
-        );
-        if (others.size > 0) {
+      if (overlappingPitching.length > 0) {
+        const firsts = await firstPitchingBookingIds(admin, [
+          ...new Set(overlappingPitching.map((b) => b.user_id)),
+        ]);
+        if (overlappingPitching.some((b) => firsts.has(b.id))) {
           return fail(
             409,
             "That slot is reserved for a first-time athlete. Please pick another.",
@@ -358,17 +396,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4) Insert booking. When the subscription covers it, no bucket is
-    //    attached — subscribers don't consume credits.
-    const useBucket = !hasSubscriptionEntitlement && bucket;
+    // 4) Insert booking. A moved credit comes along as-is; when the
+    //    subscription covers it, no bucket is attached — subscribers don't
+    //    consume credits.
+    const useBucket = !movedCredit && !hasSubscriptionEntitlement && bucket;
 
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
       .insert({
         user_id: user.id,
+        athlete_id: athlete.id,
         trainer_id: trainerId,
         service_id: serviceId,
-        credit_bucket_id: useBucket ? bucket.id : null,
+        credit_bucket_id: movedCredit ?? (useBucket ? bucket.id : null),
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         status: "confirmed",
@@ -411,6 +451,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: firstTry.error }, { status: firstTry.status });
   }
 
+  // Now the new time is booked, cancel the one it replaces.
+  if (replacing) {
+    await admin
+      .from("bookings")
+      .update({ status: replacing.late ? LATE_CANCELLED : "cancelled" })
+      .eq("id", replacing.id);
+  }
+
   // Then the same time each following week, skipping any that won't go.
   const booked: Booked[] = [firstTry.booking];
   const skipped: { startsAt: string; reason: string }[] = [];
@@ -450,7 +498,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const [{ data: athlete }, { data: trainer }, { data: svcRow }] = await Promise.all([
+  const [{ data: account }, { data: trainer }, { data: svcRow }] = await Promise.all([
     admin
       .from("profiles")
       .select("first_name, last_name, email, phone")
@@ -467,8 +515,7 @@ export async function POST(request: NextRequest) {
   // If the trainer has Google Calendar connected, push an event per session.
   try {
     const { accessToken, calendarId } = await getValidAccessToken(trainerId);
-    const athleteName =
-      `${athlete?.first_name ?? ""} ${athlete?.last_name ?? ""}`.trim() || "Athlete";
+    const athleteName = fullName(athlete) || "Athlete";
     for (const b of booked) {
       const soloTag = b.isFirstPitching ? " · 1st session (solo)" : "";
       const eventId = await createEvent({
@@ -481,12 +528,12 @@ export async function POST(request: NextRequest) {
         description:
           `Diamond Nine Athletics booking\n\n` +
           `Athlete: ${athleteName}\n` +
-          `Email: ${athlete?.email ?? "—"}\n` +
-          (athlete?.phone ? `Phone: ${athlete.phone}\n` : "") +
+          `Email: ${account?.email ?? "—"}\n` +
+          (account?.phone ? `Phone: ${account.phone}\n` : "") +
           (b.isFirstPitching
             ? "\nFIRST PITCHING SESSION — slot is solo, no other bookings will join.\n"
             : ""),
-        attendeeEmail: athlete?.email ?? undefined,
+        attendeeEmail: account?.email ?? undefined,
       });
       await admin
         .from("bookings")
@@ -502,7 +549,7 @@ export async function POST(request: NextRequest) {
   // One confirmation covers every session booked (athlete + trainer).
   // Don't fail the booking if email sending hiccups — log and move on.
   try {
-    if (athlete && trainer && svcRow) {
+    if (account && trainer && svcRow) {
       await sendBookingConfirmedEmails({
         sessions: booked.map((b) => ({
           bookingId: b.id,
@@ -510,10 +557,14 @@ export async function POST(request: NextRequest) {
           endsAtIso: b.ends_at,
         })),
         serviceName: svcRow.name,
-        athleteFirstName: athlete.first_name,
-        athleteLastName: athlete.last_name,
-        athleteEmail: athlete.email,
-        athletePhone: athlete.phone,
+        athleteFirstName: athlete.firstName,
+        athleteLastName: athlete.lastName,
+        // A brother's or sister's session: the email still goes to the account.
+        bookedBy: athlete.id
+          ? `${account.first_name ?? ""} ${account.last_name ?? ""}`.trim()
+          : null,
+        athleteEmail: account.email,
+        athletePhone: account.phone,
         trainerFirstName: trainer.first_name,
         trainerLastName: trainer.last_name,
         trainerEmail: trainer.email,

@@ -4,6 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MAX_REPEAT_WEEKS, inBookingWindow, weeklyStarts } from "@/lib/booking/repeat";
+import { isLateCancel } from "@/lib/booking/policy";
+import { zonedWallToUtc } from "@/lib/booking/tz";
+import { addDays } from "@/lib/booking/coach-calendar";
 
 export type Service = {
   id: string;
@@ -31,7 +34,18 @@ export type Trainer = {
   trainer_categories: ("pitching" | "hitting")[];
 };
 
-type Step = "service" | "trainer" | "date" | "time" | "confirm";
+/** Someone on the account who can be booked for. */
+export type AthleteOption = {
+  key: string;
+  name: string;
+  firstName: string;
+  /** Has their own Diamond membership. */
+  member: boolean;
+  /** The Participant Agreement is accepted for them. */
+  agreementCurrent: boolean;
+};
+
+type Step = "athlete" | "service" | "trainer" | "date" | "time" | "confirm";
 
 type BlockRange = {
   starts_at: string;
@@ -41,30 +55,59 @@ type BlockRange = {
 
 export type RescheduleFor = {
   bookingId: string;
-  serviceId: string;
+  service: Service;
   trainerId: string;
   startsAt: string;
+  athleteKey: string;
 } | null;
 
 export function BookingFlow({
+  athletes,
   buckets,
+  memberBuckets,
   trainers,
   rescheduleFor = null,
 }: {
+  /** Everyone on the account; more than one adds a "who's it for" step. */
+  athletes: AthleteOption[];
+  /** The account's credits, shared by everyone on it. */
   buckets: Bucket[];
+  /** Unlimited pitching for an athlete with their own Diamond membership. */
+  memberBuckets: Bucket[];
   trainers: Trainer[];
   rescheduleFor?: RescheduleFor;
 }) {
   const router = useRouter();
-  // Pre-select bucket and trainer when rescheduling.
+  const family = athletes.length > 1;
+  // A reschedule stays with the same athlete; a one-athlete account skips the question.
+  const presetAthlete = rescheduleFor
+    ? athletes.find((a) => a.key === rescheduleFor.athleteKey) ?? null
+    : family
+      ? null
+      : athletes[0] ?? null;
+  const [athlete, setAthlete] = useState<AthleteOption | null>(presetAthlete);
+  const bucketsFor = (a: AthleteOption | null) =>
+    a ? (a.member ? [...buckets, ...memberBuckets] : buckets) : [];
+  const athleteBuckets = bucketsFor(athlete);
+  // Pre-select bucket and trainer when rescheduling. With no credits left
+  // the original booking's own credit moves to the new time.
   const presetBucket = rescheduleFor
-    ? buckets.find((b) => b.service.id === rescheduleFor.serviceId) ?? null
+    ? bucketsFor(presetAthlete).find((b) => b.service.id === rescheduleFor.service.id) ?? {
+        id: `moving-${rescheduleFor.bookingId}`,
+        credits_remaining: 0,
+        expires_at: null,
+        service: rescheduleFor.service,
+      }
     : null;
   const presetTrainer = rescheduleFor
     ? trainers.find((t) => t.id === rescheduleFor.trainerId) ?? null
     : null;
   const [step, setStep] = useState<Step>(
-    rescheduleFor && presetBucket && presetTrainer ? "date" : "service",
+    rescheduleFor && presetBucket && presetTrainer
+      ? "date"
+      : presetAthlete
+        ? "service"
+        : "athlete",
   );
   const [bucket, setBucket] = useState<Bucket | null>(presetBucket);
   const [trainer, setTrainer] = useState<Trainer | null>(presetTrainer);
@@ -99,7 +142,7 @@ export function BookingFlow({
   // No credits → tell them to buy a package.
   // Reschedule is fine even when buckets are empty (we'll refund the credit
   // first), so skip this check in that mode.
-  if (buckets.length === 0 && !rescheduleFor) {
+  if (buckets.length === 0 && memberBuckets.length === 0 && !rescheduleFor) {
     return (
       <div className="card-modern rounded-2xl p-8 text-center space-y-5">
         <p className="text-[#b07adf] text-xs tracking-widest font-bold">NO CREDITS</p>
@@ -156,14 +199,34 @@ export function BookingFlow({
                 minute: "2-digit",
               })}
             </span>
-            . Pick a new time below — it&rsquo;ll be cancelled and the credit reused.
+            . Pick a new time below — your booking moves there once it&rsquo;s confirmed.
+            {isLateCancel(rescheduleFor.startsAt) &&
+              " It’s within 24 hours, so the original counts as used."}
           </p>
         </div>
       )}
-      <Stepper step={step} />
+      <Stepper step={step} family={family} />
 
-      {step === "service" && (
-        <ServiceStep buckets={buckets} onPick={pickBucket} />
+      {step === "athlete" && (
+        <AthleteStep
+          athletes={athletes}
+          onPick={(a) => {
+            setAthlete(a);
+            setBucket(null);
+            setTrainer(null);
+            setError(null);
+            setStep("service");
+          }}
+        />
+      )}
+
+      {step === "service" && athlete && (
+        <ServiceStep
+          athlete={family ? athlete : null}
+          buckets={athleteBuckets}
+          onPick={pickBucket}
+          onBack={family && !rescheduleFor ? () => setStep("athlete") : undefined}
+        />
       )}
 
       {step === "trainer" && bucket && (
@@ -203,8 +266,10 @@ export function BookingFlow({
         />
       )}
 
-      {step === "confirm" && bucket && trainer && slot && (
+      {step === "confirm" && athlete && bucket && trainer && slot && (
         <ConfirmStep
+          athlete={athlete}
+          family={family}
           bucket={bucket}
           credits={buckets
             .filter((b) => b.service.id === bucket.service.id && !b.isSubscription)
@@ -230,8 +295,9 @@ export function BookingFlow({
   );
 }
 
-function Stepper({ step }: { step: Step }) {
+function Stepper({ step, family }: { step: Step; family: boolean }) {
   const steps: { id: Step; label: string }[] = [
+    ...(family ? [{ id: "athlete" as const, label: "Who" }] : []),
     { id: "service", label: "Service" },
     { id: "trainer", label: "Trainer" },
     { id: "date", label: "Date" },
@@ -259,12 +325,55 @@ function Stepper({ step }: { step: Step }) {
   );
 }
 
-function ServiceStep({
-  buckets,
+function AthleteStep({
+  athletes,
   onPick,
 }: {
+  athletes: AthleteOption[];
+  onPick: (a: AthleteOption) => void;
+}) {
+  return (
+    <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-3">
+      <h2 className="font-display text-2xl text-white mb-2">Who&rsquo;s it for?</h2>
+      {athletes.map((a) => (
+        <button
+          key={a.key}
+          onClick={() => onPick(a)}
+          disabled={!a.agreementCurrent}
+          className="w-full text-left flex items-center justify-between gap-3 rounded-xl px-4 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition disabled:opacity-50 disabled:hover:border-zinc-800"
+        >
+          <span className="text-white text-sm font-bold">{a.name}</span>
+          {!a.agreementCurrent ? (
+            <span className="text-amber-400 text-[10px] tracking-widest font-bold">AGREEMENT NEEDED</span>
+          ) : a.member ? (
+            <span className="text-[#b07adf] text-[10px] tracking-widest font-bold">◆ DIAMOND</span>
+          ) : null}
+        </button>
+      ))}
+      {athletes.some((a) => !a.agreementCurrent) && (
+        <p className="text-zinc-500 text-xs">
+          Accept the Participant Agreement for them on{" "}
+          <Link href="/book/dashboard" className="text-[#b07adf] hover:underline">
+            your account page
+          </Link>{" "}
+          first.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ServiceStep({
+  athlete,
+  buckets,
+  onPick,
+  onBack,
+}: {
+  /** Set on a family account, to say whose options these are. */
+  athlete: AthleteOption | null;
   buckets: Bucket[];
   onPick: (b: Bucket) => void;
+  onBack?: () => void;
 }) {
   // Group by service. A subscription "bucket" always wins as the picked
   // bucket for that service — booking route bypasses credit deduction
@@ -295,9 +404,29 @@ function ServiceStep({
     return [...map.values()];
   }, [buckets]);
 
+  if (grouped.length === 0) {
+    return (
+      <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-4">
+        <p className="text-zinc-300 text-sm">
+          {athlete?.firstName ?? "This athlete"} doesn&rsquo;t have a Diamond membership, and
+          there are no credits on the account right now.
+        </p>
+        <Link
+          href="/book/packages"
+          className="btn-gold inline-block px-8 py-3 rounded-full text-xs tracking-widest font-black"
+        >
+          SEE PACKAGES
+        </Link>
+        {onBack && <BackButton onClick={onBack} />}
+      </div>
+    );
+  }
+
   return (
     <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-3">
-      <h2 className="font-display text-2xl text-white mb-2">Pick a service</h2>
+      <h2 className="font-display text-2xl text-white mb-2">
+        Pick a service{athlete && <span className="text-zinc-500"> for {athlete.firstName}</span>}
+      </h2>
       {grouped.map(({ service, total, bucket, isSubscription }) => (
         <button
           key={service.id}
@@ -320,6 +449,7 @@ function ServiceStep({
           )}
         </button>
       ))}
+      {onBack && <BackButton onClick={onBack} />}
     </div>
   );
 }
@@ -359,18 +489,13 @@ function TrainerStep({
   );
 }
 
-/** Return the day-of-CT-time span [00:00, 24:00) for a YYYY-MM-DD date. */
+/** Return the day-of-CT-time span [00:00, 24:00) for a YYYY-MM-DD date —
+ *  through the studio time zone, so it's right in CST and CDT alike. */
 function ctDayBounds(dateIso: string): { start: Date; end: Date } {
-  // Interpret the ISO date as noon CT and clip to day. Good enough for
-  // determining whether a block overlaps this day (blocks are minute-
-  // granular but we compare day-buckets for the picker).
-  const noon = new Date(`${dateIso}T12:00:00-05:00`);
-  const dayLabel = noon.toLocaleDateString("en-CA", {
-    timeZone: "America/Chicago",
-  });
-  const start = new Date(`${dayLabel}T00:00:00-05:00`);
-  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-  return { start, end };
+  return {
+    start: zonedWallToUtc(dateIso, "00:00"),
+    end: zonedWallToUtc(addDays(dateIso, 1), "00:00"),
+  };
 }
 
 function blocksForDay(blocks: BlockRange[], dateIso: string): BlockRange[] {
@@ -387,7 +512,8 @@ function isFullDayBlock(block: BlockRange, dateIso: string): boolean {
   const { start, end } = ctDayBounds(dateIso);
   const bs = new Date(block.starts_at).getTime();
   const be = new Date(block.ends_at).getTime();
-  return bs <= start.getTime() && be >= end.getTime();
+  // All-day time off is saved as 12:00 AM–11:59 PM, a minute short of midnight.
+  return bs <= start.getTime() && be >= end.getTime() - 60_000;
 }
 
 function DateStep({
@@ -675,6 +801,8 @@ type BookingResult = {
 };
 
 function ConfirmStep({
+  athlete,
+  family,
   bucket,
   credits,
   trainer,
@@ -684,6 +812,8 @@ function ConfirmStep({
   onError,
   onSuccess,
 }: {
+  athlete: AthleteOption;
+  family: boolean;
   bucket: Bucket;
   /** Credits left for this service (a membership isn't limited by these). */
   credits: number;
@@ -727,6 +857,7 @@ function ConfirmStep({
         trainerId: trainer.id,
         serviceId: bucket.service.id,
         startsAt: slot,
+        athleteKey: athlete.key,
         repeatWeeks: weeks,
         rescheduleFor: rescheduleFor?.bookingId ?? null,
       }),
@@ -835,6 +966,7 @@ function ConfirmStep({
         </div>
       )}
       <div className="text-zinc-300 text-sm space-y-2">
+        {family && <Row label="Athlete" value={athlete.name} />}
         <Row label="Service" value={bucket.service.name} />
         <Row
           label="Trainer"
@@ -859,9 +991,15 @@ function ConfirmStep({
           label="Cost"
           value={
             rescheduleFor
-              ? "No charge (reusing credit)"
+              ? isLateCancel(rescheduleFor.startsAt)
+                ? bucket.isSubscription
+                  ? "Included — the original counts as used"
+                  : "1 credit — the original counts as used"
+                : "No charge — your booking moves"
               : bucket.isSubscription
-                ? "Included in your membership"
+                ? family
+                  ? `Included in ${athlete.firstName}'s membership`
+                  : "Included in your membership"
                 : `${weeks} ${weeks === 1 ? "credit" : "credits"}`
           }
         />

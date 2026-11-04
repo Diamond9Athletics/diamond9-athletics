@@ -3,11 +3,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CancelButton } from "./CancelButton";
 import { ManageSubscriptionLink } from "./ManageSubscriptionLink";
+import { FamilyCard } from "./FamilyCard";
 import { requireWaiver } from "@/lib/legal/waiver";
-import {
-  DIAMOND_PITCHING_PRICE_ID,
-  hasActiveSubscription,
-} from "@/lib/stripe/subscription";
+import { diamondMemberships, type Membership } from "@/lib/stripe/subscription";
+import { fullName, keyOf, loadFamily } from "@/lib/booking/athletes";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +44,7 @@ export default async function Dashboard() {
       supabase
         .from("bookings")
         .select(
-          "id, starts_at, ends_at, status, service:services(name), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name)",
+          "id, starts_at, ends_at, status, athlete_id, service:services(name), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name)",
         )
         .eq("user_id", user.id)
         .eq("status", "confirmed")
@@ -56,20 +55,31 @@ export default async function Dashboard() {
   const totalCredits =
     buckets?.reduce((sum, b) => sum + (b.credits_remaining ?? 0), 0) ?? 0;
 
-  // Live-check Stripe for an active Diamond pitching membership. Runs
-  // one HTTP round-trip; keeps the source of truth in Stripe so a
-  // lapsed card is caught even without our webhook running.
-  let isPitchingSubscriber = false;
+  // Live-check Stripe for Diamond memberships (one per athlete they
+  // cover). Keeps the source of truth in Stripe so a lapsed card is
+  // caught even without our webhook running.
+  let memberships: Membership[] = [];
   if (user.email) {
     try {
-      isPitchingSubscriber = await hasActiveSubscription(
-        user.email,
-        DIAMOND_PITCHING_PRICE_ID,
-      );
+      memberships = await diamondMemberships(user.email);
     } catch (e) {
       console.warn("Dashboard subscription check failed:", (e as Error).message);
     }
   }
+  const isPitchingSubscriber = memberships.length > 0;
+
+  // Everyone on the account. With more than one, sessions say whose they are.
+  const family = await loadFamily(supabase, user.id, {
+    first_name: profile?.first_name ?? null,
+    last_name: profile?.last_name ?? null,
+    email: user.email,
+  });
+  const isFamily = family.length > 1;
+  const athleteByKey = new Map(family.map((a) => [a.key, a]));
+  const whose = (athleteId: string | null) =>
+    isFamily ? athleteByKey.get(keyOf(athleteId))?.firstName ?? null : null;
+  const memberKeys = new Set(memberships.map((m) => m.athleteKey));
+  const memberNames = family.filter((a) => memberKeys.has(a.key)).map((a) => a.firstName);
 
   const canBook = isPitchingSubscriber || totalCredits > 0;
 
@@ -107,6 +117,9 @@ export default async function Dashboard() {
                   <span className="gradient-text whitespace-nowrap">{sessionTime(next.starts_at)}</span>
                 </p>
                 <p className="text-zinc-400 text-sm mt-2">
+                  {whose(next.athlete_id) && (
+                    <span className="text-white font-bold">{whose(next.athlete_id)} · </span>
+                  )}
                   {nextService?.name ?? "Session"}
                   {nextTrainer?.first_name && (
                     <>
@@ -149,7 +162,9 @@ export default async function Dashboard() {
                   <span className="text-2xl text-zinc-400 font-normal tracking-wider">UNLIMITED</span>
                 </p>
                 <p className="text-zinc-500 text-xs mt-2">
-                  Pitching sessions — book anytime the schedule is open.
+                  {isFamily && memberNames.length > 0
+                    ? `Pitching sessions for ${memberNames.join(" and ")} — book anytime the schedule is open.`
+                    : "Pitching sessions — book anytime the schedule is open."}
                 </p>
               </>
             ) : (
@@ -214,7 +229,12 @@ export default async function Dashboard() {
                       <p className="text-[#b07adf] text-sm font-bold">
                         {sessionDay(b.starts_at)} · {sessionTime(b.starts_at)}
                       </p>
-                      <p className="text-zinc-300 text-sm mt-0.5">{svc?.name ?? "Session"}</p>
+                      <p className="text-zinc-300 text-sm mt-0.5">
+                        {whose(b.athlete_id) && (
+                          <span className="text-white font-bold">{whose(b.athlete_id)} · </span>
+                        )}
+                        {svc?.name ?? "Session"}
+                      </p>
                       <p className="text-zinc-500 text-xs">
                         with {trn?.first_name} {trn?.last_name}
                       </p>
@@ -225,6 +245,20 @@ export default async function Dashboard() {
               })}
             </ul>
           </div>
+        )}
+
+        {/* Coaches' own accounts aren't athletes — skip the pitch unless they've added someone. */}
+        {(isFamily || !(profile?.is_trainer || profile?.is_admin)) && (
+          <FamilyCard
+            athletes={family.map((a, i) => ({
+              key: a.key,
+              name: fullName(a) || a.firstName,
+              firstName: a.firstName,
+              holder: i === 0,
+              member: memberKeys.has(a.key),
+              agreementCurrent: a.agreementCurrent,
+            }))}
+          />
         )}
 
         {(profile?.is_trainer || profile?.is_admin) && (
@@ -262,7 +296,13 @@ export default async function Dashboard() {
         {/* Account housekeeping lives at the bottom */}
         <div className="mt-10">
           <p className="text-zinc-500 text-[10px] tracking-widest font-bold text-center">ACCOUNT</p>
-          <ManageSubscriptionLink prominent={isPitchingSubscriber} />
+          {memberships.map((m) => (
+            <ManageSubscriptionLink
+              key={m.subscriptionId}
+              membership={m}
+              athleteName={isFamily ? athleteByKey.get(m.athleteKey)?.firstName : undefined}
+            />
+          ))}
           <div className="card-modern rounded-2xl p-5 sm:p-6 mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <p className="text-zinc-500 text-xs min-w-0 truncate">
               Signed in as <span className="text-zinc-300">{profile?.email ?? user.email}</span>

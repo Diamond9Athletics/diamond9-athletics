@@ -7,9 +7,10 @@ import type { ClientOption, ServiceOption } from "./AddSessionPanel";
 import { CoachCalendar } from "./CoachCalendar";
 import {
   DIAMOND_PITCHING_PRICE_ID,
-  activeSubscriberEmails,
+  activeMemberships,
 } from "@/lib/stripe/subscription";
-import { hasAcceptedWaiver } from "@/lib/legal/waiver";
+import { WAIVER_VERSION, hasAcceptedWaiver } from "@/lib/legal/waiver";
+import { PRIMARY, keyOf } from "@/lib/booking/athletes";
 import { firstPitchingBookingIds } from "@/lib/booking/first-session";
 import {
   addDays,
@@ -32,9 +33,13 @@ type Athlete = {
   phone: string | null;
 };
 type Service = { name: string; category: CalCategory };
+/** A brother or sister on the client's account. */
+type Sibling = { first_name: string; last_name: string | null; waiver_version: string | null };
 type BookingRow = {
   id: string;
   user_id: string;
+  athlete_id: string | null;
+  sibling: Sibling | Sibling[] | null;
   trainer_id: string;
   starts_at: string;
   ends_at: string;
@@ -126,7 +131,7 @@ export default async function TrainerPage({
       admin
         .from("bookings")
         .select(
-          "id, user_id, trainer_id, starts_at, ends_at, notes, service:services(name, category), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone)",
+          "id, user_id, athlete_id, trainer_id, starts_at, ends_at, notes, service:services(name, category), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone), sibling:athletes(first_name, last_name, waiver_version)",
         )
         .eq("status", "confirmed")
         .in("trainer_id", loadIds)
@@ -160,9 +165,11 @@ export default async function TrainerPage({
 
   const sessions: CalSession[] = shown.map((r) => {
     const a = one(r.athlete);
+    const sib = one(r.sibling);
     const svc = one(r.service);
-    const first = a?.first_name?.trim() ?? "";
-    const last = a?.last_name?.trim() ?? "";
+    // A brother's or sister's session shows their name; contact is the account's.
+    const first = (sib ? sib.first_name : a?.first_name)?.trim() ?? "";
+    const last = (sib ? sib.last_name : a?.last_name)?.trim() ?? "";
     const athleteName = `${first} ${last}`.trim() || a?.email || "Athlete";
     return {
       id: r.id,
@@ -177,7 +184,7 @@ export default async function TrainerPage({
       category: svc?.category ?? "pitching",
       notes: r.notes,
       firstSession: firstSessions.has(r.id),
-      waiverAccepted: acceptedWaiver.has(r.user_id),
+      waiverAccepted: sib ? sib.waiver_version === WAIVER_VERSION : acceptedWaiver.has(r.user_id),
     };
   });
 
@@ -200,7 +207,10 @@ export default async function TrainerPage({
 
   const addSession = addSessionBase && {
     ...addSessionBase,
-    clients: addSessionBase.clients.map((c) => ({ ...c, waiverAccepted: acceptedWaiver.has(c.id) })),
+    clients: addSessionBase.clients.map(({ siblingAgreement, ...c }) => ({
+      ...c,
+      waiverAccepted: siblingAgreement ?? acceptedWaiver.has(c.id),
+    })),
   };
 
   // Links keep the coach and the week you're looking at.
@@ -311,9 +321,10 @@ async function loadAddSession(admin: SupabaseClient, userId: string, myCategorie
   const [
     { data: serviceRows },
     { data: profileRows },
+    { data: siblingRows },
     { data: historyRows },
     { data: bucketRows },
-    subscriberEmails,
+    memberships,
   ] = await Promise.all([
     admin
       .from("services")
@@ -323,8 +334,13 @@ async function loadAddSession(admin: SupabaseClient, userId: string, myCategorie
       .order("duration_min", { ascending: false }),
     admin.from("profiles").select("id, first_name, last_name, email").neq("id", userId),
     admin
+      .from("athletes")
+      .select("id, parent_id, first_name, last_name, waiver_version")
+      .is("archived_at", null)
+      .order("created_at"),
+    admin
       .from("bookings")
-      .select("user_id, starts_at")
+      .select("user_id, athlete_id, starts_at")
       .eq("trainer_id", userId)
       .eq("status", "confirmed"),
     admin
@@ -332,7 +348,7 @@ async function loadAddSession(admin: SupabaseClient, userId: string, myCategorie
       .select("user_id, service_id, credits_remaining")
       .gt("credits_remaining", 0)
       .or(`expires_at.is.null,expires_at.gte.${today}`),
-    activeSubscriberEmails(DIAMOND_PITCHING_PRICE_ID).catch(() => new Set<string>()),
+    activeMemberships(DIAMOND_PITCHING_PRICE_ID).catch(() => new Map<string, Set<string>>()),
   ]);
 
   const services: ServiceOption[] = [...(serviceRows ?? [])].sort(
@@ -340,15 +356,21 @@ async function loadAddSession(admin: SupabaseClient, userId: string, myCategorie
       Number(!myCategories.includes(a.category)) - Number(!myCategories.includes(b.category)),
   );
 
-  // Session history per client with this trainer.
+  // Session history per athlete with this trainer.
   const history = new Map<string, { sessions: number; lastSession: string | null }>();
   for (const h of historyRows ?? []) {
-    const entry = history.get(h.user_id) ?? { sessions: 0, lastSession: null };
+    const who = `${h.user_id}:${keyOf(h.athlete_id)}`;
+    const entry = history.get(who) ?? { sessions: 0, lastSession: null };
     entry.sessions += 1;
     if (new Date(h.starts_at) <= now && (!entry.lastSession || h.starts_at > entry.lastSession)) {
       entry.lastSession = h.starts_at;
     }
-    history.set(h.user_id, entry);
+    history.set(who, entry);
+  }
+
+  const siblings = new Map<string, NonNullable<typeof siblingRows>>();
+  for (const s of siblingRows ?? []) {
+    siblings.set(s.parent_id, [...(siblings.get(s.parent_id) ?? []), s]);
   }
 
   const credits = new Map<string, Record<string, number>>();
@@ -358,19 +380,40 @@ async function loadAddSession(admin: SupabaseClient, userId: string, myCategorie
     credits.set(b.user_id, byService);
   }
 
-  const clients: Omit<ClientOption, "waiverAccepted">[] = (profileRows ?? [])
+  // Each account holder, then any brothers or sisters on their account —
+  // who share the account's credits but have their own membership.
+  const clients: (Omit<ClientOption, "waiverAccepted"> & { siblingAgreement: boolean | null })[] = (
+    profileRows ?? []
+  )
     .filter((p) => p.email)
-    .map((p) => {
-      const h = history.get(p.id);
-      return {
-        id: p.id,
-        name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.email,
-        email: p.email,
-        sessions: h?.sessions ?? 0,
-        lastSession: h?.lastSession ?? null,
-        isDiamond: subscriberEmails.has(p.email.trim().toLowerCase()),
-        creditsByService: credits.get(p.id) ?? {},
+    .flatMap((p) => {
+      const holderName = `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.email;
+      const covered = memberships.get(p.email.trim().toLowerCase());
+      const option = (athleteKey: string, name: string, siblingAgreement: boolean | null) => {
+        const h = history.get(`${p.id}:${athleteKey}`);
+        return {
+          id: p.id,
+          athleteKey,
+          name,
+          accountName: athleteKey === PRIMARY ? null : holderName,
+          email: p.email,
+          sessions: h?.sessions ?? 0,
+          lastSession: h?.lastSession ?? null,
+          isDiamond: covered?.has(athleteKey) ?? false,
+          creditsByService: credits.get(p.id) ?? {},
+          siblingAgreement,
+        };
       };
+      return [
+        option(PRIMARY, holderName, null),
+        ...(siblings.get(p.id) ?? []).map((s) =>
+          option(
+            s.id,
+            `${s.first_name} ${s.last_name ?? ""}`.trim(),
+            s.waiver_version === WAIVER_VERSION,
+          ),
+        ),
+      ];
     })
     // Past clients first, most recently seen at the top; then everyone else A–Z.
     .sort((a, b) => {

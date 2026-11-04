@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   const { data: bookings, error } = await admin
     .from("bookings")
     .select(
-      "id, starts_at, trainer_id, service:services(name, duration_min), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
+      "id, starts_at, trainer_id, service:services(name, duration_min), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone), sibling:athletes(first_name, last_name), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
     )
     .eq("status", "confirmed")
     .gte("starts_at", from.toISOString())
@@ -87,9 +87,13 @@ export async function GET(request: NextRequest) {
     const trn = Array.isArray(b.trainer) ? b.trainer[0] : b.trainer;
     if (!ath || !svc || !trn) continue;
 
+    // A brother's or sister's session: their name, the account's email and phone.
+    const sib = Array.isArray(b.sibling) ? b.sibling[0] : b.sibling;
     const when = fmtCT(b.starts_at);
+    const named = sib ?? ath;
     const athleteName =
-      `${ath.first_name ?? ""} ${ath.last_name ?? ""}`.trim() || "Athlete";
+      `${named.first_name ?? ""} ${named.last_name ?? ""}`.trim() || "Athlete";
+    const hello = (ath.first_name ?? "").trim() || athleteName.split(" ")[0];
     const trainerName =
       `${trn.first_name ?? ""} ${trn.last_name ?? ""}`.trim() || "your trainer";
 
@@ -102,7 +106,7 @@ export async function GET(request: NextRequest) {
           title: "Session reminder",
           body: `
             <h1 style="margin:0 0 8px 0;font-size:26px;font-weight:800;color:#fff;">See you tomorrow.</h1>
-            <p style="margin:0 0 18px 0;color:#a1a1aa;font-size:14px;">Hey ${escapeHtml((ath.first_name ?? "").trim() || athleteName.split(" ")[0])} — quick reminder of your session.</p>
+            <p style="margin:0 0 18px 0;color:#a1a1aa;font-size:14px;">Hey ${escapeHtml(hello)} — quick reminder of ${sib ? `${escapeHtml(sib.first_name)}&rsquo;s` : "your"} session.</p>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(153,84,210,0.06);border:1px solid rgba(153,84,210,0.15);border-radius:12px;padding:18px;margin:0 0 18px 0;">
               <tr><td style="padding:4px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">When</td></tr>
               <tr><td style="padding:0 0 10px 0;color:#fff;font-size:16px;font-weight:600;">${escapeHtml(when)}</td></tr>
@@ -125,7 +129,7 @@ export async function GET(request: NextRequest) {
     if (ath.phone) {
       const ok = await sendSms(
         ath.phone,
-        `Diamond Nine: reminder of your ${svc.name} tomorrow — ${when}. Reply STOP to opt out.`,
+        `Diamond Nine: reminder of ${sib ? `${sib.first_name}'s` : "your"} ${svc.name} tomorrow — ${when}. Reply STOP to opt out.`,
       );
       if (ok) athleteSms++;
     }

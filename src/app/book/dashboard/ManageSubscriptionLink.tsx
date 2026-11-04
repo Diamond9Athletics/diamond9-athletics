@@ -1,65 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Membership } from "@/lib/stripe/subscription";
 
 /**
- * Subscription management card for Diamond athletes.
+ * Management card for one Diamond membership (a family can have one per
+ * athlete). The dashboard reads the state live from Stripe and passes it in.
  *
- * Shows live state from Stripe (active vs. canceling vs. paid-through
- * date). The primary action is a native CANCEL — a confirmation modal
- * calls /api/stripe/cancel-subscription which flips the Stripe sub to
+ * The primary action is a native CANCEL — a confirmation modal calls
+ * /api/stripe/cancel-subscription which flips the Stripe sub to
  * cancel_at_period_end: true. Athletes stay on D9 the whole time.
  *
  * A "manage card / invoices" link routes to the Stripe Customer Portal
  * for everything else (updating card, downloading invoices).
- *
- * When the parent isn't sure the viewer is a subscriber (prominent=false),
- * the card renders only after we confirm there's an active sub.
  */
-
-type Status = {
-  active: boolean;
-  cancelAtPeriodEnd: boolean;
-  currentPeriodEnd: string | null;
-};
-
 export function ManageSubscriptionLink({
-  prominent = false,
+  membership,
+  athleteName,
 }: {
-  prominent?: boolean;
+  membership: Membership;
+  /** Whose membership it is, on a family account. */
+  athleteName?: string;
 }) {
   const router = useRouter();
-  const [status, setStatus] = useState<Status | null>(null);
+  const [status, setStatus] = useState(membership);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState<"cancel" | "resume" | "portal" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let canceled = false;
-    fetch("/api/stripe/subscription-status")
-      .then((r) => r.json())
-      .then((json) => {
-        if (!canceled) setStatus(json);
-      })
-      .catch(() => {
-        if (!canceled) setStatus({ active: false, cancelAtPeriodEnd: false, currentPeriodEnd: null });
-      });
-    return () => {
-      canceled = true;
-    };
-  }, []);
-
-  // Keep non-subscribers out of the viewport entirely.
-  if (!prominent && (!status || !status.active)) return null;
-  if (prominent && status && !status.active) return null;
+  const subscription = JSON.stringify({ subscriptionId: membership.subscriptionId });
 
   async function cancelNow() {
     setBusy("cancel");
     setError(null);
     setNotice(null);
-    const res = await fetch("/api/stripe/cancel-subscription", { method: "POST" });
+    const res = await fetch("/api/stripe/cancel-subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: subscription,
+    });
     const json = await res.json().catch(() => ({}));
     setBusy(null);
     if (!res.ok || !json.ok) {
@@ -67,7 +47,7 @@ export function ManageSubscriptionLink({
       return;
     }
     setConfirming(false);
-    setStatus((s) => (s ? { ...s, cancelAtPeriodEnd: true, currentPeriodEnd: json.cancelsOn ?? s.currentPeriodEnd } : s));
+    setStatus((s) => ({ ...s, cancelAtPeriodEnd: true, currentPeriodEnd: json.cancelsOn ?? s.currentPeriodEnd }));
     setNotice(
       json.alreadyScheduled
         ? `You already asked to cancel. Access ends ${fmtDate(json.cancelsOn)}.`
@@ -80,14 +60,18 @@ export function ManageSubscriptionLink({
     setBusy("resume");
     setError(null);
     setNotice(null);
-    const res = await fetch("/api/stripe/resume-subscription", { method: "POST" });
+    const res = await fetch("/api/stripe/resume-subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: subscription,
+    });
     const json = await res.json().catch(() => ({}));
     setBusy(null);
     if (!res.ok || !json.ok) {
       setError(json.error ?? "Could not resume. Please try again.");
       return;
     }
-    setStatus((s) => (s ? { ...s, cancelAtPeriodEnd: false } : s));
+    setStatus((s) => ({ ...s, cancelAtPeriodEnd: false }));
     setNotice("Membership reactivated — your card will be charged next cycle.");
     router.refresh();
   }
@@ -105,17 +89,17 @@ export function ManageSubscriptionLink({
     window.location.assign(json.url);
   }
 
-  const windingDown = status?.cancelAtPeriodEnd === true;
+  const windingDown = status.cancelAtPeriodEnd;
 
   return (
     <>
       <div className="card-modern rounded-2xl p-6 mt-4">
         <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">
-          DIAMOND MEMBERSHIP
+          DIAMOND MEMBERSHIP{athleteName && <span className="text-[#b07adf]"> · {athleteName.toUpperCase()}</span>}
         </p>
         {windingDown ? (
           <p className="text-amber-300 text-sm mb-4">
-            Scheduled to cancel on <span className="text-white font-bold">{fmtDate(status?.currentPeriodEnd)}</span>. You still have unlimited access until then.
+            Scheduled to cancel on <span className="text-white font-bold">{fmtDate(status.currentPeriodEnd)}</span>. You still have unlimited access until then.
           </p>
         ) : (
           <p className="text-zinc-300 text-sm mb-4">
@@ -180,7 +164,7 @@ export function ManageSubscriptionLink({
             <p className="text-zinc-300 text-sm leading-relaxed mb-5">
               You&rsquo;ll keep unlimited access through{" "}
               <span className="text-white font-bold">
-                {fmtDate(status?.currentPeriodEnd)}
+                {fmtDate(status.currentPeriodEnd)}
               </span>
               . After that your card won&rsquo;t be charged and the membership ends.
               You can resume anytime before that date.

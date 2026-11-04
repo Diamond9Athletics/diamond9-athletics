@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const { data: booking, error } = await admin
     .from("bookings")
     .select(
-      "id, user_id, trainer_id, credit_bucket_id, status, starts_at, google_event_id, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
+      "id, user_id, trainer_id, credit_bucket_id, status, starts_at, google_event_id, service:services(name), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email), sibling:athletes(first_name, last_name), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
     )
     .eq("id", bookingId)
     .single();
@@ -104,9 +104,12 @@ export async function POST(request: NextRequest) {
   try {
     const svc = Array.isArray(booking.service) ? booking.service[0] : booking.service;
     const ath = Array.isArray(booking.athlete) ? booking.athlete[0] : booking.athlete;
+    // A brother's or sister's session: their name, the account's email.
+    const sib = Array.isArray(booking.sibling) ? booking.sibling[0] : booking.sibling;
     const trn = Array.isArray(booking.trainer) ? booking.trainer[0] : booking.trainer;
     const when = fmtCT(booking.starts_at);
-    const athleteName = `${ath?.first_name ?? ""} ${ath?.last_name ?? ""}`.trim() || "Athlete";
+    const named = sib ?? ath;
+    const athleteName = `${named?.first_name ?? ""} ${named?.last_name ?? ""}`.trim() || "Athlete";
     const outcome = late
       ? `Because it was less than ${FREE_CANCEL_HOURS} hours before the session, it counts as a used session${booking.credit_bucket_id ? " — the credit isn't returned" : ""}.`
       : booking.credit_bucket_id
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
           body: `
             <h1 style="margin:0 0 8px 0;font-size:24px;font-weight:800;color:#fff;">Session cancelled.</h1>
             <p style="margin:0 0 18px 0;color:#a1a1aa;font-size:14px;">
-              Your ${escape(svc?.name ?? "session")} on <b style="color:#fff;">${escape(when)}</b> has been cancelled. ${escape(outcome)}
+              ${sib ? `${escape(sib.first_name)}&rsquo;s` : "Your"} ${escape(svc?.name ?? "session")} on <b style="color:#fff;">${escape(when)}</b> has been cancelled. ${escape(outcome)}
             </p>
             <p style="margin:0;color:#71717a;font-size:13px;">Ready to rebook? Sign in at diamond9athletics.com.</p>
           `,
