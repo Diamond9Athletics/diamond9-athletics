@@ -171,7 +171,13 @@ export default async function AdminPage() {
             <span className="block gradient-text">CONTROL ROOM</span>
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
-          <div className="mt-5">
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/book/admin/numbers"
+              className="btn-gold inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-black"
+            >
+              THE NUMBERS →
+            </Link>
             <Link
               href="/book/trainer?coach=all"
               className="btn-outline inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-bold"

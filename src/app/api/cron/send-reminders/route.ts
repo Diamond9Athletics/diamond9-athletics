@@ -18,6 +18,7 @@ import { sendSms } from "@/lib/sms";
 import { addDays, todayInStudio } from "@/lib/booking/coach-calendar";
 import { zonedWallToUtc } from "@/lib/booking/tz";
 import { FREE_CANCEL_HOURS, freeCancelDeadline } from "@/lib/booking/policy";
+import { alertOwner } from "@/lib/alerts";
 
 export const runtime = "nodejs";
 
@@ -44,9 +45,19 @@ function escapeHtml(s: string) {
 }
 
 export async function GET(request: NextRequest) {
+  // Without CRON_SECRET, Vercel's daily call can never get in: say so,
+  // instead of reminders quietly stopping.
+  if (!process.env.CRON_SECRET) {
+    await alertOwner({
+      where: "Daily reminder job",
+      what: "Session reminders can't run",
+      impact: "Athletes aren't getting reminder emails, and you aren't getting tomorrow's schedule. The CRON_SECRET setting is missing in Vercel.",
+      fingerprint: "cron-secret-missing",
+    });
+    return NextResponse.json({ error: "CRON_SECRET isn't set on this deployment." }, { status: 503 });
+  }
   const auth = request.headers.get("authorization") ?? "";
-  const expected = `Bearer ${process.env.CRON_SECRET ?? ""}`;
-  if (!process.env.CRON_SECRET || auth !== expected) {
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -70,10 +81,17 @@ export async function GET(request: NextRequest) {
     .order("starts_at");
 
   if (error) {
+    await alertOwner({
+      where: "Daily reminder job",
+      what: "Session reminders didn't go out today",
+      impact: "The job couldn't read tomorrow's bookings, so nobody got a reminder.",
+      error,
+    });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   let athleteEmails = 0;
+  let failedEmails = 0;
   let athleteSms = 0;
   let trainerEmails = 0;
   const trainerAgenda = new Map<
@@ -122,6 +140,7 @@ export async function GET(request: NextRequest) {
       });
       athleteEmails++;
     } catch (e) {
+      failedEmails++;
       console.error(`athlete email failed for booking ${b.id}:`, e);
     }
 
@@ -169,8 +188,19 @@ export async function GET(request: NextRequest) {
       });
       trainerEmails++;
     } catch (e) {
+      failedEmails++;
       console.error(`trainer email failed for ${email}:`, e);
     }
+  }
+
+  if (failedEmails > 0) {
+    await alertOwner({
+      where: "Daily reminder job",
+      what: `${failedEmails} reminder email${failedEmails === 1 ? "" : "s"} didn't send`,
+      impact: "Some athletes (or a coach) didn't get tomorrow's reminder.",
+      details: { sent: athleteEmails + trainerEmails, failed: failedEmails },
+      fingerprint: "reminder-emails-failed",
+    });
   }
 
   return NextResponse.json({

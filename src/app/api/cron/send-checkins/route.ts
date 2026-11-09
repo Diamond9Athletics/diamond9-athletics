@@ -18,6 +18,7 @@ import {
   pickCheckin,
   type CheckinLog,
 } from "@/lib/checkins";
+import { alertOwner } from "@/lib/alerts";
 
 export const maxDuration = 60;
 
@@ -25,6 +26,12 @@ export async function GET(request: NextRequest) {
   // Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Say so plainly
   // when the secret was never set up, so a failing job is easy to spot.
   if (!process.env.CRON_SECRET) {
+    await alertOwner({
+      where: "Daily check-in job",
+      what: "Daily jobs can't run",
+      impact: "Check-in emails and session reminders are stopped. The CRON_SECRET setting is missing in Vercel.",
+      fingerprint: "cron-secret-missing",
+    });
     return NextResponse.json(
       { error: "CRON_SECRET isn't set on this deployment." },
       { status: 503 },
@@ -40,7 +47,12 @@ export async function GET(request: NextRequest) {
   try {
     members = await activeSubscriberEmails(DIAMOND_PITCHING_PRICE_ID);
   } catch (e) {
-    console.error("Check-ins: membership lookup failed:", e);
+    await alertOwner({
+      where: "Daily check-in job",
+      what: "Check-in emails skipped today",
+      impact: "Stripe didn't answer when the job checked who's a Diamond member, so it sent nothing rather than risk the wrong note. It tries again tomorrow.",
+      error: e,
+    });
     return NextResponse.json({ error: "Couldn't check memberships." }, { status: 502 });
   }
 
@@ -80,6 +92,15 @@ export async function GET(request: NextRequest) {
     }
     // Stay well under Resend's rate limit.
     await new Promise((resolve) => setTimeout(resolve, 600));
+  }
+
+  if (failed > 0) {
+    await alertOwner({
+      where: "Daily check-in job",
+      what: `${failed} check-in email${failed === 1 ? "" : "s"} didn't send`,
+      details: { sent, failed },
+      fingerprint: "checkin-emails-failed",
+    });
   }
 
   return NextResponse.json({ ok: true, live: true, sent, failed, byKind });

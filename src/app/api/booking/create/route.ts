@@ -23,6 +23,7 @@ import {
 import { bookingAthlete, fullName, keyOf } from "@/lib/booking/athletes";
 import { needsWaiver } from "@/lib/legal/waiver";
 import { LATE_CANCELLED, isLateCancel } from "@/lib/booking/policy";
+import { alertOwner } from "@/lib/alerts";
 
 // Athletes must book at least this far ahead of the slot's start.
 const MIN_LEAD_MS = 5 * 60 * 60 * 1000;
@@ -448,6 +449,17 @@ export async function POST(request: NextRequest) {
   // The session they picked has to go through; nothing is booked otherwise.
   const firstTry = await bookOne(startDate, null);
   if (!firstTry.ok) {
+    // A full slot or a missing credit is the athlete's to sort out; a
+    // database error means the site is broken.
+    if (firstTry.status >= 500) {
+      await alertOwner({
+        where: "Booking",
+        what: "An athlete couldn't book a session",
+        impact: "They saw an error when booking, so the session wasn't booked. They may try again or reach out.",
+        error: firstTry.error,
+        details: { user: user.id, startsAt: startDate.toISOString() },
+      });
+    }
     return NextResponse.json({ error: firstTry.error }, { status: firstTry.status });
   }
 
@@ -571,7 +583,13 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (e) {
-    console.error("Failed to send booking emails:", e);
+    await alertOwner({
+      where: "Booking",
+      what: "A booking's confirmation emails didn't send",
+      impact: "The session is booked, but the athlete and coach may not have gotten the email.",
+      error: e,
+      details: { booking: booked[0]?.id },
+    });
   }
 
   return NextResponse.json({ booking: booked[0], bookings: booked, skipped });

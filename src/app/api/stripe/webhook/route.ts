@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPurchaseReceipt } from "@/lib/booking/emails";
 import { sendEmail, shell } from "@/lib/email";
 import { PRIMARY } from "@/lib/booking/athletes";
+import { alertOwner } from "@/lib/alerts";
 import type Stripe from "stripe";
 
 // Stripe webhooks must read the raw body to verify the signature.
@@ -33,19 +34,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    // Subscription checkouts and package checkouts follow different paths.
-    if (session.mode === "subscription") {
-      await handleSubscriptionCheckout(session);
-    } else {
-      await handleCheckoutCompleted(session);
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      // Subscription checkouts and package checkouts follow different paths.
+      if (session.mode === "subscription") {
+        await handleSubscriptionCheckout(session);
+      } else {
+        await handleCheckoutCompleted(session);
+      }
+    } else if (
+      event.type === "charge.refunded" ||
+      event.type === "refund.created"
+    ) {
+      await handleRefund(event.data.object as Stripe.Charge | Stripe.Refund);
     }
-  } else if (
-    event.type === "charge.refunded" ||
-    event.type === "refund.created"
-  ) {
-    await handleRefund(event.data.object as Stripe.Charge | Stripe.Refund);
+  } catch (e) {
+    // The handler already alerted. A 500 makes Stripe send the event again
+    // (it retries for up to 3 days), and every step is safe to repeat.
+    console.error(`Webhook ${event.type} failed:`, e);
+    return NextResponse.json({ error: "Processing failed; Stripe will retry." }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
@@ -64,7 +72,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const serviceId = md.service_id;
 
   if (!purchaseId || !userId || !packageId) {
-    console.error("Missing metadata on Stripe session", session.id);
+    await alertOwner({
+      where: "Stripe payment",
+      what: "A payment came in that the site couldn't match to an account",
+      impact: "Someone paid but got no sessions on their account. Find the payment in Stripe and add their credits in the Admin panel.",
+      details: { checkoutSession: session.id, email: session.customer_details?.email },
+    });
     return;
   }
 
@@ -83,8 +96,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .eq("id", purchaseId);
 
   if (purchaseError) {
-    console.error("Failed to mark purchase paid:", purchaseError);
-    return;
+    await alertOwner({
+      where: "Stripe payment",
+      what: "A payment couldn't be recorded",
+      impact: "Someone paid but the site couldn't save it. Stripe will retry for up to 3 days; if that keeps failing, add their credits in the Admin panel.",
+      error: purchaseError,
+      details: { purchase: purchaseId, user: userId, checkoutSession: session.id },
+    });
+    throw new Error(`Failed to mark purchase paid: ${purchaseError.message}`);
   }
 
   // For credit packages, create a bucket.  For enrollments, skip.
@@ -112,7 +131,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     });
 
     if (bucketError) {
-      console.error("Failed to create credit bucket:", bucketError);
+      await alertOwner({
+        where: "Stripe payment",
+        what: "A payment didn't add sessions to the account",
+        impact: "Someone paid but has no new sessions to book with. Stripe will retry for up to 3 days; if that keeps failing, add their credits in the Admin panel.",
+        error: bucketError,
+        details: { purchase: purchaseId, user: userId, checkoutSession: session.id },
+      });
+      throw new Error(`Failed to create credit bucket: ${bucketError.message}`);
     }
   }
 
@@ -178,7 +204,12 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
   const email =
     (session.customer_details?.email ?? session.customer_email ?? "").trim();
   if (!email) {
-    console.error("Sub checkout with no email", session.id);
+    await alertOwner({
+      where: "Stripe payment",
+      what: "A Diamond membership started without an email",
+      impact: "The membership is active in Stripe, but the site can't tell whose it is, so they can't book with it yet.",
+      details: { checkoutSession: session.id },
+    });
     return;
   }
 

@@ -18,21 +18,27 @@ export async function sendEmail({
   html,
   replyTo,
   attachments,
+  idempotencyKey,
 }: {
   to: string;
   subject: string;
   html: string;
   replyTo?: string;
   attachments?: { filename: string; content: string | Buffer; contentType?: string }[];
+  /** Resend skips a send whose key it has seen in the last 24 hours. */
+  idempotencyKey?: string;
 }) {
-  const r = await client().emails.send({
-    from: FROM,
-    to,
-    subject,
-    html,
-    replyTo,
-    attachments,
-  });
+  const r = await client().emails.send(
+    {
+      from: FROM,
+      to,
+      subject,
+      html,
+      replyTo,
+      attachments,
+    },
+    idempotencyKey ? { idempotencyKey } : undefined,
+  );
   if (r.error) {
     console.error("Resend send failed:", r.error);
     throw new Error(r.error.message);

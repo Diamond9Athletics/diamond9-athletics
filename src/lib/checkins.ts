@@ -8,8 +8,14 @@
  *                    nothing on the calendar
  *   credits_waiting  credits on the account, nothing booked, no session in
  *                    2 weeks
+ *   review           3+ sessions, trained in the last 30 days: asks once
+ *                    for a Google review
  *   never_booked     signed up 3–60 days ago, never booked, bought nothing
  *   lapsed           no credits or membership, last session 30–120 days ago
+ *
+ * never_booked and lapsed are promotional, so they wait for the studio's
+ * mailing address; review waits for the Google review link (both in
+ * CHECKIN_SETTINGS).
  *
  * Each kind has its own cooldown, nobody gets more than one a week, coaches
  * never get them, and anyone can turn them off from the link in the email.
@@ -25,9 +31,22 @@ import { STUDIO_TZ } from "@/lib/booking/tz";
  *  what and sends nothing. */
 export const CHECKINS_LIVE = false;
 
+export const CHECKIN_SETTINGS = {
+  /** The studio's mailing address, shown at the bottom of every check-in.
+   *  U.S. law (CAN-SPAM) requires one on promotional email, so the
+   *  promotional kinds don't go out while it's empty. */
+  mailingAddress: "",
+  /** Where the review request sends people (Google Business Profile → "Ask
+   *  for reviews"). The review request doesn't go out while it's empty. */
+  reviewUrl: "",
+};
+
+const PROMOTIONAL: ReadonlySet<CheckinKind> = new Set(["never_booked", "lapsed"]);
+
 export type CheckinKind =
   | "expiring"
   | "member_idle"
+  | "review"
   | "credits_waiting"
   | "never_booked"
   | "lapsed";
@@ -36,6 +55,7 @@ export type CheckinKind =
 const COOLDOWN_DAYS: Record<CheckinKind, number> = {
   expiring: 30,
   member_idle: 14,
+  review: Infinity,
   credits_waiting: 21,
   never_booked: Infinity,
   lapsed: 60,
@@ -60,6 +80,8 @@ export type CheckinAccount = {
   member: boolean;
   credits: { remaining: number; expiresAt: string | null; createdAt: string }[];
   lastSession: { startsAt: string; category: string | null } | null;
+  /** Confirmed sessions that have already happened. */
+  pastSessions: number;
   hasUpcoming: boolean;
   everBooked: boolean;
 };
@@ -77,6 +99,8 @@ export function pickCheckin(a: CheckinAccount, today: string): Checkin | null {
   if (a.staff || a.optedOut || !a.email) return null;
   if (a.sent.last && daysBetween(a.sent.last, today) < MIN_GAP_DAYS) return null;
   const due = (kind: CheckinKind) => {
+    if (PROMOTIONAL.has(kind) && !CHECKIN_SETTINGS.mailingAddress) return false;
+    if (kind === "review" && !CHECKIN_SETTINGS.reviewUrl) return false;
     const last = a.sent[kind];
     return !last || daysBetween(last, today) >= COOLDOWN_DAYS[kind];
   };
@@ -97,6 +121,7 @@ export function pickCheckin(a: CheckinAccount, today: string): Checkin | null {
     return memberIdleEmail(a);
   }
 
+
   // Not right after a purchase: give them a few days to book on their own.
   const newestCredit = a.credits.map((c) => c.createdAt).sort().pop();
   if (
@@ -110,13 +135,18 @@ export function pickCheckin(a: CheckinAccount, today: string): Checkin | null {
     return creditsWaitingEmail(a, a.credits.some((c) => !c.expiresAt));
   }
 
+  if (a.pastSessions >= 3 && sinceLast !== null && sinceLast <= 30 && due("review")) {
+    return reviewEmail(a);
+  }
+
   if (
     !a.everBooked &&
     credits === 0 &&
     !a.member &&
     sinceSignup >= 3 &&
     sinceSignup <= 60 &&
-    !a.sent.never_booked
+    !a.sent.never_booked &&
+    due("never_booked")
   ) {
     return neverBookedEmail(a);
   }
@@ -150,7 +180,10 @@ function note(a: CheckinAccount, kind: CheckinKind, subject: string, title: stri
   const optOut = `<p style="margin:18px 0 0 0;color:#71717a;font-size:12px;line-height:1.5;">Don&rsquo;t want check-ins like this? <a href="${esc(
     preferencesUrl(a.userId),
   )}" style="color:#a1a1aa;">Turn them off</a>.</p>`;
-  return { kind, subject, html: shell({ title, body: paragraphs.map(p).join("") + optOut }) };
+  const address = CHECKIN_SETTINGS.mailingAddress
+    ? `<p style="margin:6px 0 0 0;color:#71717a;font-size:12px;line-height:1.5;">Diamond Nine Athletics · ${esc(CHECKIN_SETTINGS.mailingAddress)}</p>`
+    : "";
+  return { kind, subject, html: shell({ title, body: paragraphs.map(p).join("") + optOut + address }) };
 }
 
 function expiringEmail(a: CheckinAccount, count: number, date: string): Checkin {
@@ -177,8 +210,18 @@ function expiringEmail(a: CheckinAccount, count: number, date: string): Checkin 
 function memberIdleEmail(a: CheckinAccount): Checkin {
   return note(a, "member_idle", "Let's get your next session booked", "Book your next session", [
     hello(a),
-    `You don&rsquo;t have anything on the calendar right now. Your Diamond membership covers up to 12 sessions a month, so grab a time that works this week: ${link("/book")}.`,
+    `You don&rsquo;t have anything on the calendar right now. Grab a time that works this week: ${link("/book")}.`,
     "See you soon,<br>Wes",
+  ]);
+}
+
+function reviewEmail(a: CheckinAccount): Checkin {
+  const button = `<a href="${esc(CHECKIN_SETTINGS.reviewUrl)}" style="display:inline-block;background:#9954d2;color:#fff;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:0.08em;padding:12px 22px;border-radius:999px;">Leave a Google review</a>`;
+  return note(a, "review", "Would you leave D9 a quick review?", "A quick favor", [
+    hello(a),
+    "Thanks for training at Diamond Nine. If you&rsquo;ve liked your sessions, would you leave us a quick Google review? It takes about a minute, and it&rsquo;s the best way for other athletes and parents to find us.",
+    button,
+    "Thanks,<br>Wes",
   ]);
 }
 
@@ -206,7 +249,7 @@ function lapsedEmail(a: CheckinAccount): Checkin {
   const plans = a.lastSession?.category === "hitting" ? "/hitting-plans" : "/pitching-plans";
   return note(a, "lapsed", "Ready to get back at it?", "Ready to get back at it?", [
     hello(a),
-    "It&rsquo;s been a few weeks since your last session. Whenever you&rsquo;re ready to pick it back up, the Diamond membership is unlimited pitching for $350/month (cancel anytime), or grab a package and book on your own schedule.",
+    "It&rsquo;s been a while since your last session. Whenever you&rsquo;re ready to pick it back up, the Diamond membership is unlimited pitching for $350/month (cancel anytime), or grab a package and book on your own schedule.",
     `See the plans: ${link(plans)}.`,
     "Questions? Just reply.<br>Wes",
   ]);
@@ -277,6 +320,7 @@ export async function loadCheckinAccounts(
         .filter((b) => b.user_id === u.id)
         .map((b) => ({ remaining: b.credits_remaining, expiresAt: b.expires_at, createdAt: b.created_at })),
       lastSession: past ? { startsAt: past.starts_at, category: service?.category ?? null } : null,
+      pastSessions: mine.filter((b) => b.status === "confirmed" && new Date(b.starts_at) < now).length,
       hasUpcoming: mine.some((b) => b.status === "confirmed" && new Date(b.starts_at) >= now),
       everBooked: mine.length > 0,
     };

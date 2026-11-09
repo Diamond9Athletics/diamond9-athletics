@@ -910,3 +910,36 @@ body {
   height: 140px;
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
+
+/* ── Owner dashboard charts (/book/admin/numbers) ────────────────────
+   Two series (purple, orange), checked for color-blind separation and
+   contrast on each theme's card. The --viz-seq ramp is one hue for
+   "how many", stronger = more. */
+.viz-root {
+  --viz-series-1: #a466dc;
+  --viz-series-2: #d95926;
+  --viz-grid: rgba(255, 255, 255, 0.07);
+  --viz-axis: rgba(255, 255, 255, 0.16);
+  --viz-track: #2b1f38;
+  --viz-ring: #e4e4e7;
+  --viz-seq-0: rgba(255, 255, 255, 0.04);
+  --viz-seq-1: #3a2350;
+  --viz-seq-2: #5a3380;
+  --viz-seq-3: #7f47b5;
+  --viz-seq-4: #a466dc;
+  --viz-seq-5: #cfa6f2;
+}
+[data-theme="light"] .viz-root {
+  --viz-series-1: #9954d2;
+  --viz-series-2: #eb6834;
+  --viz-grid: rgba(0, 0, 0, 0.07);
+  --viz-axis: rgba(0, 0, 0, 0.18);
+  --viz-track: #ece0f7;
+  --viz-ring: #111111;
+  --viz-seq-0: rgba(0, 0, 0, 0.05);
+  --viz-seq-1: #e6d6f5;
+  --viz-seq-2: #ccaeea;
+  --viz-seq-3: #b07adf;
+  --viz-seq-4: #8a47c9;
+  --viz-seq-5: #5f2b94;
+}
