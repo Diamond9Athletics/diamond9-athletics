@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ProfileForm } from "./ProfileForm";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,9 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/book/login");
 
-  const { data: profile } = await supabase
+  // Emails and phones can't be read from the browser's side of the
+  // database (migration 005), so the server reads them, for this user only.
+  const { data: profile } = await createAdminClient()
     .from("profiles")
     .select("first_name, last_name, email, phone")
     .eq("id", user.id)

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CancelButton } from "./CancelButton";
 import { ManageSubscriptionLink } from "./ManageSubscriptionLink";
 import { FamilyCard } from "./FamilyCard";
@@ -29,7 +30,8 @@ export default async function Dashboard() {
 
   const [{ data: profile }, { data: buckets }, { data: bookings }] =
     await Promise.all([
-      supabase
+      // Email isn't readable from the browser's side (migration 005).
+      createAdminClient()
         .from("profiles")
         .select("first_name, last_name, email, is_trainer, is_admin")
         .eq("id", user.id)
