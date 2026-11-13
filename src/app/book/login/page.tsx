@@ -75,6 +75,12 @@ function LoginPageInner() {
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
         </div>
 
+        {searchParams.get("reason") === "signin-again" && (
+          <p className="text-zinc-300 text-sm text-center leading-relaxed bg-[#9954d2]/10 border border-[#9954d2]/25 rounded-xl px-4 py-3 mb-4">
+            For your security, coach and admin pages ask you to sign in again once a week.
+          </p>
+        )}
+
         <div className="card-modern rounded-2xl p-6 sm:p-8">
           <form onSubmit={onSubmit} className="space-y-4">
             <Field label="EMAIL">
