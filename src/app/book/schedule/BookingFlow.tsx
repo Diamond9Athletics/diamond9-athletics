@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MAX_REPEAT_WEEKS, inBookingWindow, weeklyStarts } from "@/lib/booking/repeat";
-import { isLateCancel } from "@/lib/booking/policy";
+import { MIN_BOOKING_LEAD_HOURS, MIN_BOOKING_LEAD_MS, isLateCancel } from "@/lib/booking/policy";
 import { zonedWallToUtc } from "@/lib/booking/tz";
 import { addDays } from "@/lib/booking/coach-calendar";
 
@@ -525,6 +525,8 @@ function DateStep({
   onPick: (date: string) => void;
   onBack: () => void;
 }) {
+  // Read the clock once, when the step opens.
+  const [now] = useState(() => Date.now());
   // Next 31 days.
   const days = useMemo(() => {
     const out: Date[] = [];
@@ -547,17 +549,23 @@ function DateStep({
           const dayBlocks = blocksForDay(blocks, iso);
           const fullDay = dayBlocks.some((b) => isFullDayBlock(b, iso));
           const partial = dayBlocks.length > 0 && !fullDay;
-          const label = fullDay ? "UNAVAILABLE" : partial ? "PARTIAL" : null;
+          // The whole day is inside the 25-hour booking lead: nothing to book.
+          const tooSoon =
+            zonedWallToUtc(addDays(iso, 1), "00:00").getTime() <= now + MIN_BOOKING_LEAD_MS;
+          const label = tooSoon ? "TOO SOON" : fullDay ? "UNAVAILABLE" : partial ? "PARTIAL" : null;
           return (
             <button
               key={iso}
               onClick={() => onPick(iso)}
+              disabled={tooSoon}
               className={`rounded-xl px-2 py-3 border transition text-center ${
-                fullDay
-                  ? "bg-red-950/20 border-red-900/40 hover:border-red-500/60"
-                  : partial
-                    ? "bg-amber-950/15 border-amber-900/30 hover:border-amber-500/40"
-                    : "bg-zinc-900/50 border-zinc-800 hover:border-[#9954d2]/50"
+                tooSoon
+                  ? "bg-zinc-900/30 border-zinc-800 opacity-50 cursor-not-allowed"
+                  : fullDay
+                    ? "bg-red-950/20 border-red-900/40 hover:border-red-500/60"
+                    : partial
+                      ? "bg-amber-950/15 border-amber-900/30 hover:border-amber-500/40"
+                      : "bg-zinc-900/50 border-zinc-800 hover:border-[#9954d2]/50"
               }`}
               title={
                 dayBlocks
@@ -577,7 +585,7 @@ function DateStep({
               {label && (
                 <p
                   className={`text-[8px] tracking-widest font-bold mt-1 ${
-                    fullDay ? "text-red-400" : "text-amber-400"
+                    tooSoon ? "text-zinc-500" : fullDay ? "text-red-400" : "text-amber-400"
                   }`}
                 >
                   {label}
@@ -659,6 +667,9 @@ function TimeStep({
   onBack: () => void;
 }) {
   const dayBlocks = blocksForDay(blocks, date);
+  // Part of this day is less than 25 hours away, so its earlier times are hidden.
+  const [now] = useState(() => Date.now());
+  const partlyTooSoon = zonedWallToUtc(date, "00:00").getTime() < now + MIN_BOOKING_LEAD_MS;
   const [slots, setSlots] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -767,7 +778,14 @@ function TimeStep({
       )}
       {slots && slots.length === 0 && !error && (
         <p className="text-zinc-400 text-sm">
-          No open slots that day. Try another date.
+          {partlyTooSoon
+            ? `Sessions need to be booked at least ${MIN_BOOKING_LEAD_HOURS} hours ahead, so nothing is left to book that day. Try a later date.`
+            : "No open slots that day. Try another date."}
+        </p>
+      )}
+      {slots && slots.length > 0 && partlyTooSoon && (
+        <p className="text-zinc-500 text-xs">
+          Times less than {MIN_BOOKING_LEAD_HOURS} hours away aren&rsquo;t shown.
         </p>
       )}
       {slots && slots.length > 0 && (

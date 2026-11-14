@@ -3,6 +3,7 @@
  * Timezone-aware: rules' wall-clock times are interpreted in STUDIO_TZ.
  */
 import { dayOfWeekInZone, STUDIO_TZ, zonedWallToUtc } from "./tz";
+import { MIN_BOOKING_LEAD_MS } from "./policy";
 
 export type TimeRange = { start: Date; end: Date };
 
@@ -72,9 +73,8 @@ export function computeSlots({
     ) {
       const slot: TimeRange = { start: cur, end: addMinutes(cur, durationMin) };
 
-      // Same-day cutoff: enforce a 5-hour minimum lead time on every
-      // slot. Anything sooner than 5 hours from now is hidden.
-      if (slot.start.getTime() < Date.now() + 5 * 60 * 60_000) continue;
+      // Anything sooner than the booking lead time (25 hours) is hidden.
+      if (slot.start.getTime() < Date.now() + MIN_BOOKING_LEAD_MS) continue;
 
       // Hard blocks always win.
       if (busy.some((b) => overlaps(slot, b))) continue;

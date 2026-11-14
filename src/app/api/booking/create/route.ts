@@ -22,11 +22,13 @@ import {
 } from "@/lib/booking/first-session";
 import { bookingAthlete, fullName, keyOf } from "@/lib/booking/athletes";
 import { needsWaiver } from "@/lib/legal/waiver";
-import { LATE_CANCELLED, isLateCancel } from "@/lib/booking/policy";
+import {
+  LATE_CANCELLED,
+  MIN_BOOKING_LEAD_HOURS,
+  MIN_BOOKING_LEAD_MS,
+  isLateCancel,
+} from "@/lib/booking/policy";
 import { alertOwner } from "@/lib/alerts";
-
-// Athletes must book at least this far ahead of the slot's start.
-const MIN_LEAD_MS = 5 * 60 * 60 * 1000;
 
 // Diamond members can book this many pitching sessions a calendar month.
 const SUBSCRIPTION_MONTHLY_CAP = 12;
@@ -171,14 +173,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
 
-  // Bookings must be at least 5 hours ahead of now — no last-minute
-  // scheduling. Rescheduling is exempt only when the original slot was
-  // in the future; we still enforce the cushion on the *new* slot.
-  if (startDate.getTime() < Date.now() + MIN_LEAD_MS) {
+  // Bookings must be at least 25 hours ahead of now, so nobody books late
+  // at night for the next morning. A reschedule's *new* time is held to it too.
+  if (startDate.getTime() < Date.now() + MIN_BOOKING_LEAD_MS) {
     return NextResponse.json(
       {
-        error:
-          "Sessions must be booked at least 5 hours before they start. Please pick a later time.",
+        error: `Sessions need to be booked at least ${MIN_BOOKING_LEAD_HOURS} hours before they start. Please pick a later time.`,
       },
       { status: 400 },
     );

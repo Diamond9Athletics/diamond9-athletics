@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  const { data: me } = await supabase
+  // Read with the server's key: emails aren't readable from the browser's
+  // side of the database (migration 005), and this select includes one.
+  const { data: me } = await createAdminClient()
     .from("profiles")
     .select("is_trainer, first_name, last_name, email")
     .eq("id", user.id)
