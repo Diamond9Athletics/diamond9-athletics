@@ -11,6 +11,8 @@ import {
 import { requireWaiver } from "@/lib/legal/waiver";
 import { diamondMemberships } from "@/lib/stripe/subscription";
 import { fullName, keyOf, loadFamily } from "@/lib/booking/athletes";
+import { bookingLeadHours } from "@/lib/booking/policy";
+import { isStaff } from "@/lib/auth/staff";
 
 export const dynamic = "force-dynamic";
 
@@ -137,6 +139,9 @@ export default async function BookPage({
     .select("id, first_name, last_name, trainer_slug, trainer_bio, trainer_categories")
     .eq("is_trainer", true);
 
+  // Coaches and admins aren't held to the booking lead.
+  const leadHours = bookingLeadHours(await isStaff(supabase, user.id));
+
   const trainers: Trainer[] = (trainerRows ?? []).map((t) => ({
     id: t.id,
     first_name: t.first_name,
@@ -164,6 +169,7 @@ export default async function BookPage({
           memberBuckets={memberBuckets}
           trainers={trainers}
           rescheduleFor={rescheduleFor}
+          leadHours={leadHours}
         />
       </section>
     </main>

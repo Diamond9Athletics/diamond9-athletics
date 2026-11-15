@@ -25,9 +25,10 @@ import { needsWaiver } from "@/lib/legal/waiver";
 import {
   LATE_CANCELLED,
   MIN_BOOKING_LEAD_HOURS,
-  MIN_BOOKING_LEAD_MS,
+  bookingLeadHours,
   isLateCancel,
 } from "@/lib/booking/policy";
+import { isStaff } from "@/lib/auth/staff";
 import { alertOwner } from "@/lib/alerts";
 
 // Diamond members can book this many pitching sessions a calendar month.
@@ -173,12 +174,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
 
-  // Bookings must be at least 25 hours ahead of now, so nobody books late
-  // at night for the next morning. A reschedule's *new* time is held to it too.
-  if (startDate.getTime() < Date.now() + MIN_BOOKING_LEAD_MS) {
+  // Athletes book at least 15 hours ahead, so nobody books late at night
+  // for the next morning; a reschedule's *new* time is held to it too.
+  // Coaches and admins can book any time that hasn't started yet.
+  const staff = await isStaff(supabase, user.id);
+  const leadHours = bookingLeadHours(staff);
+  if (startDate.getTime() < Date.now() + leadHours * 60 * 60 * 1000) {
     return NextResponse.json(
       {
-        error: `Sessions need to be booked at least ${MIN_BOOKING_LEAD_HOURS} hours before they start. Please pick a later time.`,
+        error: staff
+          ? "That time has already started. Please pick a later time."
+          : `Sessions need to be booked at least ${MIN_BOOKING_LEAD_HOURS} hours before they start. Please pick a later time.`,
       },
       { status: 400 },
     );
@@ -256,6 +262,7 @@ export async function POST(request: NextRequest) {
         durationMin: service.duration_min,
         category: service.category,
         ruleCategories: [service.category],
+        leadHours,
       });
       if (!open.some((t) => t.getTime() === start.getTime())) {
         return fail(409, "That time isn't open that week.", "Not open that week");

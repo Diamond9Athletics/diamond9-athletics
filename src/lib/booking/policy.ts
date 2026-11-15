@@ -8,9 +8,14 @@
 export const FREE_CANCEL_HOURS = 24;
 
 /** Athletes book at least this far ahead, so nobody books late at night for
- *  the next morning. Coaches adding a session themselves aren't held to it. */
-export const MIN_BOOKING_LEAD_HOURS = 25;
-export const MIN_BOOKING_LEAD_MS = MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000;
+ *  the next morning. */
+export const MIN_BOOKING_LEAD_HOURS = 15;
+
+/** Hours ahead this person has to book. Coaches and admins aren't held to
+ *  the rule anywhere: they can book any time that hasn't started yet. */
+export function bookingLeadHours(staff: boolean): number {
+  return staff ? 0 : MIN_BOOKING_LEAD_HOURS;
+}
 
 /** Status for a late cancellation — not active, but it counts as used. */
 export const LATE_CANCELLED = "late_cancelled";

@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MAX_REPEAT_WEEKS, inBookingWindow, weeklyStarts } from "@/lib/booking/repeat";
-import { MIN_BOOKING_LEAD_HOURS, MIN_BOOKING_LEAD_MS, isLateCancel } from "@/lib/booking/policy";
+import { FREE_CANCEL_HOURS, MIN_BOOKING_LEAD_HOURS, isLateCancel } from "@/lib/booking/policy";
 import { zonedWallToUtc } from "@/lib/booking/tz";
 import { addDays } from "@/lib/booking/coach-calendar";
+
+const HOUR_MS = 60 * 60 * 1000;
 
 export type Service = {
   id: string;
@@ -67,6 +69,7 @@ export function BookingFlow({
   memberBuckets,
   trainers,
   rescheduleFor = null,
+  leadHours = MIN_BOOKING_LEAD_HOURS,
 }: {
   /** Everyone on the account; more than one adds a "who's it for" step. */
   athletes: AthleteOption[];
@@ -76,6 +79,8 @@ export function BookingFlow({
   memberBuckets: Bucket[];
   trainers: Trainer[];
   rescheduleFor?: RescheduleFor;
+  /** How many hours ahead this person has to book (0 for coaches and admins). */
+  leadHours?: number;
 }) {
   const router = useRouter();
   const family = athletes.length > 1;
@@ -243,6 +248,7 @@ export function BookingFlow({
       {step === "date" && bucket && trainer && (
         <DateStep
           blocks={blocks}
+          leadHours={leadHours}
           onPick={(d) => {
             setDate(d);
             setStep("time");
@@ -258,6 +264,7 @@ export function BookingFlow({
           category={bucket.service.category}
           date={date}
           blocks={blocks}
+          leadHours={leadHours}
           onPick={(iso) => {
             setSlot(iso);
             setStep("confirm");
@@ -518,10 +525,12 @@ function isFullDayBlock(block: BlockRange, dateIso: string): boolean {
 
 function DateStep({
   blocks,
+  leadHours,
   onPick,
   onBack,
 }: {
   blocks: BlockRange[];
+  leadHours: number;
   onPick: (date: string) => void;
   onBack: () => void;
 }) {
@@ -549,9 +558,9 @@ function DateStep({
           const dayBlocks = blocksForDay(blocks, iso);
           const fullDay = dayBlocks.some((b) => isFullDayBlock(b, iso));
           const partial = dayBlocks.length > 0 && !fullDay;
-          // The whole day is inside the 25-hour booking lead: nothing to book.
+          // The whole day is inside the booking lead: nothing to book.
           const tooSoon =
-            zonedWallToUtc(addDays(iso, 1), "00:00").getTime() <= now + MIN_BOOKING_LEAD_MS;
+            zonedWallToUtc(addDays(iso, 1), "00:00").getTime() <= now + leadHours * HOUR_MS;
           const label = tooSoon ? "TOO SOON" : fullDay ? "UNAVAILABLE" : partial ? "PARTIAL" : null;
           return (
             <button
@@ -655,6 +664,7 @@ function TimeStep({
   category,
   date,
   blocks,
+  leadHours,
   onPick,
   onBack,
 }: {
@@ -663,13 +673,15 @@ function TimeStep({
   category: string;
   date: string;
   blocks: BlockRange[];
+  leadHours: number;
   onPick: (iso: string) => void;
   onBack: () => void;
 }) {
   const dayBlocks = blocksForDay(blocks, date);
-  // Part of this day is less than 25 hours away, so its earlier times are hidden.
+  // Part of this day is inside the booking lead, so its earlier times are hidden.
   const [now] = useState(() => Date.now());
-  const partlyTooSoon = zonedWallToUtc(date, "00:00").getTime() < now + MIN_BOOKING_LEAD_MS;
+  const partlyTooSoon =
+    leadHours > 0 && zonedWallToUtc(date, "00:00").getTime() < now + leadHours * HOUR_MS;
   const [slots, setSlots] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -779,13 +791,13 @@ function TimeStep({
       {slots && slots.length === 0 && !error && (
         <p className="text-zinc-400 text-sm">
           {partlyTooSoon
-            ? `Sessions need to be booked at least ${MIN_BOOKING_LEAD_HOURS} hours ahead, so nothing is left to book that day. Try a later date.`
+            ? `Sessions need to be booked at least ${leadHours} hours ahead, so nothing is left to book that day. Try a later date.`
             : "No open slots that day. Try another date."}
         </p>
       )}
       {slots && slots.length > 0 && partlyTooSoon && (
         <p className="text-zinc-500 text-xs">
-          Times less than {MIN_BOOKING_LEAD_HOURS} hours away aren&rsquo;t shown.
+          Times less than {leadHours} hours away aren&rsquo;t shown.
         </p>
       )}
       {slots && slots.length > 0 && (
@@ -844,6 +856,10 @@ function ConfirmStep({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [weeks, setWeeks] = useState(1);
+  // Read the clock once, when the step opens. A session booked less than
+  // FREE_CANCEL_HOURS ahead is already past its free-cancel deadline.
+  const [now] = useState(() => Date.now());
+  const insideCancelWindow = isLateCancel(slot, now);
   // Set when some weeks of a repeat couldn't be booked.
   const [result, setResult] = useState<BookingResult | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -1022,6 +1038,12 @@ function ConfirmStep({
           }
         />
       </div>
+      {insideCancelWindow && (
+        <p className="text-amber-400 text-xs">
+          {weeks > 1 ? "The first session is" : "This session is"} less than {FREE_CANCEL_HOURS} hours
+          away, so cancelling or rescheduling it would count as a used session.
+        </p>
+      )}
       <button
         onClick={confirm}
         disabled={submitting}

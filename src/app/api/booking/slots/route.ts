@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { openSlotStarts } from "@/lib/booking/open-slots";
+import { bookingLeadHours } from "@/lib/booking/policy";
+import { isStaff } from "@/lib/auth/staff";
 
 /**
  * GET /api/booking/slots?trainer=ID&duration=30|60&date=YYYY-MM-DD
@@ -51,6 +53,8 @@ export async function GET(request: NextRequest) {
     durationMin,
     category,
     ruleCategories,
+    // Coaches and admins can book any time that hasn't started yet.
+    leadHours: bookingLeadHours(await isStaff(supabase, user.id)),
   });
 
   return NextResponse.json({

@@ -3,7 +3,7 @@
  * Timezone-aware: rules' wall-clock times are interpreted in STUDIO_TZ.
  */
 import { dayOfWeekInZone, STUDIO_TZ, zonedWallToUtc } from "./tz";
-import { MIN_BOOKING_LEAD_MS } from "./policy";
+import { MIN_BOOKING_LEAD_HOURS } from "./policy";
 
 export type TimeRange = { start: Date; end: Date };
 
@@ -43,6 +43,7 @@ export function computeSlots({
   busy,
   shared = [],
   sharedCapacity = 1,
+  leadHours = MIN_BOOKING_LEAD_HOURS,
   tz = STUDIO_TZ,
 }: {
   /** YYYY-MM-DD in the studio timezone. */
@@ -55,6 +56,9 @@ export function computeSlots({
    *  `sharedCapacity` of them overlap it. */
   shared?: TimeRange[];
   sharedCapacity?: number;
+  /** How many hours ahead a slot has to start. Coaches and admins pass 0,
+   *  which still hides times that have already started. */
+  leadHours?: number;
   tz?: string;
 }): Date[] {
   const dow = dayOfWeekInZone(dateStr, tz);
@@ -73,8 +77,8 @@ export function computeSlots({
     ) {
       const slot: TimeRange = { start: cur, end: addMinutes(cur, durationMin) };
 
-      // Anything sooner than the booking lead time (25 hours) is hidden.
-      if (slot.start.getTime() < Date.now() + MIN_BOOKING_LEAD_MS) continue;
+      // Too soon to book: inside the booking lead, or already started.
+      if (slot.start.getTime() < Date.now() + leadHours * 60 * 60 * 1000) continue;
 
       // Hard blocks always win.
       if (busy.some((b) => overlaps(slot, b))) continue;

@@ -12,7 +12,7 @@
  * }
  *
  * The booking is created on the signed-in trainer's calendar. None of
- * the athlete-side booking rules apply — slot capacity, the 5-hour lead
+ * the athlete-side booking rules apply — slot capacity, the 15-hour lead
  * time, the 31-day window, and the first-session solo rule are all
  * skipped. The coach decides.
  *

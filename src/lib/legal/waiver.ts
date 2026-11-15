@@ -11,6 +11,7 @@
  */
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { isStaff } from "@/lib/auth/staff";
 
 export const WAIVER_VERSION = "2026-11-01";
 export const WAIVER_VERSION_LABEL = "November 1, 2026";
@@ -38,17 +39,8 @@ export function hasAcceptedWaiver(
   return waiverRecord(user) !== null;
 }
 
-/** Staff (trainers/admins) never have to accept the athlete agreement. */
-async function isStaff(supabase: SupabaseClient, userId: string) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("is_trainer, is_admin")
-    .eq("id", userId)
-    .single();
-  return Boolean(data?.is_trainer || data?.is_admin);
-}
-
-/** True when this user still needs to accept before booking. */
+/** True when this user still needs to accept before booking. Staff
+ *  (trainers/admins) never have to accept the athlete agreement. */
 export async function needsWaiver(supabase: SupabaseClient, user: User) {
   if (hasAcceptedWaiver(user)) return false;
   return !(await isStaff(supabase, user.id));

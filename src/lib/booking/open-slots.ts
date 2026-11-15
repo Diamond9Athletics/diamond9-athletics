@@ -17,6 +17,7 @@ export async function openSlotStarts({
   durationMin,
   category,
   ruleCategories,
+  leadHours,
 }: {
   /** Reads rules, bookings and blocks. */
   db: SupabaseClient;
@@ -28,6 +29,8 @@ export async function openSlotStarts({
   durationMin: number;
   category: string | null;
   ruleCategories: string[];
+  /** Hours ahead a time has to be; left out = the athletes' booking lead. */
+  leadHours?: number;
 }): Promise<Date[]> {
   // Day window in the studio timezone, converted to UTC bounds for queries.
   const dayStart = zonedWallToUtc(dateStr, "00:00:00");
@@ -131,5 +134,6 @@ export async function openSlotStarts({
     busy: [...otherCategoryBookings, ...blocks, ...googleBusy],
     shared: sameCategoryBookings,
     sharedCapacity: categoryCapacity(category),
+    leadHours,
   });
 }
