@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { img } from "@/lib/config";
 
 // No prices here — they live on the plan pages, so this list can't go stale.
@@ -148,6 +149,13 @@ export default function Contact() {
                 ))}
               </div>
             </div>
+            <Link href="/faq" className="card-modern rounded-2xl p-6 card-lift block group">
+              <p className="section-label mb-2">QUICK ANSWERS</p>
+              <p className="text-zinc-400 text-sm">
+                Booking, cancelling, plans and memberships.{" "}
+                <span className="text-[#b07adf] group-hover:underline">Read the FAQ →</span>
+              </p>
+            </Link>
           </div>
         </div>
       </section>

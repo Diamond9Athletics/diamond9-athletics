@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
-import { img } from "@/lib/config";
+import { img, STORE_URL } from "@/lib/config";
 
-export const BUILD_VERSION = "v1.14.3";
+export const BUILD_VERSION = "v1.15.0";
 
 type NavLink = { href: string; label: string; external?: boolean };
 
@@ -20,7 +20,7 @@ const navLinks: NavLink[] = [
   { href: "/app", label: "D9 App" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
-  { href: "https://shop.flyp.space/diamond9ath", label: "Shop", external: true },
+  { href: STORE_URL, label: "Shop", external: true },
 ];
 
 // BOOK NOW for someone who isn't signed in: sign in (or create an account

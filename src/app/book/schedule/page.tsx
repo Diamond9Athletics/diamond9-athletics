@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   BookingFlow,
   type AthleteOption,
@@ -13,6 +14,7 @@ import { diamondMemberships } from "@/lib/stripe/subscription";
 import { fullName, keyOf, loadFamily } from "@/lib/booking/athletes";
 import { bookingLeadHours } from "@/lib/booking/policy";
 import { isStaff } from "@/lib/auth/staff";
+import { PhonePrompt } from "./PhonePrompt";
 
 export const dynamic = "force-dynamic";
 
@@ -140,7 +142,20 @@ export default async function BookPage({
     .eq("is_trainer", true);
 
   // Coaches and admins aren't held to the booking lead.
-  const leadHours = bookingLeadHours(await isStaff(supabase, user.id));
+  const staff = await isStaff(supabase, user.id);
+  const leadHours = bookingLeadHours(staff);
+
+  // An athlete account with no phone number gets asked for one, once.
+  // Phones are only readable with the server's key (migration 005).
+  let askPhone = false;
+  if (!staff && !user.app_metadata?.phonePrompt?.dismissedAt) {
+    const { data: contact } = await createAdminClient()
+      .from("profiles")
+      .select("phone")
+      .eq("id", user.id)
+      .single();
+    askPhone = !contact?.phone;
+  }
 
   const trainers: Trainer[] = (trainerRows ?? []).map((t) => ({
     id: t.id,
@@ -162,6 +177,8 @@ export default async function BookPage({
           </h1>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
+
+        {askPhone && <PhonePrompt />}
 
         <BookingFlow
           athletes={athletes}

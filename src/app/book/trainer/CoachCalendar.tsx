@@ -12,6 +12,7 @@ import type {
 import { AddSessionPanel, type ClientOption, type ServiceOption } from "./AddSessionPanel";
 import { MoveBookingButton } from "./MoveBookingButton";
 import { TimeOffForm } from "./TimeOffForm";
+import { phoneLink } from "@/lib/phone";
 
 const TZ = "America/Chicago";
 
@@ -757,9 +758,17 @@ function SessionDetail({
       {(s.email || s.phone) && (
         <div className="space-y-1.5 text-sm">
           {s.phone && (
-            <a href={`tel:${s.phone}`} className="block text-zinc-300 hover:text-[#b07adf]">
-              {s.phone}
-            </a>
+            <p className="flex items-center gap-3">
+              <a href={`tel:${phoneLink(s.phone)}`} className="text-zinc-300 hover:text-[#b07adf]">
+                {s.phone}
+              </a>
+              <a
+                href={`sms:${phoneLink(s.phone)}`}
+                className="text-[10px] tracking-widest text-[#b07adf] border border-[#9954d2]/30 rounded-full px-2.5 py-0.5 hover:bg-[#9954d2]/10"
+              >
+                TEXT
+              </a>
+            </p>
           )}
           {s.email && (
             <a href={`mailto:${s.email}`} className="block text-zinc-300 hover:text-[#b07adf] break-all">

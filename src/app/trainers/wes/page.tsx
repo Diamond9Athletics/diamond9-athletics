@@ -3,7 +3,7 @@ import Link from "next/link";
 import { img } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "Wes Gafford | Diamond Nine Athletics",
+  title: "Wes Gafford",
   description: "Head Trainer Wes Gafford — Diamond Nine Athletics",
 };
 

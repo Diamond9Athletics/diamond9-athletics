@@ -4,8 +4,8 @@
  * Vercel Cron pings GET /api/cron/send-reminders each morning at ~9am CT.
  * For every confirmed booking in the next 22–26 hours, we send:
  *   • Email reminder to the athlete
- *   • SMS reminder to the athlete IF they have a phone number and
- *     Twilio is configured
+ *   • SMS reminder to the athlete IF they said yes to text reminders
+ *     for the number on their account, and Twilio is configured
  *   • Email reminder to the trainer with the day's schedule (once)
  *
  * Vercel authenticates cron requests with a bearer token — CRON_SECRET
@@ -14,7 +14,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, shell, fmtCT } from "@/lib/email";
-import { sendSms } from "@/lib/sms";
+import { sendSms, smsConfigured } from "@/lib/sms";
+import { textRemindersOn } from "@/lib/text-reminders";
 import { addDays, todayInStudio } from "@/lib/booking/coach-calendar";
 import { zonedWallToUtc } from "@/lib/booking/tz";
 import { FREE_CANCEL_HOURS, freeCancelDeadline } from "@/lib/booking/policy";
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
   const { data: bookings, error } = await admin
     .from("bookings")
     .select(
-      "id, starts_at, trainer_id, service:services(name, duration_min), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone), sibling:athletes(first_name, last_name), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
+      "id, user_id, starts_at, trainer_id, service:services(name, duration_min), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone), sibling:athletes(first_name, last_name), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name, email)",
     )
     .eq("status", "confirmed")
     .gte("starts_at", from.toISOString())
@@ -98,6 +99,16 @@ export async function GET(request: NextRequest) {
     string,
     { email: string; name: string; items: string[] }
   >();
+
+  // Texts only go to accounts that said yes for the number they have now.
+  const textsOk = new Map<string, boolean>();
+  const wantsTexts = async (userId: string, phone: string): Promise<boolean> => {
+    if (!textsOk.has(userId)) {
+      const { data } = await admin.auth.admin.getUserById(userId);
+      textsOk.set(userId, textRemindersOn(data.user?.app_metadata, phone));
+    }
+    return textsOk.get(userId) ?? false;
+  };
 
   for (const b of bookings ?? []) {
     const svc = Array.isArray(b.service) ? b.service[0] : b.service;
@@ -145,7 +156,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Athlete SMS
-    if (ath.phone) {
+    if (ath.phone && smsConfigured() && (await wantsTexts(b.user_id, ath.phone))) {
       const ok = await sendSms(
         ath.phone,
         `Diamond Nine: reminder of ${sib ? `${sib.first_name}'s` : "your"} ${svc.name} tomorrow — ${when}. Reply STOP to opt out.`,
@@ -162,7 +173,7 @@ export async function GET(request: NextRequest) {
       });
     }
     trainerAgenda.get(b.trainer_id)!.items.push(
-      `${when} — ${athleteName} — ${svc.name}`,
+      `${when} — ${athleteName} — ${svc.name}${ath.phone ? ` — ${ath.phone}` : ""}`,
     );
   }
 

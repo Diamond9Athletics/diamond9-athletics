@@ -5,7 +5,8 @@
  * doesn't need to check.
  */
 
-function configured(): boolean {
+/** Whether the Twilio settings are in place, so texts can go out. */
+export function smsConfigured(): boolean {
   return Boolean(
     process.env.TWILIO_ACCOUNT_SID &&
       process.env.TWILIO_AUTH_TOKEN &&
@@ -23,7 +24,7 @@ function normalize(phone: string): string | null {
 }
 
 export async function sendSms(toRaw: string, body: string): Promise<boolean> {
-  if (!configured()) return false;
+  if (!smsConfigured()) return false;
   const to = normalize(toRaw);
   if (!to) return false;
 

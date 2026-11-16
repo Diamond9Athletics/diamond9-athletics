@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BUILD_VERSION } from "./Navbar";
-import { img } from "@/lib/config";
+import { img, STORE_URL } from "@/lib/config";
 
 export default function Footer() {
   return (
@@ -35,6 +35,7 @@ export default function Footer() {
               <Link href="/pitching-plans" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Pitching Plans</Link>
               <Link href="/hitting-plans"  className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Hitting Plans</Link>
               <Link href="/book"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Book Session</Link>
+              <Link href="/faq"    className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">FAQ</Link>
             </div>
           </div>
 
@@ -44,7 +45,7 @@ export default function Footer() {
             <div className="space-y-2.5">
               <Link href="/app"     className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">D9 App</Link>
               <Link href="/about"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">About</Link>
-              <Link href="/shop"    className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Shop</Link>
+              <a href={STORE_URL} target="_blank" rel="noopener noreferrer" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Shop</a>
               <Link href="/contact" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Contact</Link>
               <Link href="/support" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">App Support</Link>
               <Link href="/privacy" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Privacy Policy</Link>

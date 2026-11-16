@@ -4,12 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatUsPhone } from "@/lib/phone";
+import { TextReminderConsent } from "@/components/TextReminderConsent";
 
 type Initial = {
   first_name: string;
   last_name: string;
   phone: string;
   email: string;
+  textReminders: boolean;
 };
 
 export function ProfileForm({ initial }: { initial: Initial }) {
@@ -18,6 +21,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   const [firstName, setFirstName] = useState(initial.first_name);
   const [lastName, setLastName] = useState(initial.last_name);
   const [phone, setPhone] = useState(initial.phone);
+  const [textReminders, setTextReminders] = useState(initial.textReminders);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{
     kind: "ok" | "err";
@@ -45,20 +49,40 @@ export function ProfileForm({ initial }: { initial: Initial }) {
       return;
     }
 
+    if (phone.trim() && !formatUsPhone(phone)) {
+      setProfileSaving(false);
+      setProfileMsg({ kind: "err", text: "Please enter a 10-digit U.S. phone number." });
+      return;
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        phone: phone.trim() || null,
       })
       .eq("id", user.id);
-    setProfileSaving(false);
-
     if (error) {
+      setProfileSaving(false);
       setProfileMsg({ kind: "err", text: error.message });
       return;
     }
+
+    // The phone and the text-reminder choice are saved by the server,
+    // which keeps the record of the choice.
+    const res = await fetch("/api/profile/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, textReminders, source: "profile" }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setProfileSaving(false);
+    if (!res.ok) {
+      setProfileMsg({ kind: "err", text: json.error ?? "Couldn't save. Please try again." });
+      return;
+    }
+    setPhone(json.phone ?? "");
+    setTextReminders(Boolean(json.textReminders));
     setProfileMsg({ kind: "ok", text: "Saved." });
     router.refresh();
   }
@@ -126,12 +150,19 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               placeholder="(512) 555-0123"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              onBlur={() => setPhone((p) => formatUsPhone(p) ?? p)}
               className="input"
             />
             <p className="text-zinc-600 text-[10px] mt-1.5">
-              Optional — used for session reminders and if we need to reach you quickly.
+              A parent&rsquo;s number if the player is under 18. Your coach uses it if a session
+              has to move.
             </p>
           </div>
+          <TextReminderConsent
+            checked={textReminders && Boolean(phone.trim())}
+            onChange={setTextReminders}
+            disabled={!phone.trim()}
+          />
           <div>
             <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">EMAIL</label>
             <input

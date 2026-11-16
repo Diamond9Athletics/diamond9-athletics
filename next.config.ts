@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
     return [
       // Old Acuity-era URL keeps working.
       { source: "/appointments", destination: "/book", permanent: true },
+      // The merch store lives on Flyp (STORE_URL in src/lib/config.ts).
+      // Not permanent, so browsers don't hold on to it if /shop comes back.
+      { source: "/shop", destination: "https://shop.flyp.space/diamond9ath", permanent: false },
       // Preview/dev URLs that linked at /book-v2 stay working.
       { source: "/book-v2", destination: "/book", permanent: true },
       { source: "/book-v2/:path*", destination: "/book/:path*", permanent: true },

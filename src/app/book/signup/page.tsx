@@ -4,6 +4,8 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { formatUsPhone } from "@/lib/phone";
+import { TextReminderConsent } from "@/components/TextReminderConsent";
 
 // Only allow internal paths so ?next= can't be used as an open redirect.
 function safeNext(next: string | null): string {
@@ -42,6 +44,8 @@ function SignupPageInner() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [textReminders, setTextReminders] = useState(false);
   const [password, setPassword] = useState("");
   const [honey, setHoney] = useState(""); // bot honeypot
   const [submitting, setSubmitting] = useState(false);
@@ -74,6 +78,10 @@ function SignupPageInner() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    if (!formatUsPhone(phone)) {
+      setError("Please enter a 10-digit U.S. mobile number.");
+      return;
+    }
     setSubmitting(true);
 
     const res = await fetch("/api/signup", {
@@ -83,6 +91,8 @@ function SignupPageInner() {
         firstName,
         lastName,
         email,
+        phone,
+        textReminders,
         password,
         honey,
         startedAt: startedAt.current,
@@ -188,6 +198,23 @@ function SignupPageInner() {
                 className="input"
               />
             </Field>
+            <Field label="MOBILE PHONE">
+              <input
+                type="tel"
+                inputMode="tel"
+                required
+                autoComplete="tel"
+                placeholder="(512) 555-0123"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onBlur={() => setPhone((p) => formatUsPhone(p) ?? p)}
+                className="input"
+              />
+              <p className="text-zinc-600 text-[10px] mt-1.5 tracking-wider">
+                A PARENT&rsquo;S NUMBER IF THE PLAYER IS UNDER 18. YOUR COACH USES IT IF A SESSION HAS TO MOVE.
+              </p>
+            </Field>
+            <TextReminderConsent checked={textReminders} onChange={setTextReminders} />
             <Field label="PASSWORD">
               <input
                 type="password"

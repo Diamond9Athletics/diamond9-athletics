@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 const trainers = [
   {
     name: "WES GAFFORD",
+    href: "/trainers/wes",
     title: "HEAD TRAINER",
     jersey: "1",
     bio: "Rapsodo-certified pitching specialist with a data-first approach to velocity and command development.",
@@ -19,6 +20,7 @@ const trainers = [
   },
   {
     name: "TURNER OLSON",
+    href: "/trainers/turner",
     title: "HITTING TRAINER",
     jersey: "9",
     bio: "Swing-mechanics specialist focused on bat speed, contact consistency, and a repeatable, game-ready swing.",
@@ -91,18 +93,10 @@ export default function About() {
               </>
             );
 
-            if (i === 0) {
-              return (
-                <Link key={i} href="/trainers/wes" className="card-modern rounded-2xl overflow-hidden card-lift group block">
-                  {card}
-                </Link>
-              );
-            }
-
             return (
-              <div key={i} className="card-modern rounded-2xl overflow-hidden card-lift group">
+              <Link key={i} href={trainer.href} className="card-modern rounded-2xl overflow-hidden card-lift group block">
                 {card}
-              </div>
+              </Link>
             );
           })}
         </div>

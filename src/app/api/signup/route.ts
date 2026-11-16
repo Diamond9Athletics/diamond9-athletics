@@ -13,6 +13,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { formatUsPhone } from "@/lib/phone";
+import type { TextConsent } from "@/lib/text-reminders";
 
 // ---- Bot heuristics ----------------------------------------------------
 
@@ -101,6 +103,8 @@ export async function POST(request: NextRequest) {
     firstName?: string;
     lastName?: string;
     email?: string;
+    phone?: string;
+    textReminders?: boolean;
     password?: string;
     honey?: string;
     startedAt?: number;
@@ -115,6 +119,7 @@ export async function POST(request: NextRequest) {
   const firstName = (body.firstName ?? "").trim();
   const lastName = (body.lastName ?? "").trim();
   const email = (body.email ?? "").trim().toLowerCase();
+  const phone = formatUsPhone(body.phone);
   const password = body.password ?? "";
   const honey = body.honey ?? "";
   const startedAt = Number(body.startedAt ?? 0);
@@ -134,6 +139,12 @@ export async function POST(request: NextRequest) {
   if (!firstName || !lastName || !email || password.length < 8) {
     return NextResponse.json(
       { error: "All fields required. Password must be at least 8 characters." },
+      { status: 400 },
+    );
+  }
+  if (!phone) {
+    return NextResponse.json(
+      { error: "Please enter a 10-digit U.S. mobile number." },
       { status: 400 },
     );
   }
@@ -169,13 +180,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 7) Create the auth user, auto-confirmed.
+  // 7) Create the auth user, auto-confirmed, with their text-reminder
+  //    choice on record (server-only app_metadata).
+  const sms: TextConsent = {
+    reminders: body.textReminders === true,
+    phone,
+    at: new Date().toISOString(),
+    source: "signup",
+    ip: ip === "unknown" ? undefined : ip,
+  };
   const admin = createAdminClient();
   const created = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     user_metadata: { first_name: firstName, last_name: lastName },
+    app_metadata: { sms },
   });
 
   if (created.error) {
@@ -193,6 +213,13 @@ export async function POST(request: NextRequest) {
       { status },
     );
   }
+
+  // The profile row comes from the signup trigger; the phone is added here.
+  const { error: phoneError } = await admin
+    .from("profiles")
+    .update({ phone })
+    .eq("id", created.data.user.id);
+  if (phoneError) console.error("Signup: phone save failed:", phoneError);
 
   // 8) Sign them in so they walk out with a session cookie.
   const supabase = await createClient();

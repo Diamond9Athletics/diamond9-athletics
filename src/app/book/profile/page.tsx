@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ProfileForm } from "./ProfileForm";
+import { textRemindersOn } from "@/lib/text-reminders";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My Profile" };
@@ -39,6 +40,7 @@ export default async function ProfilePage() {
             last_name: profile?.last_name ?? "",
             phone: profile?.phone ?? "",
             email: profile?.email ?? user.email ?? "",
+            textReminders: textRemindersOn(user.app_metadata, profile?.phone),
           }}
         />
       </section>

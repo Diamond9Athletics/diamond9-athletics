@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "privacy@diamond9athletics.com";
-const LAST_UPDATED = "September 18, 2026";
+const LAST_UPDATED = "November 16, 2026";
 
 export default function Privacy() {
   return (
@@ -32,7 +32,8 @@ export default function Privacy() {
             <p>
               This Privacy Policy describes how Diamond Nine Athletics (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or
               &ldquo;our&rdquo;) collects, uses, and protects information when you use the Diamond Nine
-              Athletics mobile application (the &ldquo;App&rdquo;).
+              Athletics mobile application (the &ldquo;App&rdquo;) and, where noted below, our website
+              at diamond9athletics.com.
             </p>
           </div>
 
@@ -64,6 +65,25 @@ export default function Privacy() {
               providers who help us operate the App (for example, hosting and analytics providers),
               and only to the extent necessary for them to perform their services. We may also disclose
               information if required by law.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl text-white mb-3">PHONE NUMBERS &amp; TEXT MESSAGES</h2>
+            <p className="mb-3">
+              When you create an account on our website, we ask for a mobile phone number so your
+              coach can reach you about your training sessions, for example if a session has to move.
+            </p>
+            <p className="mb-3">
+              If you opt in to text reminders, we use that number to text you reminders about
+              sessions you&rsquo;ve booked, about one message per session. Message and data rates may
+              apply. Reply STOP to any message to stop them, or HELP for help. You can also turn text
+              reminders off at any time in My Profile.
+            </p>
+            <p>
+              Texts are sent through our messaging provider, which uses your number only to deliver
+              our messages. We do not sell, rent, or share your mobile number or your text-message
+              opt-in with third parties or affiliates for their marketing purposes.
             </p>
           </div>
 

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "support@diamond9athletics.com";
-const LAST_UPDATED = "November 3, 2026";
+const LAST_UPDATED = "November 16, 2026";
 
 export default function Terms() {
   return (
@@ -34,9 +34,10 @@ export default function Terms() {
           <div>
             <p>
               These Terms of Service (&ldquo;Terms&rdquo;) govern your use of the Diamond Nine Athletics
-              mobile application (the &ldquo;App&rdquo;) provided by Diamond Nine Athletics
-              (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;). By downloading or using the App,
-              you agree to these Terms.
+              mobile application (the &ldquo;App&rdquo;) and, where noted below, our website at
+              diamond9athletics.com, provided by Diamond Nine Athletics (&ldquo;we,&rdquo;
+              &ldquo;us,&rdquo; or &ldquo;our&rdquo;). By downloading or using the App, you agree to
+              these Terms.
             </p>
           </div>
 
@@ -77,6 +78,22 @@ export default function Terms() {
               package credit isn&rsquo;t returned, and for Diamond members it counts toward the
               month&rsquo;s sessions. We may make exceptions at our discretion — reach out if
               something comes up.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl text-white mb-3">TEXT MESSAGES</h2>
+            <p className="mb-3">
+              If you opt in to text reminders on our website, Diamond Nine Athletics will text
+              reminders about sessions you&rsquo;ve booked to the mobile number on your account,
+              about one message per session. Opting in isn&rsquo;t required to book.
+            </p>
+            <p>
+              Message and data rates may apply. Reply STOP to any message to opt out, or HELP for
+              help; you can also turn text reminders off in My Profile. Carriers are not liable for
+              delayed or undelivered messages. For questions, email {EMAIL}. Our{" "}
+              <Link href="/privacy" className="text-[#b07adf] hover:underline">Privacy Policy</Link>{" "}
+              explains how we handle your number.
             </p>
           </div>
 
