@@ -117,11 +117,11 @@ export function ProfileForm({ initial }: { initial: Initial }) {
     <div className="space-y-6">
       {/* Details */}
       <div className="card-modern rounded-2xl p-6 sm:p-8">
-        <p className="text-zinc-500 text-[10px] tracking-widest mb-4 font-bold">DETAILS</p>
+        <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">DETAILS</p>
         <form onSubmit={saveProfile} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">FIRST NAME</label>
+              <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">FIRST NAME</label>
               <input
                 type="text"
                 required
@@ -131,7 +131,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               />
             </div>
             <div>
-              <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">LAST NAME</label>
+              <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">LAST NAME</label>
               <input
                 type="text"
                 required
@@ -142,7 +142,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
             </div>
           </div>
           <div>
-            <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">PHONE</label>
+            <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">PHONE</label>
             <input
               type="tel"
               inputMode="tel"
@@ -153,7 +153,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               onBlur={() => setPhone((p) => formatUsPhone(p) ?? p)}
               className="input"
             />
-            <p className="text-zinc-600 text-[10px] mt-1.5">
+            <p className="text-zinc-500 text-xs mt-1.5">
               A parent&rsquo;s number if the player is under 18. Your coach uses it if a session
               has to move.
             </p>
@@ -164,14 +164,14 @@ export function ProfileForm({ initial }: { initial: Initial }) {
             disabled={!phone.trim()}
           />
           <div>
-            <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">EMAIL</label>
+            <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">EMAIL</label>
             <input
               type="email"
               disabled
               value={initial.email}
               className="input opacity-60"
             />
-            <p className="text-zinc-600 text-[10px] mt-1.5">
+            <p className="text-zinc-500 text-xs mt-1.5">
               Contact support to change your email address.
             </p>
           </div>
@@ -200,10 +200,10 @@ export function ProfileForm({ initial }: { initial: Initial }) {
 
       {/* Password */}
       <div className="card-modern rounded-2xl p-6 sm:p-8">
-        <p className="text-zinc-500 text-[10px] tracking-widest mb-4 font-bold">CHANGE PASSWORD</p>
+        <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">CHANGE PASSWORD</p>
         <form onSubmit={changePw} className="space-y-4">
           <div>
-            <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">NEW PASSWORD</label>
+            <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">NEW PASSWORD</label>
             <input
               type="password"
               autoComplete="new-password"
@@ -211,10 +211,10 @@ export function ProfileForm({ initial }: { initial: Initial }) {
               onChange={(e) => setPw(e.target.value)}
               className="input"
             />
-            <p className="text-zinc-600 text-[10px] mt-1.5 tracking-wider">AT LEAST 8 CHARACTERS</p>
+            <p className="text-zinc-500 text-xs mt-1.5 tracking-wider">AT LEAST 8 CHARACTERS</p>
           </div>
           <div>
-            <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">CONFIRM PASSWORD</label>
+            <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">CONFIRM PASSWORD</label>
             <input
               type="password"
               autoComplete="new-password"

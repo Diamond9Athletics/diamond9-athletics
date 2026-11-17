@@ -19,10 +19,10 @@ export default function Footer() {
               <img
                 src={img("/images/d9-logo.png")}
                 alt="Diamond Nine Athletics"
-                className="h-48 w-auto mix-blend-screen"
+                className="h-24 sm:h-32 md:h-48 w-auto mix-blend-screen"
               />
             </div>
-            <p className="text-zinc-600 text-xs leading-relaxed mb-5 max-w-[220px]">
+            <p className="text-zinc-500 text-xs leading-relaxed mb-5 max-w-[220px]">
               Elite baseball training powered by Rapsodo data. Real trainers. Real results.
             </p>
 
@@ -30,7 +30,7 @@ export default function Footer() {
 
           {/* Training */}
           <div>
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-4 font-bold">TRAINING</p>
+            <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">TRAINING</p>
             <div className="space-y-2.5">
               <Link href="/pitching-plans" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Pitching Plans</Link>
               <Link href="/hitting-plans"  className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Hitting Plans</Link>
@@ -41,7 +41,7 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-4 font-bold">COMPANY</p>
+            <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">COMPANY</p>
             <div className="space-y-2.5">
               <Link href="/app"     className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">D9 App</Link>
               <Link href="/about"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">About</Link>
@@ -56,7 +56,7 @@ export default function Footer() {
 
           {/* Connect */}
           <div>
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-4 font-bold">CONNECT</p>
+            <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">CONNECT</p>
             <div className="space-y-3">
               <a href="https://instagram.com/diamond9atx" target="_blank" rel="noopener noreferrer" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">
                 Instagram
@@ -74,8 +74,8 @@ export default function Footer() {
         <div className="divider-glow mb-6" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-zinc-700 text-xs">© 2026 Diamond Nine Athletics. All rights reserved.</p>
-          <span className="font-mono text-zinc-700 text-[10px]">{BUILD_VERSION}</span>
+          <p className="text-zinc-500 text-xs">© 2026 Diamond Nine Athletics. All rights reserved.</p>
+          <span className="font-mono text-zinc-500 text-xs">{BUILD_VERSION}</span>
         </div>
       </div>
     </footer>

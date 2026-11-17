@@ -239,7 +239,7 @@ function creditsWaitingEmail(a: CheckinAccount, notStarted: boolean): Checkin {
 function neverBookedEmail(a: CheckinAccount): Checkin {
   return note(a, "never_booked", "Ready for your first session at D9?", "Ready for your first session?", [
     `${hello(a)} Thanks for creating your Diamond Nine account.`,
-    "Whenever you&rsquo;re ready: the Diamond membership is unlimited pitching for $350/month (cancel anytime), or grab a pitching or hitting package and book on your own schedule.",
+    "Whenever you&rsquo;re ready: the Diamond membership is unlimited pitching for $350/month (cancel anytime), or grab a pitching or hitting plan and book on your own schedule.",
     `See the plans: ${link("/pitching-plans")}.`,
     "Questions? Just reply.<br>Wes",
   ]);
@@ -249,7 +249,7 @@ function lapsedEmail(a: CheckinAccount): Checkin {
   const plans = a.lastSession?.category === "hitting" ? "/hitting-plans" : "/pitching-plans";
   return note(a, "lapsed", "Ready to get back at it?", "Ready to get back at it?", [
     hello(a),
-    "It&rsquo;s been a while since your last session. Whenever you&rsquo;re ready to pick it back up, the Diamond membership is unlimited pitching for $350/month (cancel anytime), or grab a package and book on your own schedule.",
+    "It&rsquo;s been a while since your last session. Whenever you&rsquo;re ready to pick it back up, the Diamond membership is unlimited pitching for $350/month (cancel anytime), or grab a plan and book on your own schedule.",
     `See the plans: ${link(plans)}.`,
     "Questions? Just reply.<br>Wes",
   ]);

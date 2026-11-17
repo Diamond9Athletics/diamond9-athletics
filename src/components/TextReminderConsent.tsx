@@ -26,7 +26,7 @@ export function TextReminderConsent({
       />
       <span>
         <span className="block text-zinc-200 text-sm">Text me a reminder before each session</span>
-        <span className="block text-zinc-500 text-[11px] leading-relaxed mt-1">
+        <span className="block text-zinc-500 text-xs leading-relaxed mt-1">
           Diamond Nine Athletics will text reminders for sessions you book, about one per
           session. Msg &amp; data rates may apply. Reply STOP to cancel, HELP for help. Not
           required to book. See our{" "}

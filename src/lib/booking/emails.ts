@@ -261,10 +261,10 @@ export async function sendPurchaseReceipt(
   const price = `$${(d.amountCents / 100).toFixed(2)}`;
   const creditLine = d.isEnrollment
     ? "Full program enrollment"
-    : `${d.credits} ${d.credits === 1 ? "credit" : "credits"} added to your account`;
+    : `${d.credits} ${d.credits === 1 ? "session" : "sessions"} added to your account`;
   const nextStep = d.isEnrollment
     ? `Your coach will reach out shortly to get you scheduled.`
-    : `Head to your dashboard to book your first session — credits expire 31 days after your first booking, so schedule anytime.`;
+    : `Head to your dashboard to book your first session — sessions expire 31 days after your first booking, so schedule anytime.`;
 
   // Athlete receipt.
   const athleteHtml = shell({
@@ -274,7 +274,7 @@ export async function sendPurchaseReceipt(
       <p style="margin:0 0 22px 0;color:#a1a1aa;font-size:14px;">Thanks, ${escape(athleteName.split(" ")[0])} — payment received.</p>
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(153,84,210,0.06);border:1px solid rgba(153,84,210,0.15);border-radius:12px;padding:18px;margin:0 0 22px 0;">
-        <tr><td style="padding:6px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Package</td></tr>
+        <tr><td style="padding:6px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Plan</td></tr>
         <tr><td style="padding:0 0 14px 0;color:#fff;font-size:16px;font-weight:600;">${escape(d.packageName)}</td></tr>
         <tr><td style="padding:6px 0;color:#71717a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Amount</td></tr>
         <tr><td style="padding:0 0 14px 0;color:#fff;font-size:16px;">${escape(price)}</td></tr>
@@ -307,8 +307,8 @@ export async function sendPurchaseReceipt(
       </p>
       <p style="margin:0 0 8px 0;color:#a1a1aa;font-size:14px;">
         ${d.isEnrollment
-          ? "Reach out to schedule — no credits, full program enrollment."
-          : `${d.credits} ${d.credits === 1 ? "credit" : "credits"} added to their account. They'll book their own sessions from the dashboard.`}
+          ? "Reach out to schedule — full program enrollment."
+          : `${d.credits} ${d.credits === 1 ? "session" : "sessions"} added to their account. They'll book their own sessions from the dashboard.`}
       </p>
       <p style="margin:14px 0 0 0;color:#71717a;font-size:13px;">
         Contact: <a href="mailto:${escape(d.athleteEmail)}" style="color:#b07adf;">${escape(d.athleteEmail)}</a>

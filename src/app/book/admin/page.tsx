@@ -239,7 +239,7 @@ export default async function AdminPage() {
                       <p className="text-[#b07adf] font-bold">
                         ${((p.amount_cents ?? 0) / 100).toFixed(2)}
                       </p>
-                      <p className="text-zinc-600 text-xs">{when}</p>
+                      <p className="text-zinc-500 text-xs">{when}</p>
                     </div>
                   </li>
                 );
@@ -254,7 +254,7 @@ export default async function AdminPage() {
             <p className="text-zinc-500 text-[10px] tracking-widest font-bold">
               ATHLETES ({athletes.length})
             </p>
-            <p className="text-zinc-600 text-[10px] tracking-wider">
+            <p className="text-zinc-500 text-[10px] tracking-wider">
               Most recent first
             </p>
           </div>
@@ -295,7 +295,7 @@ function Stat({
     <div className="card-modern rounded-2xl p-4 sm:p-5">
       <p className="text-zinc-500 text-[9px] tracking-widest mb-2 font-bold">{label}</p>
       <p className="font-display text-3xl gradient-text mb-1">{value}</p>
-      <p className="text-zinc-600 text-[11px]">{sub}</p>
+      <p className="text-zinc-500 text-[11px]">{sub}</p>
     </div>
   );
 }

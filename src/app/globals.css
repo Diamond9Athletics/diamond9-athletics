@@ -6,6 +6,12 @@
   --font-display: var(--font-bebas);
 }
 
+/* Secondary text gray, lighter than Tailwind's stock zinc-500 so small
+   print stays readable on the near-black background (about 6:1 contrast). */
+@theme {
+  --color-zinc-500: #8b8b94;
+}
+
 html {
   scroll-behavior: smooth;
 }

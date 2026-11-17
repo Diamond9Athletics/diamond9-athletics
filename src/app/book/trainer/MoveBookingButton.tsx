@@ -103,7 +103,7 @@ export function MoveBookingButton({
             setTime(initial.time);
             setErr(null);
           }}
-          className="text-[10px] tracking-widest text-zinc-600 hover:text-zinc-400 font-bold"
+          className="text-[10px] tracking-widest text-zinc-500 hover:text-zinc-400 font-bold"
         >
           CANCEL
         </button>

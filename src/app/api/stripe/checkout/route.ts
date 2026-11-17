@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error || !pkg) {
-    return NextResponse.json({ error: "Package not found" }, { status: 404 });
+    return NextResponse.json({ error: "That plan isn't available right now." }, { status: 404 });
   }
 
   if (!pkg.stripe_price_id) {

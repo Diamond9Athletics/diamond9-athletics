@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Book a Session",
   description:
-    "Book pitching or hitting sessions with Diamond Nine Athletics. Buy a package, use credits to schedule without paying again.",
+    "Book pitching or hitting sessions with Diamond Nine Athletics. Buy a plan, then book your sessions online.",
 };
 
 /**

@@ -97,7 +97,7 @@ export function AvailabilityEditor({
               </div>
             </div>
             {dayRules.length === 0 ? (
-              <p className="text-zinc-600 text-xs italic pl-1">Off</p>
+              <p className="text-zinc-500 text-xs italic pl-1">Off</p>
             ) : (
               <div className="space-y-2">
                 {dayRules.map(({ rule, idx }) => (

@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     const outcome = late
       ? `Because it was less than ${FREE_CANCEL_HOURS} hours before the session, it counts as a used session${booking.credit_bucket_id ? " — the credit isn't returned" : ""}.`
       : booking.credit_bucket_id
-        ? "The credit is back on your account."
+        ? "The session is back on your account."
         : "Book another time whenever you're ready.";
 
     if (ath?.email) {

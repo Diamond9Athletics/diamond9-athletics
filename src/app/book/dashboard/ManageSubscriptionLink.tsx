@@ -94,7 +94,7 @@ export function ManageSubscriptionLink({
   return (
     <>
       <div className="card-modern rounded-2xl p-6 mt-4">
-        <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">
+        <p className="text-zinc-500 text-xs tracking-widest mb-2 font-bold">
           DIAMOND MEMBERSHIP{athleteName && <span className="text-[#b07adf]"> · {athleteName.toUpperCase()}</span>}
         </p>
         {windingDown ? (
@@ -155,7 +155,7 @@ export function ManageSubscriptionLink({
             className="card-modern rounded-2xl p-6 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-zinc-500 text-[10px] tracking-widest mb-2 font-bold">
+            <p className="text-zinc-500 text-xs tracking-widest mb-2 font-bold">
               CANCEL DIAMOND MEMBERSHIP
             </p>
             <h2 className="font-display text-2xl text-white mb-3">

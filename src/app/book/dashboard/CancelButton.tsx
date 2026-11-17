@@ -35,11 +35,11 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
   }
 
   const hint = late ? (
-    <p className="text-amber-500 text-[10px] leading-snug max-w-[240px]">
+    <p className="text-amber-500 text-xs leading-snug max-w-[240px]">
       It&rsquo;s within {FREE_CANCEL_HOURS} hours — changing it now uses this session.
     </p>
   ) : (
-    <p className="text-zinc-500 text-[10px] leading-snug">
+    <p className="text-zinc-500 text-xs leading-snug">
       Free to change until{" "}
       {freeCancelDeadline(startsAt).toLocaleString("en-US", {
         timeZone: "America/Chicago",
@@ -81,19 +81,19 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
           <button
             onClick={() => cancel("rebook")}
             disabled={busy}
-            className="text-[#b07adf] hover:text-[#c89cff] text-[11px] tracking-wider font-bold disabled:opacity-60"
+            className="text-[#b07adf] hover:text-[#c89cff] text-xs tracking-wider font-bold disabled:opacity-60"
           >
             {busy ? "…" : "RESCHEDULE"}
           </button>
           <button
             onClick={() => setMode("confirm")}
-            className="text-zinc-500 hover:text-red-400 text-[11px] tracking-wider"
+            className="text-zinc-500 hover:text-red-400 text-xs tracking-wider"
           >
             CANCEL
           </button>
           <button
             onClick={() => setMode("idle")}
-            className="text-zinc-700 hover:text-zinc-500 text-[11px] tracking-wider"
+            className="text-zinc-500 hover:text-zinc-500 text-xs tracking-wider"
           >
             ✕
           </button>
@@ -109,7 +109,7 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
         setLate(isLateCancel(startsAt));
         setMode("menu");
       }}
-      className="text-zinc-500 hover:text-[#b07adf] text-[11px] tracking-wider shrink-0"
+      className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider shrink-0"
     >
       CHANGE ▾
     </button>

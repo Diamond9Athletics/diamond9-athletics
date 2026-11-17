@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import ThemeToggle from "./ThemeToggle";
 import { img, STORE_URL } from "@/lib/config";
 
-export const BUILD_VERSION = "v1.15.1";
+export const BUILD_VERSION = "v1.16.0";
 
 type NavLink = { href: string; label: string; external?: boolean };
 
@@ -21,6 +20,14 @@ const navLinks: NavLink[] = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
   { href: STORE_URL, label: "Shop", external: true },
+];
+
+// The phone menu lists the plans directly, and the FAQ.
+const mobileLinks: NavLink[] = [
+  ...planLinks,
+  ...navLinks.slice(0, 2),
+  { href: "/faq", label: "FAQ" },
+  ...navLinks.slice(2),
 ];
 
 // BOOK NOW for someone who isn't signed in: sign in (or create an account
@@ -217,9 +224,8 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Theme Toggle + Account + Book Now */}
+            {/* Account + Book Now */}
             <div className="hidden lg:flex items-center gap-3">
-              <ThemeToggle />
               {account?.isTrainer && (
                 <Link
                   href="/book/trainer"
@@ -276,11 +282,7 @@ export default function Navbar() {
           }`}
         >
           <div className="px-4 pb-4 pt-2 space-y-1 bg-zinc-950/95 border-t border-zinc-800/50">
-            <div className="flex items-center justify-between px-4 py-2 mb-1">
-              <span className="text-zinc-500 text-xs tracking-wider">THEME</span>
-              <ThemeToggle />
-            </div>
-            {[...planLinks, ...navLinks].map((link) => (
+            {mobileLinks.map((link) => (
               link.external ? (
                 <a
                   key={link.href}

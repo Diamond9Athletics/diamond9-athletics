@@ -46,11 +46,11 @@ export default function PageError({
         <div className="flex items-center justify-center gap-5">
           <button
             onClick={() => (error.digest ? window.location.reload() : reset())}
-            className="btn-gold px-7 py-3 rounded-full text-[11px] tracking-widest font-black"
+            className="btn-gold px-7 py-3 rounded-full text-xs tracking-widest font-black"
           >
             TRY AGAIN
           </button>
-          <Link href="/" className="text-zinc-400 hover:text-white text-[11px] tracking-widest font-bold">
+          <Link href="/" className="text-zinc-400 hover:text-white text-xs tracking-widest font-bold">
             HOME
           </Link>
         </div>

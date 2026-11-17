@@ -170,7 +170,7 @@ export default async function BookPage({
     <main className="pt-24 bg-[#040200] min-h-screen">
       <section className="max-w-3xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
-          <p className="section-label mb-3">USE YOUR CREDITS</p>
+          <p className="section-label mb-3">USE YOUR PLAN</p>
           <h1 className="font-display text-5xl sm:text-7xl text-white leading-none">
             BOOK A
             <span className="block gradient-text">SESSION</span>

@@ -190,7 +190,7 @@ export default function ResetPasswordPage() {
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
-                <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">NEW PASSWORD</label>
+                <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">NEW PASSWORD</label>
                 <input
                   type="password"
                   required
@@ -200,10 +200,10 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="input"
                 />
-                <p className="text-zinc-600 text-[10px] mt-1.5 tracking-wider">AT LEAST 8 CHARACTERS</p>
+                <p className="text-zinc-500 text-xs mt-1.5 tracking-wider">AT LEAST 8 CHARACTERS</p>
               </div>
               <div>
-                <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">CONFIRM PASSWORD</label>
+                <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">CONFIRM PASSWORD</label>
                 <input
                   type="password"
                   required

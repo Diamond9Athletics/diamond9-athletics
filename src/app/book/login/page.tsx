@@ -105,7 +105,7 @@ function LoginPageInner() {
               <div className="text-right mt-1.5">
                 <Link
                   href="/book/forgot-password"
-                  className="text-[#b07adf] hover:underline text-[11px] tracking-wider"
+                  className="text-[#b07adf] hover:underline text-xs tracking-wider"
                 >
                   Forgot password?
                 </Link>
@@ -118,7 +118,7 @@ function LoginPageInner() {
                 {showSignupNudge && (
                   <Link
                     href={signupHref}
-                    className="inline-block bg-[#9954d2] hover:bg-[#b07adf] text-black px-4 py-2 rounded-full text-[11px] tracking-widest font-black no-underline"
+                    className="inline-block bg-[#9954d2] hover:bg-[#b07adf] text-black px-4 py-2 rounded-full text-xs tracking-widest font-black no-underline"
                   >
                     CREATE AN ACCOUNT →
                   </Link>
@@ -140,7 +140,7 @@ function LoginPageInner() {
             to sign in without ever having made an account — make the way
             in impossible to miss. */}
         <div className="card-modern rounded-2xl p-6 sm:p-8 mt-4 text-center">
-          <p className="text-[#b07adf] text-[10px] tracking-widest font-bold mb-2">
+          <p className="text-[#b07adf] text-xs tracking-widest font-bold mb-2">
             FIRST TIME BOOKING ONLINE?
           </p>
           <p className="text-zinc-400 text-sm leading-relaxed mb-5">
@@ -177,7 +177,7 @@ function LoginPageInner() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">{label}</label>
+      <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">{label}</label>
       {children}
     </div>
   );

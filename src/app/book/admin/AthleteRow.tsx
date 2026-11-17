@@ -141,7 +141,7 @@ export function AthleteRow({
               </>
             )}
           </p>
-          <p className="text-zinc-600 text-xs">
+          <p className="text-zinc-500 text-xs">
             {a.upcoming} upcoming · joined {joined}
           </p>
         </div>
@@ -197,11 +197,11 @@ export function AthleteRow({
           {/* Meta */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-zinc-400 pt-1">
             <p>
-              <span className="text-zinc-600">Upcoming:</span>{" "}
+              <span className="text-zinc-500">Upcoming:</span>{" "}
               <span className="text-white">{a.upcoming}</span>
             </p>
             <p>
-              <span className="text-zinc-600">Joined:</span>{" "}
+              <span className="text-zinc-500">Joined:</span>{" "}
               <span className="text-white">{joined}</span>
             </p>
           </div>

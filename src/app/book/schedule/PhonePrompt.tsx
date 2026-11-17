@@ -84,7 +84,7 @@ export function PhonePrompt() {
         onChange={(e) => setPhone(e.target.value)}
         onBlur={() => setPhone((p) => formatUsPhone(p) ?? p)}
         aria-label="Phone number"
-        className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700"
+        className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600"
       />
       <TextReminderConsent checked={textReminders} onChange={setTextReminders} />
       {error && (

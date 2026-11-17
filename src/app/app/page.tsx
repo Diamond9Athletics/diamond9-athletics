@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { img } from "@/lib/config";
+import { PageHero } from "@/components/PageHero";
 
 export const metadata: Metadata = {
   title: "The App",
@@ -71,7 +71,7 @@ function AppStoreBadge({ className = "" }: { className?: string }) {
         <path d="M17.564 12.72c-.027-2.69 2.196-3.98 2.296-4.043-1.25-1.83-3.196-2.08-3.886-2.107-1.654-.167-3.228.974-4.066.974-.837 0-2.131-.95-3.503-.924-1.802.027-3.466 1.048-4.392 2.66-1.872 3.245-.479 8.046 1.343 10.68.89 1.29 1.952 2.738 3.343 2.686 1.342-.054 1.85-.868 3.472-.868 1.622 0 2.08.868 3.502.842 1.446-.027 2.362-1.314 3.245-2.606 1.022-1.496 1.444-2.943 1.47-3.018-.032-.014-2.822-1.083-2.85-4.296zM14.96 4.79c.74-.898 1.24-2.146 1.103-3.39-1.067.043-2.36.71-3.124 1.608-.685.795-1.285 2.065-1.124 3.283 1.19.092 2.405-.605 3.145-1.501z" />
       </svg>
       <span className="text-left leading-tight">
-        <span className="block text-[10px] text-zinc-400 tracking-wide">Download on the</span>
+        <span className="block text-xs text-zinc-400 tracking-wide">Download on the</span>
         <span className="block text-white font-semibold text-lg -mt-0.5">App Store</span>
       </span>
     </a>
@@ -83,31 +83,21 @@ export default function AppPage() {
     <main className="pt-24 bg-[#040200]">
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${img("/images/hero-pitcher-night.jpg")}')` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/65 to-zinc-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.08)_0%,transparent_100%)]" />
-        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">◆ NOW ON iOS · FREE</span>
-          <h1 className="font-display leading-none">
-            <span className="text-white text-5xl sm:text-7xl lg:text-8xl block">THE DIAMOND 9</span>
-            <span className="gradient-text text-glow text-5xl sm:text-7xl lg:text-8xl block">APP</span>
-          </h1>
-          <div className="divider-glow max-w-[100px] mx-auto mt-6 mb-5" />
-          <p className="text-zinc-300 text-base sm:text-lg max-w-xl mx-auto mb-8">
-            Track your pitching. Follow your plan. Outwork everyone. The training tool built for
-            serious pitchers — and the coaches who develop them.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <AppStoreBadge />
-            <div className="flex items-center gap-4 text-xs text-zinc-500">
-              <Link href="/terms" className="hover:text-[#b07adf] transition-colors">Terms of Use</Link>
-              <span className="text-zinc-700">·</span>
-              <Link href="/privacy" className="hover:text-[#b07adf] transition-colors">Privacy Policy</Link>
-            </div>
+      <PageHero
+        badge="◆ NOW ON iOS · FREE"
+        title="THE DIAMOND 9"
+        accent="APP"
+        subtitle="Track your pitching. Follow your plan. Outwork everyone. The training tool built for serious pitchers — and the coaches who develop them."
+      >
+        <div className="flex flex-col items-center gap-4 mt-8">
+          <AppStoreBadge />
+          <div className="flex items-center gap-4 text-xs text-zinc-500">
+            <Link href="/terms" className="hover:text-[#b07adf] transition-colors">Terms of Use</Link>
+            <span className="text-zinc-500">·</span>
+            <Link href="/privacy" className="hover:text-[#b07adf] transition-colors">Privacy Policy</Link>
           </div>
         </div>
-      </section>
+      </PageHero>
 
       {/* ── Features ─────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 py-16">
@@ -129,7 +119,7 @@ export default function AppPage() {
             </div>
           ))}
         </div>
-        <p className="text-center text-zinc-600 text-[11px] mt-8 tracking-wide">
+        <p className="text-center text-zinc-500 text-xs mt-8 tracking-wide">
           Compatible with Rapsodo and Trackman CSV exports. Not affiliated with or endorsed by
           Rapsodo or Trackman.
         </p>
@@ -168,9 +158,9 @@ export default function AppPage() {
           </a>
           <div className="flex items-center justify-center gap-4 text-xs text-zinc-500 mt-7">
             <Link href="/terms" className="hover:text-[#b07adf] transition-colors">Terms of Use</Link>
-            <span className="text-zinc-700">·</span>
+            <span className="text-zinc-500">·</span>
             <Link href="/privacy" className="hover:text-[#b07adf] transition-colors">Privacy Policy</Link>
-            <span className="text-zinc-700">·</span>
+            <span className="text-zinc-500">·</span>
             <Link href="/support" className="hover:text-[#b07adf] transition-colors">Support</Link>
           </div>
         </div>

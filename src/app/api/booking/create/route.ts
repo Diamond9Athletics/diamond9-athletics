@@ -323,7 +323,7 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: true });
 
     if (bucketErr) {
-      return fail(500, bucketErr.message, "Couldn't check your credits");
+      return fail(500, bucketErr.message, "Couldn't check your sessions");
     }
 
     const bucket = buckets?.[0] ?? null;
@@ -331,8 +331,8 @@ export async function POST(request: NextRequest) {
     if (!hasSubscriptionEntitlement && !bucket && !movedCredit) {
       return fail(
         402,
-        "You don't have credits for this service. Buy a package first.",
-        "Out of credits",
+        "You don't have any sessions left for this. Buy a plan first.",
+        "Out of sessions",
       );
     }
 

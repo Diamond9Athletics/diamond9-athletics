@@ -48,7 +48,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
 
   return (
     <div className="card-modern rounded-2xl p-6 sm:p-7 mb-6">
-      <p className="text-zinc-500 text-[10px] tracking-widest mb-3 font-bold">
+      <p className="text-zinc-500 text-xs tracking-widest mb-3 font-bold">
         {family ? "YOUR ATHLETES" : "TRAINING MORE THAN ONE ATHLETE?"}
       </p>
 
@@ -67,11 +67,11 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   {a.member ? (
-                    <span className="text-[#b07adf] text-[10px] tracking-widest font-bold">◆ DIAMOND</span>
+                    <span className="text-[#b07adf] text-xs tracking-widest font-bold">◆ DIAMOND</span>
                   ) : (
                     <Link
                       href={`/book/subscribe?for=${encodeURIComponent(a.key)}`}
-                      className="text-zinc-400 hover:text-[#b07adf] text-[10px] tracking-widest font-bold"
+                      className="text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest font-bold"
                     >
                       JOIN DIAMOND
                     </Link>
@@ -83,7 +83,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                         setRemoving(null);
                         setError(null);
                       }}
-                      className="text-amber-400 hover:text-amber-300 text-[10px] tracking-widest font-bold"
+                      className="text-amber-400 hover:text-amber-300 text-xs tracking-widest font-bold"
                     >
                       RENEW
                     </button>
@@ -95,7 +95,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                         setRenewing(null);
                         setError(null);
                       }}
-                      className="text-zinc-600 hover:text-red-300 text-[10px] tracking-widest font-bold"
+                      className="text-zinc-500 hover:text-red-300 text-xs tracking-widest font-bold"
                     >
                       REMOVE
                     </button>
@@ -110,7 +110,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                     <button
                       onClick={() => setRemoving(null)}
                       disabled={busy}
-                      className="text-zinc-400 hover:text-white text-[10px] tracking-widest font-bold"
+                      className="text-zinc-400 hover:text-white text-xs tracking-widest font-bold"
                     >
                       KEEP
                     </button>
@@ -119,7 +119,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                         if (await send("DELETE", { id: a.key })) setRemoving(null);
                       }}
                       disabled={busy}
-                      className="text-red-300 hover:text-red-200 text-[10px] tracking-widest font-bold disabled:opacity-60"
+                      className="text-red-300 hover:text-red-200 text-xs tracking-widest font-bold disabled:opacity-60"
                     >
                       {busy ? "REMOVING…" : "YES, REMOVE"}
                     </button>
@@ -175,13 +175,13 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
             setRemoving(null);
             setError(null);
           }}
-          className="btn-outline px-5 py-2.5 rounded-full text-[11px] tracking-widest font-bold"
+          className="btn-outline px-5 py-2.5 rounded-full text-xs tracking-widest font-bold"
         >
           + ADD AN ATHLETE
         </button>
       )}
       {family && (
-        <p className="text-zinc-600 text-xs mt-3">
+        <p className="text-zinc-500 text-xs mt-3">
           Credits are shared by everyone here. A Diamond membership covers one athlete.
         </p>
       )}
@@ -190,8 +190,8 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
 }
 
 const inputCls =
-  "w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-3 py-2.5 rounded-lg outline-none transition-all placeholder:text-zinc-700";
-const labelCls = "block text-zinc-500 text-[10px] tracking-widest font-bold mb-1.5";
+  "w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-3 py-2.5 rounded-lg outline-none transition-all placeholder:text-zinc-600";
+const labelCls = "block text-zinc-500 text-xs tracking-widest font-bold mb-1.5";
 
 function AddAthleteForm({
   busy,
@@ -294,14 +294,14 @@ function AgreementForm({
         <button
           onClick={() => onSubmit(guardianName.trim())}
           disabled={!ready || busy}
-          className="btn-gold px-6 py-2.5 rounded-full text-[11px] tracking-widest font-black disabled:opacity-50"
+          className="btn-gold px-6 py-2.5 rounded-full text-xs tracking-widest font-black disabled:opacity-50"
         >
           {busy ? "SAVING…" : submitLabel}
         </button>
         <button
           onClick={onCancel}
           disabled={busy}
-          className="text-zinc-500 hover:text-zinc-300 text-[10px] tracking-widest font-bold"
+          className="text-zinc-500 hover:text-zinc-300 text-xs tracking-widest font-bold"
         >
           CANCEL
         </button>

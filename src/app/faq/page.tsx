@@ -5,6 +5,7 @@ import { FREE_CANCEL_HOURS, MIN_BOOKING_LEAD_HOURS } from "@/lib/booking/policy"
 import { BOOKING_WINDOW_DAYS, MAX_REPEAT_WEEKS } from "@/lib/booking/repeat";
 import { CATEGORY_CAPACITY } from "@/lib/booking/slots";
 import { smsConfigured } from "@/lib/sms";
+import { PageHero } from "@/components/PageHero";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -166,18 +167,12 @@ function sections(): { title: string; items: Item[] }[] {
 export default function Faq() {
   return (
     <main className="pt-24 bg-[#040200]">
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.07)_0%,transparent_100%)]" />
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">◆ QUESTIONS</span>
-          <h1 className="font-display leading-none">
-            <span className="text-white text-6xl sm:text-8xl block">FREQUENTLY</span>
-            <span className="gradient-text text-glow text-6xl sm:text-8xl block">ASKED</span>
-          </h1>
-          <div className="divider-glow max-w-[100px] mx-auto mt-6 mb-4" />
-          <p className="text-zinc-400 text-sm">Booking, plans, and what to expect.</p>
-        </div>
-      </section>
+      <PageHero
+        badge="◆ QUESTIONS"
+        title="FREQUENTLY"
+        accent="ASKED"
+        subtitle="Booking, plans, and what to expect."
+      />
 
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-24 space-y-10">
         {sections().map((section) => (

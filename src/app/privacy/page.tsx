@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { PageHero } from "@/components/PageHero";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -36,18 +37,13 @@ export default function Privacy() {
   return (
     <main className="pt-24 bg-[#040200]">
       {/* Hero */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.06)_0%,transparent_100%)]" />
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">◆ LEGAL</span>
-          <h1 className="font-display text-5xl sm:text-7xl leading-none">
-            <span className="text-white">PRIVACY</span>
-            <span className="block gradient-text">POLICY</span>
-          </h1>
-          <div className="divider-glow max-w-[100px] mx-auto mt-5" />
-          <p className="text-zinc-500 text-xs tracking-wider mt-5">LAST UPDATED · {LAST_UPDATED.toUpperCase()}</p>
-        </div>
-      </section>
+      <PageHero
+        badge="◆ LEGAL"
+        title="PRIVACY"
+        accent="POLICY"
+      >
+        <p className="text-zinc-500 text-xs tracking-wider mt-4">LAST UPDATED · {LAST_UPDATED.toUpperCase()}</p>
+      </PageHero>
 
       {/* Body */}
       <section className="max-w-3xl mx-auto px-6 pb-24">

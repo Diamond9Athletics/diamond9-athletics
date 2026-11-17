@@ -62,7 +62,7 @@ export default async function WaiverPage({
           >
             <ParticipantAgreement />
           </div>
-          <p className="text-zinc-500 text-[11px] mt-4 pt-3 border-t border-white/5">
+          <p className="text-zinc-500 text-xs mt-4 pt-3 border-t border-white/5">
             Scroll to read the full agreement, or{" "}
             <Link href="/waiver" target="_blank" className="text-[#b07adf] hover:underline">
               open it on its own page

@@ -120,7 +120,7 @@ export default async function SubscribePage({
                 className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 bg-zinc-900/30 border border-zinc-800/60"
               >
                 <span className="text-zinc-500 text-sm font-bold">{name}</span>
-                <span className="text-[#b07adf] text-[10px] tracking-widest font-bold">◆ MEMBER</span>
+                <span className="text-[#b07adf] text-xs tracking-widest font-bold">◆ MEMBER</span>
               </div>
             ) : (
               <Link

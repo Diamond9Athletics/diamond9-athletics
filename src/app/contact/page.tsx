@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { img } from "@/lib/config";
+import { PageHero } from "@/components/PageHero";
 
 // No prices here — they live on the plan pages, so this list can't go stale.
 const plans = [
@@ -12,6 +12,43 @@ const plans = [
   "Gold Hitting Plan",
   "Single Hitting Session",
   "Not sure yet",
+];
+
+// Drawn icons, matching the rest of the site.
+const CONTACT_ITEMS: { label: string; value: string; href?: string; icon: React.ReactNode }[] = [
+  {
+    label: "INSTAGRAM",
+    value: "@diamond9atx",
+    href: "https://instagram.com/diamond9atx",
+    icon: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="0.75" fill="currentColor" stroke="none" />
+      </>
+    ),
+  },
+  {
+    label: "EMAIL",
+    value: "info@diamond9athletics.com",
+    href: "mailto:info@diamond9athletics.com",
+    icon: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m3.5 6.5 8.5 6 8.5-6" />
+      </>
+    ),
+  },
+  {
+    label: "LOCATION",
+    value: "Austin, Texas",
+    icon: (
+      <>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
+        <circle cx="12" cy="10" r="2.3" />
+      </>
+    ),
+  },
 ];
 
 export default function Contact() {
@@ -48,20 +85,11 @@ export default function Contact() {
   return (
     <main className="pt-24 bg-[#040200]">
       {/* Hero */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${img("/images/hero-contact.jpg")}')` }} />
-        <div className="absolute inset-0 bg-zinc-950/60" />
-        <div className="absolute inset-0 grid-bg opacity-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.06)_0%,transparent_100%)]" />
-        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">◆ REACH OUT</span>
-          <h1 className="font-display text-6xl sm:text-8xl lg:text-9xl leading-none">
-            <span className="text-white">GET IN</span>
-            <span className="block gradient-text">TOUCH</span>
-          </h1>
-          <div className="divider-glow max-w-[100px] mx-auto mt-5" />
-        </div>
-      </section>
+      <PageHero
+        badge="◆ REACH OUT"
+        title="GET IN"
+        accent="TOUCH"
+      />
 
       {/* Form + Info */}
       <section className="max-w-5xl mx-auto px-6 py-12 pb-24">
@@ -86,16 +114,16 @@ export default function Contact() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">NAME</label>
-                    <input type="text" required autoComplete="name" value={form.name} onChange={set("name")} placeholder="Your name" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
+                    <input type="text" required autoComplete="name" value={form.name} onChange={set("name")} placeholder="Your name" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
                   </div>
                   <div>
                     <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">EMAIL</label>
-                    <input type="email" required autoComplete="email" value={form.email} onChange={set("email")} placeholder="your@email.com" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
+                    <input type="email" required autoComplete="email" value={form.email} onChange={set("email")} placeholder="your@email.com" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">PHONE</label>
-                  <input type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} placeholder="(555) 000-0000" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700" />
+                  <input type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} placeholder="(555) 000-0000" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">PLAN INTEREST</label>
@@ -106,7 +134,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">MESSAGE</label>
-                  <textarea rows={4} value={form.message} onChange={set("message")} placeholder="Tell us about your goals..." className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-700 resize-none" />
+                  <textarea rows={4} value={form.message} onChange={set("message")} placeholder="Tell us about your goals..." className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600 resize-none" />
                 </div>
                 {error && (
                   <p className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">{error}</p>
@@ -121,33 +149,44 @@ export default function Contact() {
           {/* Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="card-modern rounded-2xl p-6 space-y-5">
-              {[
-                { label: "INSTAGRAM", value: "@diamond9atx", icon: "📸" },
-                { label: "EMAIL", value: "info@diamond9athletics.com", icon: "✉️" },
-                { label: "LOCATION", value: "Austin, Texas", icon: "📍" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="icon-box text-lg">{item.icon}</div>
-                  <div>
-                    <p className="text-zinc-600 text-[10px] tracking-widest mb-0.5">{item.label}</p>
-                    <p className="text-white text-sm">{item.value}</p>
+              {CONTACT_ITEMS.map((item) => {
+                const body = (
+                  <>
+                    <div className="icon-box">
+                      <svg className="w-5 h-5 text-[#b07adf]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                        {item.icon}
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs tracking-widest mb-0.5">{item.label}</p>
+                      <p className="text-white text-sm">{item.value}</p>
+                    </div>
+                  </>
+                );
+                return item.href ? (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    {...(item.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+                  >
+                    {body}
+                  </a>
+                ) : (
+                  <div key={item.label} className="flex items-center gap-4">
+                    {body}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="card-modern-amber rounded-2xl p-6">
-              <p className="section-label mb-3">TRAINING HOURS</p>
-              <div className="space-y-2">
-                {[
-                  ["Mon – Fri", "By appointment"],
-                  ["Weekends", "By appointment"],
-                ].map(([day, hours]) => (
-                  <div key={day} className="flex justify-between text-sm">
-                    <span className="text-zinc-400">{day}</span>
-                    <span className="text-[#b07adf]">{hours}</span>
-                  </div>
-                ))}
-              </div>
+              <p className="section-label mb-2">TRAINING HOURS</p>
+              <p className="text-zinc-300 text-sm leading-relaxed">
+                By appointment.{" "}
+                <Link href="/book" className="text-[#b07adf] hover:underline">
+                  Book any open time online →
+                </Link>
+              </p>
             </div>
             <Link href="/faq" className="card-modern rounded-2xl p-6 card-lift block group">
               <p className="section-label mb-2">QUICK ANSWERS</p>

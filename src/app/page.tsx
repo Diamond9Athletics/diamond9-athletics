@@ -3,25 +3,54 @@ import { img } from "@/lib/config";
 import { HomeTestimonials } from "@/components/HomeTestimonials";
 
 const steps = [
-  { num: "01", title: "CHOOSE A PLAN", desc: "Go Diamond for unlimited sessions, or grab a Single or Gold package." },
-  { num: "02", title: "BOOK & SHOW UP", desc: "Schedule your session. Bring the effort. We bring the tech." },
-  { num: "03", title: "COME READY TO WORK", desc: "" },
+  { num: "01", title: "CHOOSE A PLAN", desc: "Go Diamond for unlimited pitching sessions, or grab a Single or Gold plan." },
+  { num: "02", title: "BOOK ONLINE", desc: "Pick any open time on the calendar. You’ll get a confirmation and a reminder." },
+  { num: "03", title: "COME READY TO WORK", desc: "Bring the effort. We bring the tech: every session is tracked, so you can see what’s getting better." },
 ];
+
+/** A coach's photo in the home page hero, with their name, linking to their page. */
+function CoachPhoto({
+  href,
+  src,
+  alt,
+  role,
+  name,
+  className,
+  position,
+}: {
+  href: string;
+  src: string;
+  alt: string;
+  role: string;
+  name: string;
+  className: string;
+  position: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`${className} group block rounded-2xl overflow-hidden border border-[#9954d2]/25 shadow-2xl shadow-black/60 card-lift`}
+    >
+      <img src={src} alt={alt} className="w-full h-full object-cover" style={{ objectPosition: position }} />
+      <div className="absolute inset-x-0 bottom-0 px-4 pt-12 pb-3 bg-gradient-to-t from-zinc-950 via-zinc-950/85 to-transparent">
+        <p className="text-[#c49bea] text-xs font-bold tracking-widest">{role}</p>
+        <p className="font-display text-xl sm:text-3xl text-white leading-tight flex items-center gap-1.5 sm:gap-2">
+          {name}
+          <span className="text-[#b07adf] text-lg transition-transform duration-200 group-hover:translate-x-1">→</span>
+        </p>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
   return (
     <main className="overflow-hidden page-reveal">
 
-      {/* ══ HERO ══════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Stadium background */}
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${img("/images/hero-main.jpg")}')` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/55 to-zinc-950" />
-        {/* Amber radial */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_50%_65%,rgba(153,84,210,0.07)_0%,transparent_100%)]" />
-
-        {/* Giant watermark "9" */}
-        <div className="absolute right-[-5%] top-1/2 -translate-y-1/2 font-display text-[32rem] leading-none text-white/[0.025] select-none pointer-events-none hidden lg:block">9</div>
+      {/* ══ HERO: what D9 is, and the coaches ══════════════════════ */}
+      <section className="relative overflow-hidden pt-32 pb-16 sm:pt-36 lg:pt-40 lg:pb-24">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_70%_40%,rgba(153,84,210,0.16)_0%,transparent_70%)]" />
+        <div className="absolute inset-0 grid-bg opacity-60 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
 
         {/* Baseball stitching SVG curves */}
         <svg className="absolute bottom-0 left-0 right-0 w-full opacity-10 pointer-events-none" height="80" viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none">
@@ -29,29 +58,50 @@ export default function Home() {
           <path d="M0,55 C240,95 480,15 720,55 C960,95 1200,15 1440,55" stroke="#9954d2" strokeWidth="1" fill="none" strokeDasharray="6 6"/>
         </svg>
 
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-20">
-          <p className="animate-fade-in-up text-zinc-400 text-sm sm:text-base tracking-[0.3em] uppercase mb-4">Elevate Your Game</p>
-          <h1 className="font-display leading-none mb-6">
-            <span className="animate-fade-in-up block text-5xl sm:text-8xl lg:text-[10rem] gradient-text-white">DIAMOND 9</span>
-            <div className="divider-glow max-w-[80px] mx-auto my-2 animate-fade-in-up-delay" />
-            <span className="animate-fade-in-up-delay block text-5xl sm:text-8xl lg:text-[10rem] gradient-text text-glow">ATHLETICS</span>
-          </h1>
-          <p className="animate-fade-in-up-delay-2 text-zinc-400 text-base sm:text-lg mb-10">
-            Real data. Real results.
-          </p>
-          <div className="animate-fade-in-up-delay-3 flex flex-row gap-3 justify-center flex-wrap">
-            <Link href="/book" className="btn-gold animate-pulse-glow px-8 py-4 text-sm rounded-full inline-block font-black tracking-widest">
-              BOOK NOW
-            </Link>
-            <Link href="/pitching-plans" className="btn-outline px-8 py-4 text-sm rounded-full inline-block tracking-widest">
-              VIEW PLANS
-            </Link>
+        <div className="relative z-10 max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-14 items-center">
+          <div className="text-center lg:text-left">
+            <p className="animate-fade-in-up text-zinc-400 text-sm tracking-[0.3em] uppercase mb-4">Elevate Your Game</p>
+            <h1 className="font-display leading-none mb-6">
+              <span className="animate-fade-in-up block text-6xl sm:text-8xl lg:text-[8.5rem] gradient-text-white">DIAMOND 9</span>
+              <span className="animate-fade-in-up-delay block text-6xl sm:text-8xl lg:text-[8.5rem] gradient-text text-glow">ATHLETICS</span>
+            </h1>
+            <p className="animate-fade-in-up-delay-2 text-zinc-300 text-base sm:text-lg max-w-md mx-auto lg:mx-0 mb-8">
+              Pitching and hitting training in Austin, Texas. Real data every session, so you can see
+              exactly what&rsquo;s getting better.
+            </p>
+            <div className="animate-fade-in-up-delay-3 flex flex-row gap-3 justify-center lg:justify-start flex-wrap">
+              <Link href="/book" className="btn-gold animate-pulse-glow px-8 py-4 text-sm rounded-full inline-block font-black tracking-widest">
+                BOOK NOW
+              </Link>
+              <Link href="/pitching-plans" className="btn-outline px-8 py-4 text-sm rounded-full inline-block tracking-widest">
+                VIEW PLANS
+              </Link>
+            </div>
           </div>
-        </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center scroll-bounce">
-          <div className="w-px h-10 bg-gradient-to-b from-[#9954d2]/30 to-transparent" />
+          {/* The coaches, each linking to their page: side by side on a
+              phone, overlapping on a computer. */}
+          <div className="animate-fade-in-up-delay relative w-full max-w-md mx-auto lg:max-w-none grid grid-cols-2 gap-3 lg:block lg:h-[540px]">
+            <div className="absolute -inset-6 bg-[radial-gradient(circle_at_50%_50%,rgba(153,84,210,0.22),transparent_65%)] pointer-events-none" />
+            <CoachPhoto
+              href="/trainers/wes"
+              src={img("/images/wes-pitching.jpg")}
+              alt="Head Trainer Wes Gafford pitching"
+              role="HEAD TRAINER"
+              name="WES GAFFORD"
+              className="relative h-72 sm:h-96 lg:absolute lg:left-0 lg:top-0 lg:w-[64%] lg:h-[80%]"
+              position="center 15%"
+            />
+            <CoachPhoto
+              href="/trainers/turner"
+              src={img("/images/turner-olson.jpg")}
+              alt="Hitting Trainer Turner Olson at the plate"
+              role="HITTING TRAINER"
+              name="TURNER OLSON"
+              className="relative h-72 sm:h-96 lg:absolute lg:right-0 lg:bottom-0 lg:w-[58%] lg:h-[50%]"
+              position="48% 30%"
+            />
+          </div>
         </div>
       </section>
 
@@ -113,9 +163,8 @@ export default function Home() {
       </section>
 
       {/* ══ TRAINING PLANS ════════════════════════════════════════ */}
-      <section className="relative py-24 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${img("/images/hero-training.jpg")}')` }} />
-        <div className="absolute inset-0 bg-zinc-950/82" />
+      <section className="relative py-16 sm:py-24 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(153,84,210,0.08)_0%,transparent_100%)]" />
         <div className="relative max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <p className="section-label mb-3">WHAT WE OFFER</p>
@@ -132,7 +181,7 @@ export default function Home() {
                 <div className="relative z-10 p-7 sm:p-10">
                   <div className="flex items-center gap-2 mb-5 flex-wrap">
                     <span className="w-2 h-2 rounded-full bg-[#9954d2] animate-pulse shrink-0" />
-                    <span className="text-[10px] text-[#b07adf] font-bold tracking-[0.2em] shrink-0">ACTIVE</span>
+                    <span className="text-xs text-[#b07adf] font-bold tracking-[0.2em] shrink-0">ACTIVE</span>
                   </div>
                   <h3 className="font-display text-5xl sm:text-6xl text-white mb-1">PITCHING</h3>
                   <h3 className="font-display text-5xl sm:text-6xl gradient-text leading-tight mb-4">PLANS</h3>
@@ -154,7 +203,7 @@ export default function Home() {
                 <div className="relative z-10 p-7 sm:p-10">
                   <div className="flex items-center gap-2 mb-5 flex-wrap">
                     <span className="w-2 h-2 rounded-full bg-[#9954d2] animate-pulse shrink-0" />
-                    <span className="text-[10px] text-[#b07adf] font-bold tracking-[0.2em] shrink-0">ACTIVE</span>
+                    <span className="text-xs text-[#b07adf] font-bold tracking-[0.2em] shrink-0">ACTIVE</span>
                   </div>
                   <h3 className="font-display text-5xl sm:text-6xl text-white mb-1">HITTING</h3>
                   <h3 className="font-display text-5xl sm:text-6xl gradient-text leading-tight mb-4">PLANS</h3>

@@ -47,7 +47,7 @@ export default function NotFound() {
 
         {/* Divider + brand */}
         <div className="divider-glow max-w-[80px] mx-auto mt-12 mb-6" />
-        <div className="flex items-center justify-center gap-2 text-zinc-700 text-xs tracking-widest">
+        <div className="flex items-center justify-center gap-2 text-zinc-500 text-xs tracking-widest">
           <IconDiamond className="w-3 h-3 text-[#9954d2]/40" />
           DIAMOND NINE ATHLETICS
         </div>

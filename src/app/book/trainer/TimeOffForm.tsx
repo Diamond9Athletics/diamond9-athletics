@@ -165,7 +165,7 @@ export function TimeOffForm({
           onChange={(e) => setReason(e.target.value)}
           className={inputCls}
         />
-        <p className="text-zinc-600 text-[11px] mt-1.5">
+        <p className="text-zinc-500 text-[11px] mt-1.5">
           Athletes see this reason when they pick a day. Sessions already booked in this
           time stay on your calendar — move them if needed.
         </p>

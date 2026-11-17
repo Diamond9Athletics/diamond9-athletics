@@ -269,7 +269,7 @@ export function AddSessionPanel({
               autoComplete="off"
               className={inputCls}
             />
-            <p className="text-zinc-600 text-[10px] tracking-wider mt-2 mb-1.5">
+            <p className="text-zinc-500 text-[10px] tracking-wider mt-2 mb-1.5">
               {query.trim() ? "MATCHES" : "RECENT CLIENTS"}
             </p>
             {matches.length === 0 ? (
@@ -393,10 +393,10 @@ export function AddSessionPanel({
             onChange={(e) => setSendEmail(e.target.checked)}
             className="mt-0.5 accent-[#9954d2]"
           />
-          <span className={`text-sm ${isPast ? "text-zinc-600" : "text-zinc-300"}`}>
+          <span className={`text-sm ${isPast ? "text-zinc-500" : "text-zinc-300"}`}>
             Email them a confirmation
             {isPast && (
-              <span className="block text-xs text-zinc-600 mt-0.5">
+              <span className="block text-xs text-zinc-500 mt-0.5">
                 That time has already passed, so no email will be sent.
               </span>
             )}

@@ -333,7 +333,7 @@ export default async function NumbersPage() {
                 ))}
               </ul>
             )}
-            <p className="text-zinc-600 text-xs mt-4">
+            <p className="text-zinc-500 text-xs mt-4">
               {n.signupsThisMonth} new sign-up{n.signupsThisMonth === 1 ? "" : "s"} this month.
             </p>
           </Card>

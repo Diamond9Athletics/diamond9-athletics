@@ -46,8 +46,8 @@ export default async function EmailPreferences({
               )}
               <p className="text-zinc-300 text-sm leading-relaxed">
                 {off
-                  ? "Check-in emails are off. You won't get notes about sessions to book or expiring credits."
-                  : "You're getting check-in emails: a short note from Wes when you have sessions to book, credits about to expire, or it's been a while."}
+                  ? "Check-in emails are off. You won't get notes about sessions to book or sessions about to expire."
+                  : "You're getting check-in emails: a short note from Wes when you have sessions to book, sessions about to expire, or it's been a while."}
               </p>
               <form method="post" action="/api/checkins/preferences">
                 <input type="hidden" name="u" value={u} />

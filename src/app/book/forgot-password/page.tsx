@@ -55,7 +55,7 @@ function ForgotPasswordInner() {
             folder too.
           </p>
           <div className="card-modern rounded-2xl p-5 text-left mb-8">
-            <p className="text-[#b07adf] text-[10px] tracking-widest font-bold mb-1.5">
+            <p className="text-[#b07adf] text-xs tracking-widest font-bold mb-1.5">
               NO EMAIL AFTER A FEW MINUTES?
             </p>
             <p className="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -69,7 +69,7 @@ function ForgotPasswordInner() {
               CREATE AN ACCOUNT
             </Link>
           </div>
-          <p className="text-zinc-600 text-xs">
+          <p className="text-zinc-500 text-xs">
             <Link href="/book/login" className="text-[#b07adf] hover:underline">
               Back to sign in
             </Link>
@@ -103,7 +103,7 @@ function ForgotPasswordInner() {
               Enter your account email and we&rsquo;ll send you a link to set a new password.
             </p>
             <div>
-              <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">EMAIL</label>
+              <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">EMAIL</label>
               <input
                 type="email"
                 required

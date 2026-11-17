@@ -150,15 +150,15 @@ export function BookingFlow({
   if (buckets.length === 0 && memberBuckets.length === 0 && !rescheduleFor) {
     return (
       <div className="card-modern rounded-2xl p-8 text-center space-y-5">
-        <p className="text-[#b07adf] text-xs tracking-widest font-bold">NO CREDITS</p>
+        <p className="text-[#b07adf] text-xs tracking-widest font-bold">NO SESSIONS LEFT</p>
         <p className="text-zinc-300 text-sm">
-          You don&rsquo;t have any active credits yet. Buy a package to start booking.
+          You don&rsquo;t have any sessions to book yet. Buy a plan to get started.
         </p>
         <Link
           href="/book/packages"
           className="btn-gold inline-block px-8 py-3 rounded-full text-xs tracking-widest font-black"
         >
-          SEE PACKAGES
+          SEE PLANS
         </Link>
       </div>
     );
@@ -189,7 +189,7 @@ export function BookingFlow({
     <div className="space-y-6">
       {rescheduleFor && (
         <div className="rounded-2xl border border-[#9954d2]/30 bg-[#9954d2]/10 px-4 py-3">
-          <p className="text-[10px] tracking-widest text-[#b07adf] font-bold mb-1">
+          <p className="text-xs tracking-widest text-[#b07adf] font-bold mb-1">
             RESCHEDULING
           </p>
           <p className="text-zinc-300 text-sm">
@@ -313,7 +313,7 @@ function Stepper({ step, family }: { step: Step; family: boolean }) {
   ];
   const currentIdx = steps.findIndex((s) => s.id === step);
   return (
-    <div className="flex justify-between text-[10px] tracking-widest text-zinc-600 mb-2">
+    <div className="flex justify-between text-xs tracking-widest text-zinc-500 mb-2">
       {steps.map((s, i) => (
         <span
           key={s.id}
@@ -351,9 +351,9 @@ function AthleteStep({
         >
           <span className="text-white text-sm font-bold">{a.name}</span>
           {!a.agreementCurrent ? (
-            <span className="text-amber-400 text-[10px] tracking-widest font-bold">AGREEMENT NEEDED</span>
+            <span className="text-amber-400 text-xs tracking-widest font-bold">AGREEMENT NEEDED</span>
           ) : a.member ? (
-            <span className="text-[#b07adf] text-[10px] tracking-widest font-bold">◆ DIAMOND</span>
+            <span className="text-[#b07adf] text-xs tracking-widest font-bold">◆ DIAMOND</span>
           ) : null}
         </button>
       ))}
@@ -416,13 +416,13 @@ function ServiceStep({
       <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-4">
         <p className="text-zinc-300 text-sm">
           {athlete?.firstName ?? "This athlete"} doesn&rsquo;t have a Diamond membership, and
-          there are no credits on the account right now.
+          there are no sessions left on the account right now.
         </p>
         <Link
           href="/book/packages"
           className="btn-gold inline-block px-8 py-3 rounded-full text-xs tracking-widest font-black"
         >
-          SEE PACKAGES
+          SEE PLANS
         </Link>
         {onBack && <BackButton onClick={onBack} />}
       </div>
@@ -451,7 +451,7 @@ function ServiceStep({
             </span>
           ) : (
             <span className="text-[#b07adf] text-xs font-bold">
-              {total} {total === 1 ? "credit" : "credits"}
+              {total} {total === 1 ? "session" : "sessions"} left
             </span>
           )}
         </button>
@@ -582,13 +582,13 @@ function DateStep({
                   .join(" · ") || undefined
               }
             >
-              <p className="text-zinc-500 text-[10px] tracking-wider">
+              <p className="text-zinc-500 text-xs tracking-wider">
                 {d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}
               </p>
               <p className={`text-lg font-bold leading-tight ${fullDay ? "text-red-300" : "text-white"}`}>
                 {d.getDate()}
               </p>
-              <p className="text-zinc-600 text-[10px]">
+              <p className="text-zinc-500 text-xs">
                 {d.toLocaleDateString(undefined, { month: "short" })}
               </p>
               {label && (
@@ -613,7 +613,7 @@ function DateStep({
         if (upcomingBlocked.length === 0) return null;
         return (
           <div className="rounded-xl border border-white/5 bg-zinc-900/40 p-3 mt-3">
-            <p className="text-[10px] tracking-widest text-zinc-500 font-bold mb-2">
+            <p className="text-xs tracking-widest text-zinc-500 font-bold mb-2">
               UPCOMING BLOCKED TIMES
             </p>
             <ul className="space-y-1">
@@ -751,7 +751,7 @@ function TimeStep({
       </h2>
       {dayBlocks.length > 0 && (
         <div className="rounded-xl border border-amber-500/25 bg-amber-950/15 p-3">
-          <p className="text-[10px] tracking-widest text-amber-400 font-bold mb-1">
+          <p className="text-xs tracking-widest text-amber-400 font-bold mb-1">
             {dayBlocks.some((b) => isFullDayBlock(b, date))
               ? "TRAINER OUT ALL DAY"
               : "PARTIALLY UNAVAILABLE"}
@@ -1028,13 +1028,13 @@ function ConfirmStep({
               ? isLateCancel(rescheduleFor.startsAt)
                 ? bucket.isSubscription
                   ? "Included — the original counts as used"
-                  : "1 credit — the original counts as used"
+                  : "1 session — the original counts as used"
                 : "No charge — your booking moves"
               : bucket.isSubscription
                 ? family
                   ? `Included in ${athlete.firstName}'s membership`
                   : "Included in your membership"
-                : `${weeks} ${weeks === 1 ? "credit" : "credits"}`
+                : `${weeks} ${weeks === 1 ? "session" : "sessions"} from your plan`
           }
         />
       </div>

@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 
-export function BuyButton({ slug, kind }: { slug: string; kind: string }) {
+export function BuyButton({
+  slug,
+  kind,
+  featured = false,
+}: {
+  slug: string;
+  kind: string;
+  featured?: boolean;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,12 +39,12 @@ export function BuyButton({ slug, kind }: { slug: string; kind: string }) {
       <button
         onClick={onClick}
         disabled={loading}
-        className="btn-gold w-full py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
+        className={`${featured ? "btn-gold" : "btn-outline"} w-full py-3.5 rounded-full text-sm tracking-widest font-bold disabled:opacity-60`}
       >
-        {loading ? "REDIRECTING…" : kind === "enrollment" ? "ENROLL NOW" : "BUY PACKAGE"}
+        {loading ? "REDIRECTING…" : kind === "enrollment" ? "ENROLL NOW" : "BUY PLAN"}
       </button>
       {error && (
-        <p className="text-red-400 text-[11px] mt-2">{error}</p>
+        <p className="text-red-400 text-xs mt-2">{error}</p>
       )}
     </div>
   );

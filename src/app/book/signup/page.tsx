@@ -148,7 +148,7 @@ function SignupPageInner() {
 
         <div className="card-modern rounded-2xl p-6 sm:p-8">
           <form onSubmit={onSubmit} className="space-y-4" autoComplete="on">
-            <p className="text-[#b07adf] text-[11px] tracking-wider bg-[#9954d2]/8 border border-[#9954d2]/20 rounded-lg px-3 py-2.5 leading-relaxed">
+            <p className="text-[#b07adf] text-xs tracking-wider bg-[#9954d2]/8 border border-[#9954d2]/20 rounded-lg px-3 py-2.5 leading-relaxed">
               <span className="font-bold">PARENTS:</span> please enter the <span className="text-white">player&rsquo;s</span> name here, not your own.
             </p>
 
@@ -210,7 +210,7 @@ function SignupPageInner() {
                 onBlur={() => setPhone((p) => formatUsPhone(p) ?? p)}
                 className="input"
               />
-              <p className="text-zinc-600 text-[10px] mt-1.5 tracking-wider">
+              <p className="text-zinc-500 text-xs mt-1.5 tracking-wider">
                 A PARENT&rsquo;S NUMBER IF THE PLAYER IS UNDER 18. YOUR COACH USES IT IF A SESSION HAS TO MOVE.
               </p>
             </Field>
@@ -225,7 +225,7 @@ function SignupPageInner() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
               />
-              <p className="text-zinc-600 text-[10px] mt-1.5 tracking-wider">AT LEAST 8 CHARACTERS</p>
+              <p className="text-zinc-500 text-xs mt-1.5 tracking-wider">AT LEAST 8 CHARACTERS</p>
             </Field>
 
             {TURNSTILE_SITE_KEY && (
@@ -283,7 +283,7 @@ function SignupPageInner() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-zinc-500 text-[10px] tracking-widest mb-1.5">{label}</label>
+      <label className="block text-zinc-500 text-xs tracking-widest mb-1.5">{label}</label>
       {children}
     </div>
   );

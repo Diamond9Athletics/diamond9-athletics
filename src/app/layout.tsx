@@ -4,7 +4,6 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ThemeProvider } from "@/components/ThemeProvider";
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -70,11 +69,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${bebasNeue.variable} font-sans bg-[#040200] text-white antialiased`}>
-        <ThemeProvider>
-          <Navbar />
-          {children}
-          <Footer />
-        </ThemeProvider>
+        <Navbar />
+        {children}
+        <Footer />
         <Analytics />
       </body>
     </html>

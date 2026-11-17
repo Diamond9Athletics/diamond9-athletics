@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { img } from "@/lib/config";
+import { PageHero } from "@/components/PageHero";
 
 export const metadata: Metadata = {
   title: "Turner Olson",
@@ -33,18 +34,11 @@ const focus = [
 export default function TurnerOlsonBio() {
   return (
     <main className="pt-24 bg-[#040200]">
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${img("/images/batting-cages.jpg")}')` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/60 to-zinc-950" />
-        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-          <span className="badge-amber mb-5 inline-flex">HITTING TRAINER</span>
-          <h1 className="font-display leading-none">
-            <span className="text-white text-5xl sm:text-7xl lg:text-8xl block">TURNER</span>
-            <span className="gradient-text text-glow text-5xl sm:text-7xl lg:text-8xl block">OLSON</span>
-          </h1>
-          <div className="divider-glow max-w-[100px] mx-auto mt-6 mb-4" />
-        </div>
-      </section>
+      <PageHero
+        badge="HITTING TRAINER"
+        title="TURNER"
+        accent="OLSON"
+      />
 
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
@@ -61,7 +55,7 @@ export default function TurnerOlsonBio() {
             </p>
             <div className="flex flex-wrap gap-2">
               {["Swing Mechanics", "Bat Speed", "Pitch Recognition", "Video Breakdown", "Lower-Half Sequencing", "Barrel Control"].map((s) => (
-                <span key={s} className="text-[10px] text-[#9954d2]/70 bg-[#9954d2]/8 border border-[#9954d2]/15 px-3 py-1 rounded-full tracking-wide">{s}</span>
+                <span key={s} className="text-xs text-[#9954d2]/70 bg-[#9954d2]/8 border border-[#9954d2]/15 px-3 py-1 rounded-full tracking-wide">{s}</span>
               ))}
             </div>
           </div>

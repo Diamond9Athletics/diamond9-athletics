@@ -52,7 +52,7 @@ export function WaiverAcceptForm({
       className="card-modern-amber rounded-2xl p-5 sm:p-7 mt-5 space-y-5"
     >
       <fieldset>
-        <legend className="text-zinc-500 text-[10px] tracking-widest font-bold mb-2">
+        <legend className="text-zinc-500 text-xs tracking-widest font-bold mb-2">
           WHO IS ACCEPTING?
         </legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -80,7 +80,7 @@ export function WaiverAcceptForm({
         <div>
           <label
             htmlFor="guardian-name"
-            className="block text-zinc-500 text-[10px] tracking-widest font-bold mb-1.5"
+            className="block text-zinc-500 text-xs tracking-widest font-bold mb-1.5"
           >
             YOUR FULL NAME
           </label>
