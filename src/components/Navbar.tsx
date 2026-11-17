@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import { img, STORE_URL } from "@/lib/config";
 
-export const BUILD_VERSION = "v1.15.0";
+export const BUILD_VERSION = "v1.15.1";
 
 type NavLink = { href: string; label: string; external?: boolean };
 
