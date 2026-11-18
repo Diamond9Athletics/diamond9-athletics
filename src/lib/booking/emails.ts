@@ -4,6 +4,7 @@
 import { fmtCT, sendEmail, shell } from "@/lib/email";
 import { FREE_CANCEL_HOURS } from "./policy";
 import { STUDIO_TZ } from "./tz";
+import { DASHBOARD_URL, googleCalendarUrl as calendarLink, sessionsIcs } from "./calendar-links";
 
 export type BookedSession = {
   bookingId: string;
@@ -28,13 +29,7 @@ export type BookingEmailData = {
   trainerEmail: string;
 };
 
-const STUDIO = "Diamond Nine Athletics, Austin, TX";
-const DASHBOARD = "https://www.diamond9athletics.com/book/dashboard";
-
-/** 20261104T230000Z — the UTC stamp calendars expect. */
-function calStamp(iso: string) {
-  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-}
+const DASHBOARD = DASHBOARD_URL;
 
 /** "Wednesdays at 5:00 PM" when every session is the same weekday and time. */
 function weeklySlot(sessions: BookedSession[]): string | null {
@@ -56,53 +51,15 @@ function everyWeek(sessions: BookedSession[]): boolean {
   return sessions.every((s, i) => i === 0 || day(s) - day(sessions[i - 1]) === 7 * 86_400_000);
 }
 
-/** "Add to Google Calendar" link. A weekly run is one repeating event, kept
- *  in studio time so a DST change can't shift it. */
+/** "Add to Google Calendar" link (shared with the account page). */
 function googleCalendarUrl(d: BookingEmailData, trainerName: string, s: BookedSession, weeks = 1) {
-  const q = new URLSearchParams({
-    action: "TEMPLATE",
-    text: `${d.serviceName} — Diamond Nine Athletics`,
-    dates: `${calStamp(s.startsAtIso)}/${calStamp(s.endsAtIso)}`,
-    details: `With ${trainerName}. Manage your booking: ${DASHBOARD}`,
-    location: STUDIO,
-  });
-  if (weeks > 1) {
-    q.set("ctz", STUDIO_TZ);
-    q.set("recur", `RRULE:FREQ=WEEKLY;COUNT=${weeks}`);
-  }
-  return `https://calendar.google.com/calendar/render?${q}`;
+  return calendarLink(d.serviceName, trainerName, s, weeks);
 }
 
 /** Calendar file Apple Calendar, Outlook and Gmail can all add — one event
- *  per session. */
+ *  per session (shared with the account page). */
 function sessionIcs(d: BookingEmailData, trainerName: string): string {
-  const text = (s: string) =>
-    s.replace(/\\/g, "\\\\").replace(/[,;]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
-  // Long lines are folded (CRLF + space) per the iCalendar spec.
-  const fold = (line: string) => (line.match(/.{1,60}/g) ?? [line]).join("\r\n ");
-  const stamp = calStamp(new Date().toISOString());
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Diamond Nine Athletics//Bookings//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    ...d.sessions.flatMap((s) => [
-      "BEGIN:VEVENT",
-      `UID:${s.bookingId}@diamond9athletics.com`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART:${calStamp(s.startsAtIso)}`,
-      `DTEND:${calStamp(s.endsAtIso)}`,
-      `SUMMARY:${text(`${d.serviceName} — Diamond Nine Athletics`)}`,
-      `DESCRIPTION:${text(`With ${trainerName}. Manage your booking at ${DASHBOARD}`)}`,
-      `LOCATION:${text(STUDIO)}`,
-      "END:VEVENT",
-    ]),
-    "END:VCALENDAR",
-    "",
-  ]
-    .map(fold)
-    .join("\r\n");
+  return sessionsIcs(d.sessions, d.serviceName, trainerName);
 }
 
 /** "Wed, Nov 4" — a session's date in a list of several. */

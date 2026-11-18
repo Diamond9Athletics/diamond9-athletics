@@ -146,7 +146,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
       ) : (
         <p className="text-zinc-400 text-sm leading-relaxed mb-4">
           Add a brother or sister to your account and book for them here. They share your
-          credits; a Diamond membership covers one athlete.
+          sessions; a Diamond membership covers one athlete.
         </p>
       )}
 
@@ -182,7 +182,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
       )}
       {family && (
         <p className="text-zinc-500 text-xs mt-3">
-          Credits are shared by everyone here. A Diamond membership covers one athlete.
+          Sessions are shared by everyone here. A Diamond membership covers one athlete.
         </p>
       )}
     </div>

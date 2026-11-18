@@ -4,6 +4,9 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { planFromPath } from "@/lib/plans";
+import { PlanContext } from "@/components/PlanContext";
+import { FirstSteps } from "@/components/FirstSteps";
 
 // Only allow internal paths so ?next= can't be used as an open redirect.
 function safeNext(next: string | null): string {
@@ -24,6 +27,8 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNext(searchParams.get("next"));
+  // On the way to buying a plan: say which, and lead with making an account.
+  const plan = planFromPath(next);
   const signupHref = `/book/signup${next !== "/book/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`;
   const supabase = createClient();
   const [email, setEmail] = useState("");
@@ -67,13 +72,33 @@ function LoginPageInner() {
     <main className="pt-24 bg-[#040200] min-h-screen">
       <section className="max-w-md mx-auto px-6 pt-8 pb-16 sm:py-16">
         <div className="text-center mb-8">
-          <span className="badge-amber mb-4 inline-flex">◆ ATHLETE LOGIN</span>
+          <span className="badge-amber mb-4 inline-flex">{plan ? "◆ ALMOST THERE" : "◆ ATHLETE LOGIN"}</span>
           <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            SIGN
-            <span className="block gradient-text">IN</span>
+            {plan ? "YOUR" : "SIGN"}
+            <span className="block gradient-text">{plan ? "ACCOUNT" : "IN"}</span>
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
         </div>
+
+        {plan && (
+          <>
+            <FirstSteps current={1} />
+            <PlanContext plan={plan} />
+            <div className="card-modern rounded-2xl p-6 sm:p-8 mb-4 text-center">
+              <p className="text-[#b07adf] text-xs tracking-widest font-bold mb-2">NEW TO D9?</p>
+              <p className="text-zinc-400 text-sm leading-relaxed mb-5">
+                Create your free account first &mdash; even if you&rsquo;ve trained with D9 before.
+                It takes about a minute.
+              </p>
+              <Link
+                href={signupHref}
+                className="btn-gold block w-full py-3.5 rounded-full text-sm tracking-widest font-black"
+              >
+                CREATE AN ACCOUNT
+              </Link>
+            </div>
+          </>
+        )}
 
         {searchParams.get("reason") === "signin-again" && (
           <p className="text-zinc-300 text-sm text-center leading-relaxed bg-[#9954d2]/10 border border-[#9954d2]/25 rounded-xl px-4 py-3 mb-4">
@@ -82,6 +107,11 @@ function LoginPageInner() {
         )}
 
         <div className="card-modern rounded-2xl p-6 sm:p-8">
+          {plan && (
+            <p className="text-zinc-400 text-xs tracking-widest font-bold mb-4 text-center">
+              ALREADY HAVE AN ACCOUNT? SIGN IN
+            </p>
+          )}
           <form onSubmit={onSubmit} className="space-y-4">
             <Field label="EMAIL">
               <input
@@ -138,7 +168,8 @@ function LoginPageInner() {
 
         {/* Lots of athletes who trained with D9 before online booking try
             to sign in without ever having made an account — make the way
-            in impossible to miss. */}
+            in impossible to miss. (On the way to a plan it's up top.) */}
+        {!plan && (
         <div className="card-modern rounded-2xl p-6 sm:p-8 mt-4 text-center">
           <p className="text-[#b07adf] text-xs tracking-widest font-bold mb-2">
             FIRST TIME BOOKING ONLINE?
@@ -154,6 +185,7 @@ function LoginPageInner() {
             CREATE AN ACCOUNT
           </Link>
         </div>
+        )}
       </section>
 
       <style>{`

@@ -25,17 +25,28 @@ export async function firstPitchingBookingIds(
 ): Promise<Set<string>> {
   if (userIds.length === 0) return new Set();
 
-  const { data } = await admin
-    .from("bookings")
-    .select("id, user_id, athlete_id, starts_at, service:services!inner(category)")
-    .in("user_id", userIds)
-    .eq("service.category", "pitching")
-    .eq("status", "confirmed")
-    .order("starts_at", { ascending: true });
+  // Read in pages: a month of athletes can pass the database's 1,000-row
+  // cap on a single request, and a missed row would misplace a first session.
+  const PAGE = 1000;
+  const data: { id: string; user_id: string; athlete_id: string | null }[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data: page, error } = await admin
+      .from("bookings")
+      .select("id, user_id, athlete_id, starts_at, service:services!inner(category)")
+      .in("user_id", userIds)
+      .eq("service.category", "pitching")
+      .eq("status", "confirmed")
+      .order("starts_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error || !page) break;
+    data.push(...page);
+    if (page.length < PAGE) break;
+  }
 
   const seen = new Set<string>();
   const ids = new Set<string>();
-  for (const row of data ?? []) {
+  for (const row of data) {
     const key = athleteKey(row.user_id, row.athlete_id);
     if (seen.has(key)) continue;
     seen.add(key);

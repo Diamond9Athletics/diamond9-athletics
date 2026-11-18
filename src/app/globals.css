@@ -12,6 +12,11 @@
   --color-zinc-500: #8b8b94;
 }
 
+/* <summary> without Safari's own disclosure triangle. */
+summary.no-marker::-webkit-details-marker {
+  display: none;
+}
+
 html {
   scroll-behavior: smooth;
 }

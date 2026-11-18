@@ -3,11 +3,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CancelButton } from "./CancelButton";
+import { AddToCalendar } from "./AddToCalendar";
 import { ManageSubscriptionLink } from "./ManageSubscriptionLink";
 import { FamilyCard } from "./FamilyCard";
 import { requireWaiver } from "@/lib/legal/waiver";
 import { diamondMemberships, type Membership } from "@/lib/stripe/subscription";
 import { fullName, keyOf, loadFamily } from "@/lib/booking/athletes";
+import { LATE_CANCELLED } from "@/lib/booking/policy";
+
+/** Past sessions listed before "show all". */
+const PAST_SHOWN = 5;
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +22,11 @@ export const metadata = {
 
 const TZ = "America/Chicago";
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ booked?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -27,8 +36,11 @@ export default async function Dashboard() {
     redirect("/book/login");
   }
   await requireWaiver(supabase, user, "/book/dashboard");
+  const { booked } = await searchParams;
 
-  const [{ data: profile }, { data: buckets }, { data: bookings }] =
+  // One clock for both lists, so a session is never in both or neither.
+  const nowIso = new Date().toISOString();
+  const [{ data: profile }, { data: buckets }, { data: bookings }, { data: past }] =
     await Promise.all([
       // Email isn't readable from the browser's side (migration 005).
       createAdminClient()
@@ -50,8 +62,19 @@ export default async function Dashboard() {
         )
         .eq("user_id", user.id)
         .eq("status", "confirmed")
-        .gte("starts_at", new Date().toISOString())
+        .gte("starts_at", nowIso)
         .order("starts_at"),
+      // Sessions already done (and late cancels, which counted as used).
+      supabase
+        .from("bookings")
+        .select(
+          "id, starts_at, status, athlete_id, service:services(name), trainer:profiles!bookings_trainer_id_fkey(first_name, last_name)",
+        )
+        .eq("user_id", user.id)
+        .in("status", ["confirmed", LATE_CANCELLED])
+        .lt("starts_at", nowIso)
+        .order("starts_at", { ascending: false })
+        .limit(30),
     ]);
 
   const totalCredits =
@@ -92,6 +115,15 @@ export default async function Dashboard() {
   const [next, ...later] = bookings ?? [];
   const nextService = next && (Array.isArray(next.service) ? next.service[0] : next.service);
   const nextTrainer = next && (Array.isArray(next.trainer) ? next.trainer[0] : next.trainer);
+  const trainerName = (t: { first_name: string | null; last_name: string | null } | null | undefined) =>
+    `${t?.first_name ?? ""} ${t?.last_name ?? ""}`.trim() || "your coach";
+
+  // Just booked (the booking page sends them here with ?booked=ID).
+  const justBooked = booked ? (bookings ?? []).find((b) => b.id === booked) : undefined;
+  const justBookedService =
+    justBooked && (Array.isArray(justBooked.service) ? justBooked.service[0] : justBooked.service);
+  const justBookedTrainer =
+    justBooked && (Array.isArray(justBooked.trainer) ? justBooked.trainer[0] : justBooked.trainer);
 
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">
@@ -104,6 +136,26 @@ export default async function Dashboard() {
           </h1>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
+
+        {justBooked && (
+          <div className="rounded-2xl border border-[#9954d2]/40 bg-[#9954d2]/10 px-5 py-4 mb-6" role="status">
+            <p className="text-[#c49bea] text-xs tracking-widest font-bold mb-1">✓ YOU&rsquo;RE BOOKED</p>
+            <p className="text-white text-sm leading-relaxed">
+              {sessionDay(justBooked.starts_at)} at {sessionTime(justBooked.starts_at)}
+              {" — "}
+              {justBookedService?.name ?? "Session"} with {trainerName(justBookedTrainer)}. A
+              confirmation email is on its way.
+            </p>
+            <AddToCalendar
+              bookingId={justBooked.id}
+              startsAt={justBooked.starts_at}
+              endsAt={justBooked.ends_at}
+              serviceName={justBookedService?.name ?? "Training Session"}
+              trainerName={trainerName(justBookedTrainer)}
+              open
+            />
+          </div>
+        )}
 
         {/* What's next, and the one button most people come here for */}
         <div className="card-modern-amber rounded-2xl p-6 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
@@ -129,8 +181,15 @@ export default async function Dashboard() {
                     </>
                   )}
                 </p>
-                <div className="mt-3">
+                <div className="mt-2 flex flex-wrap items-start gap-x-6">
                   <CancelButton bookingId={next.id} startsAt={next.starts_at} />
+                  <AddToCalendar
+                    bookingId={next.id}
+                    startsAt={next.starts_at}
+                    endsAt={next.ends_at}
+                    serviceName={nextService?.name ?? "Training Session"}
+                    trainerName={trainerName(nextTrainer)}
+                  />
                 </div>
               </>
             ) : (
@@ -238,14 +297,46 @@ export default async function Dashboard() {
                         {svc?.name ?? "Session"}
                       </p>
                       <p className="text-zinc-500 text-xs">
-                        with {trn?.first_name} {trn?.last_name}
+                        with {trainerName(trn)}
                       </p>
+                      <AddToCalendar
+                        bookingId={b.id}
+                        startsAt={b.starts_at}
+                        endsAt={b.ends_at}
+                        serviceName={svc?.name ?? "Training Session"}
+                        trainerName={trainerName(trn)}
+                      />
                     </div>
                     <CancelButton bookingId={b.id} startsAt={b.starts_at} />
                   </li>
                 );
               })}
             </ul>
+          </div>
+        )}
+
+        {past && past.length > 0 && (
+          <div className="card-modern rounded-2xl p-6 sm:p-7 mb-6">
+            <p className="text-zinc-500 text-xs tracking-widest mb-3 font-bold">PAST SESSIONS</p>
+            <ul className="space-y-2">
+              {past.slice(0, PAST_SHOWN).map((b) => (
+                <PastRow key={b.id} b={b} who={whose(b.athlete_id)} trainerName={trainerName} />
+              ))}
+            </ul>
+            {past.length > PAST_SHOWN && (
+              <details className="group mt-2">
+                <summary className="no-marker list-none cursor-pointer inline-flex items-center gap-1 min-h-[44px] text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest">
+                  <span className="group-open:hidden">SHOW ALL ({past.length})</span>
+                  <span className="hidden group-open:inline">SHOW FEWER</span>
+                  <span aria-hidden="true" className="transition-transform group-open:rotate-180">▾</span>
+                </summary>
+                <ul className="space-y-2 mt-1">
+                  {past.slice(PAST_SHOWN).map((b) => (
+                    <PastRow key={b.id} b={b} who={whose(b.athlete_id)} trainerName={trainerName} />
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
         )}
 
@@ -329,6 +420,52 @@ export default async function Dashboard() {
         </div>
       </section>
     </main>
+  );
+}
+
+type PastBooking = {
+  id: string;
+  starts_at: string;
+  status: string;
+  athlete_id: string | null;
+  service: { name: string } | { name: string }[] | null;
+  trainer:
+    | { first_name: string | null; last_name: string | null }
+    | { first_name: string | null; last_name: string | null }[]
+    | null;
+};
+
+/** One line in Past sessions. */
+function PastRow({
+  b,
+  who,
+  trainerName,
+}: {
+  b: PastBooking;
+  who: string | null;
+  trainerName: (t: { first_name: string | null; last_name: string | null } | null | undefined) => string;
+}) {
+  const svc = Array.isArray(b.service) ? b.service[0] : b.service;
+  const trn = Array.isArray(b.trainer) ? b.trainer[0] : b.trainer;
+  const late = b.status === LATE_CANCELLED;
+  return (
+    <li className="flex items-start justify-between gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+      <div className="min-w-0">
+        <p className={`text-sm ${late ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
+          {sessionDay(b.starts_at)} · {sessionTime(b.starts_at)}
+        </p>
+        <p className="text-zinc-500 text-xs">
+          {who && <span className="text-zinc-300">{who} · </span>}
+          {svc?.name ?? "Session"} with {trainerName(trn)}
+        </p>
+      </div>
+      {late && (
+        <span className="text-amber-500 text-xs tracking-wider font-bold shrink-0 text-right">
+          LATE CANCEL
+          <span className="block text-zinc-500 font-normal tracking-normal">counted as used</span>
+        </span>
+      )}
+    </li>
   );
 }
 

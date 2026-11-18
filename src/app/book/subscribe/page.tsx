@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SubscribeRedirector } from "./SubscribeRedirector";
+import { FirstSteps } from "@/components/FirstSteps";
 import { requireWaiver } from "@/lib/legal/waiver";
 import { diamondMemberships } from "@/lib/stripe/subscription";
 import { fullName, loadFamily } from "@/lib/booking/athletes";
@@ -59,6 +60,7 @@ export default async function SubscribePage({
     return (
       <main className="pt-24 bg-[#040200] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-16 text-center">
+          <FirstSteps current={3} />
           <span className="badge-amber mb-5 inline-flex">◆ DIAMOND MEMBERSHIP</span>
           <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
             ONE MOMENT
@@ -78,6 +80,7 @@ export default async function SubscribePage({
     return (
       <main className="pt-24 bg-[#040200] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-16 text-center">
+          <FirstSteps current={3} />
           <span className="badge-amber mb-5 inline-flex">◆ DIAMOND MEMBERSHIP</span>
           <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
             YOU&rsquo;RE IN
@@ -101,6 +104,7 @@ export default async function SubscribePage({
     <main className="pt-24 bg-[#040200] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-16">
         <div className="text-center">
+          <FirstSteps current={3} />
           <span className="badge-amber mb-5 inline-flex">◆ DIAMOND MEMBERSHIP</span>
           <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
             WHO&rsquo;S IT FOR?

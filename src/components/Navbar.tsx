@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { img, STORE_URL } from "@/lib/config";
 
-export const BUILD_VERSION = "v1.16.0";
+export const BUILD_VERSION = "v1.17.0";
 
 type NavLink = { href: string; label: string; external?: boolean };
 
@@ -248,30 +248,40 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Mobile Hamburger */}
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="lg:hidden text-white p-2"
-              aria-label="Toggle menu"
-            >
-              <div className="w-6 h-5 relative flex flex-col justify-between">
-                <span
-                  className={`w-full h-0.5 bg-white transition-all duration-300 ${
-                    isOpen ? "rotate-45 translate-y-2" : ""
-                  }`}
-                />
-                <span
-                  className={`w-full h-0.5 bg-white transition-all duration-300 ${
-                    isOpen ? "opacity-0" : ""
-                  }`}
-                />
-                <span
-                  className={`w-full h-0.5 bg-white transition-all duration-300 ${
-                    isOpen ? "-rotate-45 -translate-y-2" : ""
-                  }`}
-                />
-              </div>
-            </button>
+            {/* Phone: the main action stays in sight, next to the menu. */}
+            <div className="lg:hidden flex items-center gap-1">
+              <Link
+                href={bookHref}
+                onClick={() => setIsOpen(false)}
+                className="btn-gold px-5 py-2.5 rounded-full text-xs tracking-widest font-black"
+              >
+                BOOK
+              </Link>
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="text-white p-3"
+                aria-label="Toggle menu"
+                aria-expanded={isOpen}
+              >
+                <div className="w-6 h-5 relative flex flex-col justify-between">
+                  <span
+                    className={`w-full h-0.5 bg-white transition-all duration-300 ${
+                      isOpen ? "rotate-45 translate-y-2" : ""
+                    }`}
+                  />
+                  <span
+                    className={`w-full h-0.5 bg-white transition-all duration-300 ${
+                      isOpen ? "opacity-0" : ""
+                    }`}
+                  />
+                  <span
+                    className={`w-full h-0.5 bg-white transition-all duration-300 ${
+                      isOpen ? "-rotate-45 -translate-y-2" : ""
+                    }`}
+                  />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
 

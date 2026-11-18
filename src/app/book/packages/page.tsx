@@ -40,6 +40,7 @@ function asPlan(pkg: PackageRow): Plan {
     slug: pkg.slug,
     category: pkg.service?.category ?? "pitching",
     name: known?.name ?? pkg.name.toUpperCase(),
+    title: known?.title ?? pkg.name,
     tag: known?.tag ?? (pkg.kind === "enrollment" ? "FULL PROGRAM" : "PLAN"),
     price: Math.round(pkg.price_cents) / 100,
     sessions,

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/PageHero";
 import { PlanCard, planLinkClass, SESSIONS_EXPIRE } from "@/components/PlanCard";
 import { plansFor } from "@/lib/plans";
+import { OpenTimesPreview } from "@/components/OpenTimesPreview";
 
 export const metadata: Metadata = {
   title: "Pitching Plans",
@@ -40,6 +41,9 @@ export default function PitchingPlans() {
           {SESSIONS_EXPIRE} The Diamond membership renews monthly until you cancel.
         </p>
       </section>
+
+      {/* ── Open times this week ─────────────────────────────── */}
+      <OpenTimesPreview category="pitching" />
 
     </main>
   );

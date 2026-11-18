@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/PageHero";
 import { PlanCard, planLinkClass, SESSIONS_EXPIRE } from "@/components/PlanCard";
 import { plansFor } from "@/lib/plans";
+import { OpenTimesPreview } from "@/components/OpenTimesPreview";
 
 export const metadata: Metadata = {
   title: "Hitting Plans",
@@ -38,6 +39,9 @@ export default function HittingPlans() {
         </div>
         <p className="text-zinc-500 text-sm text-center mt-6">{SESSIONS_EXPIRE}</p>
       </section>
+
+      {/* ── Open times this week ─────────────────────────────── */}
+      <OpenTimesPreview category="hitting" />
 
     </main>
   );

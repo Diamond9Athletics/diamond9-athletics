@@ -9,6 +9,7 @@ import { zonedWallToUtc } from "@/lib/booking/tz";
 import { addDays } from "@/lib/booking/coach-calendar";
 
 const HOUR_MS = 60 * 60 * 1000;
+const TZ = "America/Chicago";
 
 export type Service = {
   id: string;
@@ -63,6 +64,62 @@ export type RescheduleFor = {
   athleteKey: string;
 } | null;
 
+/** One bookable service, with the bucket a booking for it should use. */
+type ServiceChoice = { service: Service; total: number; bucket: Bucket; isSubscription: boolean };
+
+/** Group buckets by service. A subscription "bucket" always wins as the
+ *  picked bucket for that service — the booking route bypasses credit
+ *  deduction when the subscription covers it. */
+function groupServices(buckets: Bucket[]): ServiceChoice[] {
+  const map = new Map<string, ServiceChoice>();
+  for (const b of buckets) {
+    const k = b.service.id;
+    const prev = map.get(k);
+    if (prev) {
+      if (!b.isSubscription) prev.total += b.credits_remaining;
+      if (b.isSubscription) {
+        prev.isSubscription = true;
+        prev.bucket = b;
+      }
+    } else {
+      map.set(k, {
+        service: b.service,
+        total: b.isSubscription ? 0 : b.credits_remaining,
+        bucket: b,
+        isSubscription: !!b.isSubscription,
+      });
+    }
+  }
+  return [...map.values()];
+}
+
+/** Where the flow goes next, and which questions were answered for them
+ *  because there was only one possible answer. */
+type Plan = {
+  step: Step;
+  bucket: Bucket | null;
+  trainer: Trainer | null;
+  autoService: boolean;
+  autoTrainer: boolean;
+};
+
+function trainersFor(bucket: Bucket, trainers: Trainer[]) {
+  return trainers.filter((t) => t.trainer_categories.includes(bucket.service.category));
+}
+
+function planForService(bucket: Bucket, trainers: Trainer[], autoService: boolean): Plan {
+  const matches = trainersFor(bucket, trainers);
+  return matches.length === 1
+    ? { step: "date", bucket, trainer: matches[0], autoService, autoTrainer: true }
+    : { step: "trainer", bucket, trainer: null, autoService, autoTrainer: false };
+}
+
+function planForAthlete(choices: ServiceChoice[], trainers: Trainer[]): Plan {
+  return choices.length === 1
+    ? planForService(choices[0].bucket, trainers, true)
+    : { step: "service", bucket: null, trainer: null, autoService: false, autoTrainer: false };
+}
+
 export function BookingFlow({
   athletes,
   buckets,
@@ -73,7 +130,7 @@ export function BookingFlow({
 }: {
   /** Everyone on the account; more than one adds a "who's it for" step. */
   athletes: AthleteOption[];
-  /** The account's credits, shared by everyone on it. */
+  /** The account's sessions, shared by everyone on it. */
   buckets: Bucket[];
   /** Unlimited pitching for an athlete with their own Diamond membership. */
   memberBuckets: Bucket[];
@@ -94,8 +151,8 @@ export function BookingFlow({
   const bucketsFor = (a: AthleteOption | null) =>
     a ? (a.member ? [...buckets, ...memberBuckets] : buckets) : [];
   const athleteBuckets = bucketsFor(athlete);
-  // Pre-select bucket and trainer when rescheduling. With no credits left
-  // the original booking's own credit moves to the new time.
+  // Pre-select bucket and trainer when rescheduling. With no sessions left
+  // the original booking's own one moves to the new time.
   const presetBucket = rescheduleFor
     ? bucketsFor(presetAthlete).find((b) => b.service.id === rescheduleFor.service.id) ?? {
         id: `moving-${rescheduleFor.bookingId}`,
@@ -107,46 +164,59 @@ export function BookingFlow({
   const presetTrainer = rescheduleFor
     ? trainers.find((t) => t.id === rescheduleFor.trainerId) ?? null
     : null;
-  const [step, setStep] = useState<Step>(
-    rescheduleFor && presetBucket && presetTrainer
-      ? "date"
-      : presetAthlete
-        ? "service"
-        : "athlete",
-  );
-  const [bucket, setBucket] = useState<Bucket | null>(presetBucket);
-  const [trainer, setTrainer] = useState<Trainer | null>(presetTrainer);
+
+  // Where the flow opens. Questions with only one possible answer (one
+  // service to use, one coach for it) are answered for them.
+  const [initial] = useState<Plan>(() => {
+    if (rescheduleFor) {
+      return {
+        step: presetBucket && presetTrainer ? "date" : presetAthlete ? "service" : "athlete",
+        bucket: presetBucket,
+        trainer: presetTrainer,
+        autoService: false,
+        autoTrainer: false,
+      };
+    }
+    if (!presetAthlete) {
+      return { step: "athlete", bucket: null, trainer: null, autoService: false, autoTrainer: false };
+    }
+    return planForAthlete(groupServices(bucketsFor(presetAthlete)), trainers);
+  });
+  const [step, setStep] = useState<Step>(initial.step);
+  const [bucket, setBucket] = useState<Bucket | null>(initial.bucket);
+  const [trainer, setTrainer] = useState<Trainer | null>(initial.trainer);
+  const [autoService, setAutoService] = useState(initial.autoService);
+  const [autoTrainer, setAutoTrainer] = useState(initial.autoTrainer);
   const [date, setDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [blocks, setBlocks] = useState<BlockRange[]>([]);
+  // Kept with the trainer they belong to, so switching coaches never shows
+  // the previous coach's time off.
+  const [loadedBlocks, setLoadedBlocks] = useState<{ trainerId: string; blocks: BlockRange[] } | null>(null);
+  const blocks = trainer && loadedBlocks?.trainerId === trainer.id ? loadedBlocks.blocks : [];
 
   // When a trainer is picked, pull their upcoming blocks so the date
   // and time pickers can surface *why* certain days are unavailable
   // instead of just showing nothing.
   useEffect(() => {
-    if (!trainer) {
-      setBlocks([]);
-      return;
-    }
+    if (!trainer) return;
     let canceled = false;
     fetch(`/api/booking/blocks?trainer=${trainer.id}&days=31`)
       .then((r) => r.json())
       .then((json) => {
-        if (canceled) return;
-        setBlocks(json.blocks ?? []);
+        if (!canceled) setLoadedBlocks({ trainerId: trainer.id, blocks: json.blocks ?? [] });
       })
       .catch(() => {
-        if (!canceled) setBlocks([]);
+        if (!canceled) setLoadedBlocks({ trainerId: trainer.id, blocks: [] });
       });
     return () => {
       canceled = true;
     };
   }, [trainer]);
 
-  // No credits → tell them to buy a package.
-  // Reschedule is fine even when buckets are empty (we'll refund the credit
-  // first), so skip this check in that mode.
+  // Nothing to book with → tell them to buy a plan.
+  // Reschedule is fine even when buckets are empty (the original session
+  // moves), so skip this check in that mode.
   if (buckets.length === 0 && memberBuckets.length === 0 && !rescheduleFor) {
     return (
       <div className="card-modern rounded-2xl p-8 text-center space-y-5">
@@ -164,26 +234,36 @@ export function BookingFlow({
     );
   }
 
-  const eligibleTrainers = trainer
-    ? [trainer]
-    : trainers.filter((t) =>
-        bucket ? t.trainer_categories.includes(bucket.service.category) : false,
-      );
-
-  // Auto-skip trainer step if there's only one match.
-  function pickBucket(b: Bucket) {
-    setBucket(b);
+  function apply(p: Plan) {
+    setBucket(p.bucket);
+    setTrainer(p.trainer);
+    setAutoService(p.autoService);
+    setAutoTrainer(p.autoTrainer);
+    setDate(null);
+    setSlot(null);
     setError(null);
-    const matches = trainers.filter((t) =>
-      t.trainer_categories.includes(b.service.category),
-    );
-    if (matches.length === 1) {
-      setTrainer(matches[0]);
-      setStep("date");
-    } else {
-      setStep("trainer");
-    }
+    setStep(p.step);
   }
+
+  // The steps this person actually sees, in order.
+  const showAthlete = family && !rescheduleFor;
+  const showService = !(autoService || (rescheduleFor && presetBucket));
+  const showTrainer = !(autoTrainer || (rescheduleFor && presetTrainer));
+  const visible: Step[] = [
+    ...(showAthlete ? (["athlete"] as const) : []),
+    ...(showService ? (["service"] as const) : []),
+    ...(showTrainer ? (["trainer"] as const) : []),
+    "date",
+    "time",
+    "confirm",
+  ];
+  const stepIndex = visible.indexOf(step);
+  const back =
+    stepIndex > 0 ? (
+      <BackButton onClick={() => setStep(visible[stepIndex - 1])} />
+    ) : rescheduleFor ? (
+      <BackLink href="/book/dashboard" label="← KEEP MY CURRENT TIME" />
+    ) : null;
 
   return (
     <div className="space-y-6">
@@ -196,7 +276,7 @@ export function BookingFlow({
             Your current booking is{" "}
             <span className="text-white">
               {new Date(rescheduleFor.startsAt).toLocaleString("en-US", {
-                timeZone: "America/Chicago",
+                timeZone: TZ,
                 weekday: "long",
                 month: "long",
                 day: "numeric",
@@ -210,17 +290,14 @@ export function BookingFlow({
           </p>
         </div>
       )}
-      <Stepper step={step} family={family} />
+      <Stepper steps={visible} step={step} />
 
       {step === "athlete" && (
         <AthleteStep
           athletes={athletes}
           onPick={(a) => {
             setAthlete(a);
-            setBucket(null);
-            setTrainer(null);
-            setError(null);
-            setStep("service");
+            apply(planForAthlete(groupServices(bucketsFor(a)), trainers));
           }}
         />
       )}
@@ -228,32 +305,42 @@ export function BookingFlow({
       {step === "service" && athlete && (
         <ServiceStep
           athlete={family ? athlete : null}
-          buckets={athleteBuckets}
-          onPick={pickBucket}
-          onBack={family && !rescheduleFor ? () => setStep("athlete") : undefined}
+          choices={groupServices(athleteBuckets)}
+          onPick={(b) => apply(planForService(b, trainers, false))}
+          back={back}
         />
       )}
 
       {step === "trainer" && bucket && (
         <TrainerStep
-          trainers={eligibleTrainers}
+          trainers={trainersFor(bucket, trainers)}
           onPick={(t) => {
             setTrainer(t);
+            setError(null);
             setStep("date");
           }}
-          onBack={() => setStep("service")}
+          back={back}
         />
       )}
 
       {step === "date" && bucket && trainer && (
         <DateStep
+          trainerId={trainer.id}
+          duration={bucket.service.duration_min}
+          category={bucket.service.category}
           blocks={blocks}
           leadHours={leadHours}
-          onPick={(d) => {
+          onPickDate={(d) => {
             setDate(d);
+            setSlot(null);
             setStep("time");
           }}
-          onBack={() => setStep(trainer ? "trainer" : "service")}
+          onPickSlot={(d, iso) => {
+            setDate(d);
+            setSlot(iso);
+            setStep("confirm");
+          }}
+          back={back}
         />
       )}
 
@@ -269,7 +356,7 @@ export function BookingFlow({
             setSlot(iso);
             setStep("confirm");
           }}
-          onBack={() => setStep("date")}
+          back={back}
         />
       )}
 
@@ -284,7 +371,7 @@ export function BookingFlow({
           trainer={trainer}
           slot={slot}
           rescheduleFor={rescheduleFor}
-          onBack={() => setStep("time")}
+          back={back}
           onError={setError}
           onSuccess={(bookingId) => {
             router.push(`/book/dashboard?booked=${bookingId}`);
@@ -302,32 +389,32 @@ export function BookingFlow({
   );
 }
 
-function Stepper({ step, family }: { step: Step; family: boolean }) {
-  const steps: { id: Step; label: string }[] = [
-    ...(family ? [{ id: "athlete" as const, label: "Who" }] : []),
-    { id: "service", label: "Service" },
-    { id: "trainer", label: "Trainer" },
-    { id: "date", label: "Date" },
-    { id: "time", label: "Time" },
-    { id: "confirm", label: "Confirm" },
-  ];
-  const currentIdx = steps.findIndex((s) => s.id === step);
+const STEP_LABEL: Record<Step, string> = {
+  athlete: "Who",
+  service: "Service",
+  trainer: "Coach",
+  date: "Day",
+  time: "Time",
+  confirm: "Confirm",
+};
+
+/** "STEP 2 OF 3 · TIME" over a bar with one segment per step. */
+function Stepper({ steps, step }: { steps: Step[]; step: Step }) {
+  const current = Math.max(steps.indexOf(step), 0);
   return (
-    <div className="flex justify-between text-xs tracking-widest text-zinc-500 mb-2">
-      {steps.map((s, i) => (
-        <span
-          key={s.id}
-          className={
-            i === currentIdx
-              ? "text-[#b07adf] font-bold"
-              : i < currentIdx
-                ? "text-zinc-400"
-                : ""
-          }
-        >
-          {i + 1}. {s.label.toUpperCase()}
-        </span>
-      ))}
+    <div className="mb-2" aria-label={`Step ${current + 1} of ${steps.length}: ${STEP_LABEL[step]}`}>
+      <p className="text-xs tracking-widest text-zinc-400 mb-2">
+        STEP {current + 1} OF {steps.length}
+        <span className="text-[#b07adf] font-bold"> · {STEP_LABEL[step].toUpperCase()}</span>
+      </p>
+      <div className="flex gap-1.5" aria-hidden="true">
+        {steps.map((s, i) => (
+          <span
+            key={s}
+            className={`h-1 flex-1 rounded-full ${i <= current ? "bg-[#9954d2]" : "bg-zinc-800"}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -372,46 +459,17 @@ function AthleteStep({
 
 function ServiceStep({
   athlete,
-  buckets,
+  choices,
   onPick,
-  onBack,
+  back,
 }: {
   /** Set on a family account, to say whose options these are. */
   athlete: AthleteOption | null;
-  buckets: Bucket[];
+  choices: ServiceChoice[];
   onPick: (b: Bucket) => void;
-  onBack?: () => void;
+  back: React.ReactNode;
 }) {
-  // Group by service. A subscription "bucket" always wins as the picked
-  // bucket for that service — booking route bypasses credit deduction
-  // when the subscription covers it.
-  const grouped = useMemo(() => {
-    const map = new Map<
-      string,
-      { service: Service; total: number; bucket: Bucket; isSubscription: boolean }
-    >();
-    for (const b of buckets) {
-      const k = b.service.id;
-      const prev = map.get(k);
-      if (prev) {
-        if (!b.isSubscription) prev.total += b.credits_remaining;
-        if (b.isSubscription) {
-          prev.isSubscription = true;
-          prev.bucket = b;
-        }
-      } else {
-        map.set(k, {
-          service: b.service,
-          total: b.isSubscription ? 0 : b.credits_remaining,
-          bucket: b,
-          isSubscription: !!b.isSubscription,
-        });
-      }
-    }
-    return [...map.values()];
-  }, [buckets]);
-
-  if (grouped.length === 0) {
+  if (choices.length === 0) {
     return (
       <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-4">
         <p className="text-zinc-300 text-sm">
@@ -424,7 +482,7 @@ function ServiceStep({
         >
           SEE PLANS
         </Link>
-        {onBack && <BackButton onClick={onBack} />}
+        {back && <div>{back}</div>}
       </div>
     );
   }
@@ -434,7 +492,7 @@ function ServiceStep({
       <h2 className="font-display text-2xl text-white mb-2">
         Pick a service{athlete && <span className="text-zinc-500"> for {athlete.firstName}</span>}
       </h2>
-      {grouped.map(({ service, total, bucket, isSubscription }) => (
+      {choices.map(({ service, total, bucket, isSubscription }) => (
         <button
           key={service.id}
           onClick={() => onPick(bucket)}
@@ -456,7 +514,7 @@ function ServiceStep({
           )}
         </button>
       ))}
-      {onBack && <BackButton onClick={onBack} />}
+      {back}
     </div>
   );
 }
@@ -464,17 +522,17 @@ function ServiceStep({
 function TrainerStep({
   trainers,
   onPick,
-  onBack,
+  back,
 }: {
   trainers: Trainer[];
   onPick: (t: Trainer) => void;
-  onBack: () => void;
+  back: React.ReactNode;
 }) {
   return (
     <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-3">
-      <h2 className="font-display text-2xl text-white mb-2">Pick a trainer</h2>
+      <h2 className="font-display text-2xl text-white mb-2">Pick a coach</h2>
       {trainers.length === 0 ? (
-        <p className="text-zinc-400 text-sm">No trainer available for this service yet.</p>
+        <p className="text-zinc-400 text-sm">No coach available for this service yet.</p>
       ) : (
         trainers.map((t) => (
           <button
@@ -491,7 +549,7 @@ function TrainerStep({
           </button>
         ))
       )}
-      <BackButton onClick={onBack} />
+      {back}
     </div>
   );
 }
@@ -523,16 +581,30 @@ function isFullDayBlock(block: BlockRange, dateIso: string): boolean {
   return bs <= start.getTime() && be >= end.getTime() - 60_000;
 }
 
+type DayOpen = { date: string; slots: string[]; hasHours: boolean };
+
+/** How many quick picks the date step offers. */
+const QUICK_PICKS = 4;
+
 function DateStep({
+  trainerId,
+  duration,
+  category,
   blocks,
   leadHours,
-  onPick,
-  onBack,
+  onPickDate,
+  onPickSlot,
+  back,
 }: {
+  trainerId: string;
+  duration: number;
+  category: string;
   blocks: BlockRange[];
   leadHours: number;
-  onPick: (date: string) => void;
-  onBack: () => void;
+  onPickDate: (date: string) => void;
+  /** A quick pick: straight to confirm with this time. */
+  onPickSlot: (date: string, iso: string) => void;
+  back: React.ReactNode;
 }) {
   // Read the clock once, when the step opens.
   const [now] = useState(() => Date.now());
@@ -549,9 +621,78 @@ function DateStep({
     return out;
   }, []);
 
+  // Open times for every day at once, worked out the same way as the time
+  // step's. If it can't load, the days still work — they just don't say
+  // how many times are open.
+  const [open, setOpen] = useState<Map<string, DayOpen> | null>(null);
+  const [openFailed, setOpenFailed] = useState(false);
+  useEffect(() => {
+    let canceled = false;
+    const from = isoDate(days[0]);
+    fetch(
+      `/api/booking/availability?trainer=${trainerId}&duration=${duration}&category=${category}&from=${from}&days=${days.length}`,
+    )
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((json: { days?: DayOpen[] }) => {
+        if (canceled) return;
+        setOpen(new Map((json.days ?? []).map((d) => [d.date, d])));
+      })
+      .catch(() => {
+        if (!canceled) setOpenFailed(true);
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [trainerId, duration, category, days]);
+
+  // The soonest open times, for one-tap booking.
+  const quickPicks = useMemo(() => {
+    if (!open) return [];
+    const out: { date: string; iso: string }[] = [];
+    for (const d of days) {
+      const iso = isoDate(d);
+      for (const s of open.get(iso)?.slots ?? []) {
+        out.push({ date: iso, iso: s });
+        if (out.length === QUICK_PICKS) return out;
+      }
+    }
+    return out;
+  }, [open, days]);
+
+  const anyOpen = open ? [...open.values()].some((d) => d.slots.length > 0) : false;
+
   return (
     <div className="card-modern rounded-2xl p-6 sm:p-8 space-y-4">
-      <h2 className="font-display text-2xl text-white mb-2">Pick a date</h2>
+      {quickPicks.length > 0 && (
+        <div className="rounded-xl border border-[#9954d2]/25 bg-[#9954d2]/8 p-4">
+          <p className="text-xs tracking-widest text-[#b07adf] font-bold mb-3">NEXT OPEN TIMES</p>
+          <div className="grid grid-cols-2 gap-2">
+            {quickPicks.map((q) => (
+              <button
+                key={q.iso}
+                type="button"
+                onClick={() => onPickSlot(q.date, q.iso)}
+                className="rounded-xl px-3 py-3 min-h-[44px] bg-zinc-900/60 border border-[#9954d2]/30 hover:border-[#9954d2] transition text-white text-sm font-semibold"
+              >
+                {quickPickLabel(q.iso)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h2 className="font-display text-2xl text-white">
+        {quickPicks.length > 0 ? "Or pick a day" : "Pick a day"}
+      </h2>
+      {open === null && !openFailed && (
+        <p className="text-zinc-500 text-xs -mt-2">Checking open times…</p>
+      )}
+      {open !== null && !anyOpen && (
+        <p className="text-zinc-400 text-sm -mt-2">
+          Nothing is open in the next month right now. Check back soon — times open up as plans
+          change.
+        </p>
+      )}
       <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
         {days.map((d) => {
           const iso = isoDate(d);
@@ -561,14 +702,30 @@ function DateStep({
           // The whole day is inside the booking lead: nothing to book.
           const tooSoon =
             zonedWallToUtc(addDays(iso, 1), "00:00").getTime() <= now + leadHours * HOUR_MS;
-          const label = tooSoon ? "TOO SOON" : fullDay ? "UNAVAILABLE" : partial ? "PARTIAL" : null;
+          const info = open?.get(iso);
+          const count = info ? info.slots.length : null;
+          const none = count === 0;
+          const label = tooSoon
+            ? "TOO SOON"
+            : fullDay
+              ? "UNAVAILABLE"
+              : none
+                ? info?.hasHours
+                  ? "BOOKED UP"
+                  : "CLOSED"
+                : count !== null
+                  ? `${count} OPEN`
+                  : partial
+                    ? "PARTIAL"
+                    : null;
+          const disabled = tooSoon || none;
           return (
             <button
               key={iso}
-              onClick={() => onPick(iso)}
-              disabled={tooSoon}
+              onClick={() => onPickDate(iso)}
+              disabled={disabled}
               className={`rounded-xl px-2 py-3 border transition text-center ${
-                tooSoon
+                disabled
                   ? "bg-zinc-900/30 border-zinc-800 opacity-50 cursor-not-allowed"
                   : fullDay
                     ? "bg-red-950/20 border-red-900/40 hover:border-red-500/60"
@@ -585,7 +742,7 @@ function DateStep({
               <p className="text-zinc-500 text-xs tracking-wider">
                 {d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}
               </p>
-              <p className={`text-lg font-bold leading-tight ${fullDay ? "text-red-300" : "text-white"}`}>
+              <p className={`text-lg font-bold leading-tight ${fullDay && !disabled ? "text-red-300" : "text-white"}`}>
                 {d.getDate()}
               </p>
               <p className="text-zinc-500 text-xs">
@@ -593,8 +750,14 @@ function DateStep({
               </p>
               {label && (
                 <p
-                  className={`text-[8px] tracking-widest font-bold mt-1 ${
-                    tooSoon ? "text-zinc-500" : fullDay ? "text-red-400" : "text-amber-400"
+                  className={`text-[10px] tracking-wider font-bold mt-1 ${
+                    disabled
+                      ? "text-zinc-500"
+                      : fullDay
+                        ? "text-red-400"
+                        : count !== null
+                          ? "text-[#b07adf]"
+                          : "text-amber-400"
                   }`}
                 >
                   {label}
@@ -632,13 +795,13 @@ function DateStep({
                     <span className="text-amber-400">
                       {" "}·{" "}
                       {new Date(b.starts_at).toLocaleTimeString("en-US", {
-                        timeZone: "America/Chicago",
+                        timeZone: TZ,
                         hour: "numeric",
                         minute: "2-digit",
                       })}
                       {" – "}
                       {new Date(b.ends_at).toLocaleTimeString("en-US", {
-                        timeZone: "America/Chicago",
+                        timeZone: TZ,
                         hour: "numeric",
                         minute: "2-digit",
                       })}
@@ -653,9 +816,24 @@ function DateStep({
           </div>
         );
       })()}
-      <BackButton onClick={onBack} />
+      {back}
     </div>
   );
+}
+
+/** "Thu 11:00 AM", or "Today 5:00 PM" / "Tomorrow 9:00 AM". */
+function quickPickLabel(iso: string) {
+  const d = new Date(iso);
+  const dayKey = (x: Date) => x.toLocaleDateString("en-CA", { timeZone: TZ });
+  const today = new Date();
+  const day =
+    dayKey(d) === dayKey(today)
+      ? "Today"
+      : dayKey(d) === dayKey(new Date(today.getTime() + 24 * HOUR_MS))
+        ? "Tomorrow"
+        : d.toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" });
+  const time = d.toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+  return `${day} · ${time}`;
 }
 
 function TimeStep({
@@ -666,7 +844,7 @@ function TimeStep({
   blocks,
   leadHours,
   onPick,
-  onBack,
+  back,
 }: {
   trainerId: string;
   duration: number;
@@ -675,7 +853,7 @@ function TimeStep({
   blocks: BlockRange[];
   leadHours: number;
   onPick: (iso: string) => void;
-  onBack: () => void;
+  back: React.ReactNode;
 }) {
   const dayBlocks = blocksForDay(blocks, date);
   // Part of this day is inside the booking lead, so its earlier times are hidden.
@@ -742,7 +920,7 @@ function TimeStep({
         Pick a time —{" "}
         <span className="gradient-text">
           {new Date(`${date}T12:00:00-05:00`).toLocaleDateString("en-US", {
-            timeZone: "America/Chicago",
+            timeZone: TZ,
             weekday: "long",
             month: "long",
             day: "numeric",
@@ -764,13 +942,13 @@ function TimeStep({
                 ) : (
                   <>
                     {new Date(b.starts_at).toLocaleTimeString("en-US", {
-                      timeZone: "America/Chicago",
+                      timeZone: TZ,
                       hour: "numeric",
                       minute: "2-digit",
                     })}
                     {" – "}
                     {new Date(b.ends_at).toLocaleTimeString("en-US", {
-                      timeZone: "America/Chicago",
+                      timeZone: TZ,
                       hour: "numeric",
                       minute: "2-digit",
                     })}
@@ -811,7 +989,7 @@ function TimeStep({
                 className="rounded-xl px-2 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition text-white text-sm"
               >
                 {d.toLocaleTimeString("en-US", {
-                  timeZone: "America/Chicago",
+                  timeZone: TZ,
                   hour: "numeric",
                   minute: "2-digit",
                 })}
@@ -820,7 +998,7 @@ function TimeStep({
           })}
         </div>
       )}
-      <BackButton onClick={onBack} />
+      {back}
     </div>
   );
 }
@@ -838,19 +1016,19 @@ function ConfirmStep({
   trainer,
   slot,
   rescheduleFor,
-  onBack,
+  back,
   onError,
   onSuccess,
 }: {
   athlete: AthleteOption;
   family: boolean;
   bucket: Bucket;
-  /** Credits left for this service (a membership isn't limited by these). */
+  /** Sessions left for this service (a membership isn't limited by these). */
   credits: number;
   trainer: Trainer;
   slot: string;
   rescheduleFor: RescheduleFor;
-  onBack: () => void;
+  back: React.ReactNode;
   onError: (msg: string) => void;
   onSuccess: (id: string) => void;
 }) {
@@ -871,7 +1049,7 @@ function ConfirmStep({
   }, [result]);
 
   // Same time each week, as far as the booking window reaches — and no
-  // more sessions than credits left. A reschedule moves one session.
+  // more sessions than they have left. A reschedule moves one session.
   const weekly = useMemo(
     () => weeklyStarts(new Date(slot), MAX_REPEAT_WEEKS).filter((w) => inBookingWindow(w.start)),
     [slot],
@@ -949,7 +1127,7 @@ function ConfirmStep({
   }
 
   const when = start.toLocaleString("en-US", {
-    timeZone: "America/Chicago",
+    timeZone: TZ,
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -957,53 +1135,26 @@ function ConfirmStep({
     minute: "2-digit",
   });
   const weeklyWhen = `${start.toLocaleDateString("en-US", {
-    timeZone: "America/Chicago",
+    timeZone: TZ,
     weekday: "long",
   })}s at ${start.toLocaleTimeString("en-US", {
-    timeZone: "America/Chicago",
+    timeZone: TZ,
     hour: "numeric",
     minute: "2-digit",
   })}`;
 
   return (
-    <div className="card-modern-amber rounded-2xl p-6 sm:p-8 space-y-4">
-      <h2 className="font-display text-2xl text-white mb-2">
+    <div className="card-modern-amber rounded-2xl p-6 sm:p-8 space-y-5">
+      <h2 className="font-display text-2xl text-white">
         {rescheduleFor ? "Confirm reschedule" : "Confirm your booking"}
       </h2>
-      {maxWeeks > 1 && (
-        <div>
-          <p className="text-zinc-500 text-xs tracking-widest uppercase mb-2">
-            How many weeks?
-          </p>
-          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${maxWeeks}, minmax(0, 1fr))` }}>
-            {Array.from({ length: maxWeeks }, (_, i) => i + 1).map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setWeeks(n)}
-                aria-pressed={weeks === n}
-                className={`rounded-xl py-2.5 border text-sm font-bold transition ${
-                  weeks === n
-                    ? "border-[#9954d2] bg-[#9954d2]/15 text-white"
-                    : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-[#9954d2]/50"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-          <p className="text-zinc-500 text-xs mt-2">
-            {weeks === 1
-              ? "Book the same time on following weeks in one go."
-              : `Same time each week — ${weeks} sessions in a row.`}
-          </p>
-        </div>
-      )}
+
+      {/* What they're booking comes first. */}
       <div className="text-zinc-300 text-sm space-y-2">
         {family && <Row label="Athlete" value={athlete.name} />}
         <Row label="Service" value={bucket.service.name} />
         <Row
-          label="Trainer"
+          label="Coach"
           value={`${trainer.first_name ?? ""} ${trainer.last_name ?? ""}`.trim()}
         />
         <Row label="When" value={weeks > 1 ? weeklyWhen : when} />
@@ -1013,7 +1164,7 @@ function ConfirmStep({
             value={dates
               .map((d) =>
                 d.toLocaleDateString("en-US", {
-                  timeZone: "America/Chicago",
+                  timeZone: TZ,
                   month: "short",
                   day: "numeric",
                 }),
@@ -1038,6 +1189,38 @@ function ConfirmStep({
           }
         />
       </div>
+
+      {/* Then the option to repeat it. */}
+      {maxWeeks > 1 && (
+        <div>
+          <p className="text-zinc-400 text-xs tracking-widest uppercase mb-2">
+            Repeat each week?
+          </p>
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${maxWeeks}, minmax(0, 1fr))` }}>
+            {Array.from({ length: maxWeeks }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setWeeks(n)}
+                aria-pressed={weeks === n}
+                className={`rounded-xl px-1 py-2.5 min-h-[44px] border text-xs sm:text-sm font-bold leading-tight transition ${
+                  weeks === n
+                    ? "border-[#9954d2] bg-[#9954d2]/15 text-white"
+                    : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-[#9954d2]/50"
+                }`}
+              >
+                {n === 1 ? "Just once" : `${n} weeks`}
+              </button>
+            ))}
+          </div>
+          <p className="text-zinc-500 text-xs mt-2">
+            {weeks === 1
+              ? "Or book this same time for the next few weeks in one go."
+              : `Same time each week — ${weeks} sessions in a row.`}
+          </p>
+        </div>
+      )}
+
       {insideCancelWindow && (
         <p className="text-amber-400 text-xs">
           {weeks > 1 ? "The first session is" : "This session is"} less than {FREE_CANCEL_HOURS} hours
@@ -1057,7 +1240,7 @@ function ConfirmStep({
               ? `BOOK ${weeks} SESSIONS`
               : "CONFIRM BOOKING"}
       </button>
-      <BackButton onClick={onBack} />
+      {back}
     </div>
   );
 }
@@ -1065,7 +1248,7 @@ function ConfirmStep({
 /** "Wed, Nov 11 · 5:00 PM" */
 function fmtSessionDate(iso: string) {
   return new Date(iso).toLocaleString("en-US", {
-    timeZone: "America/Chicago",
+    timeZone: TZ,
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -1083,14 +1266,23 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Big enough to tap with a thumb. */
+const BACK_CLASS =
+  "inline-flex items-center min-h-[44px] -ml-2 px-2 text-zinc-400 hover:text-[#b07adf] text-sm tracking-wider";
+
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider mt-2"
-    >
+    <button type="button" onClick={onClick} className={BACK_CLASS}>
       ← BACK
     </button>
+  );
+}
+
+function BackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link href={href} className={BACK_CLASS}>
+      {label}
+    </Link>
   );
 }
 

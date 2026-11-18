@@ -15,6 +15,8 @@ export type Plan = {
   slug: string | null;
   category: PlanCategory;
   name: string;
+  /** Full name, as on receipts: "Gold Pitching Plan". */
+  title: string;
   tag: string;
   /** Dollars. */
   price: number;
@@ -35,6 +37,7 @@ export const PLANS: Plan[] = [
     slug: null,
     category: "pitching",
     name: "DIAMOND",
+    title: "Diamond Pitching Membership",
     tag: "MEMBERSHIP",
     price: 350,
     sessions: "unlimited",
@@ -58,6 +61,7 @@ export const PLANS: Plan[] = [
     slug: "pitching-gold",
     category: "pitching",
     name: "GOLD",
+    title: "Gold Pitching Plan",
     tag: "GREAT VALUE",
     price: 285,
     sessions: 3,
@@ -71,6 +75,7 @@ export const PLANS: Plan[] = [
     slug: "pitching-single",
     category: "pitching",
     name: "SINGLE",
+    title: "Single Pitching Session",
     tag: "ONE TIME",
     price: 125,
     sessions: 1,
@@ -84,6 +89,7 @@ export const PLANS: Plan[] = [
     slug: "hitting-diamond",
     category: "hitting",
     name: "DIAMOND",
+    title: "Diamond Hitting Plan",
     tag: "MOST POPULAR",
     price: 300,
     sessions: 4,
@@ -106,6 +112,7 @@ export const PLANS: Plan[] = [
     slug: "hitting-gold",
     category: "hitting",
     name: "GOLD",
+    title: "Gold Hitting Plan",
     tag: "GREAT VALUE",
     price: 275,
     sessions: 3,
@@ -126,6 +133,7 @@ export const PLANS: Plan[] = [
     slug: "hitting-single",
     category: "hitting",
     name: "SINGLE",
+    title: "Single Hitting Session",
     tag: "ONE TIME",
     price: 100,
     sessions: 1,
@@ -162,4 +170,27 @@ export function planValue(
     main: `${money(per)} per session`,
     note: saved > 0 ? `Save ${money(saved)} vs. ${plan.sessions} singles` : undefined,
   };
+}
+
+/**
+ * The plan someone is on their way to buying, read from the page they'll
+ * land on after signing in: /book/buy/<slug>, /book/subscribe, or the
+ * agreement page with one of those as its own ?next=.
+ */
+export function planFromPath(path: string | null | undefined): Plan | null {
+  if (!path) return null;
+  const [pathname, query = ""] = path.split("?");
+  if (pathname === "/book/waiver") {
+    const inner = new URLSearchParams(query).get("next");
+    return inner && inner !== path ? planFromPath(inner) : null;
+  }
+  const buy = pathname.match(/^\/book\/buy\/([a-z0-9-]+)$/);
+  if (buy) return PLANS.find((p) => p.slug === buy[1]) ?? null;
+  if (pathname === "/book/subscribe") return PLANS.find((p) => p.sessions === "unlimited") ?? null;
+  return null;
+}
+
+/** "$285", or "$350/month" for the membership. */
+export function planPriceLabel(plan: Pick<Plan, "price" | "sessions">) {
+  return plan.sessions === "unlimited" ? `$${plan.price}/month` : `$${plan.price}`;
 }

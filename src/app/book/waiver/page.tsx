@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ParticipantAgreement } from "@/components/ParticipantAgreement";
 import { WAIVER_VERSION, hasAcceptedWaiver } from "@/lib/legal/waiver";
 import { WaiverAcceptForm } from "./WaiverAcceptForm";
+import { planFromPath } from "@/lib/plans";
+import { FirstSteps } from "@/components/FirstSteps";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Participant Agreement" };
@@ -27,7 +29,7 @@ export default async function WaiverPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect(`/book/login?next=${encodeURIComponent(`/book/waiver?next=${next}`)}`);
+    redirect(`/book/login?next=${encodeURIComponent(`/book/waiver?next=${encodeURIComponent(next)}`)}`);
   }
   if (hasAcceptedWaiver(user)) redirect(next);
 
@@ -53,6 +55,9 @@ export default async function WaiverPage({
             Read and accept D9&rsquo;s Participant Agreement. You only need to do this once.
           </p>
         </div>
+
+        {/* On the way to buying a plan: step 2 of 4. */}
+        {planFromPath(next) && <FirstSteps current={2} />}
 
         <div className="card-modern rounded-2xl p-5 sm:p-7">
           <div

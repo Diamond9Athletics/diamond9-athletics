@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatUsPhone } from "@/lib/phone";
 import { TextReminderConsent } from "@/components/TextReminderConsent";
+import { planFromPath } from "@/lib/plans";
+import { PlanContext } from "@/components/PlanContext";
+import { FirstSteps } from "@/components/FirstSteps";
 
 // Only allow internal paths so ?next= can't be used as an open redirect.
 function safeNext(next: string | null): string {
@@ -41,6 +44,8 @@ function SignupPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNext(searchParams.get("next"));
+  // On the way to buying a plan: say which.
+  const plan = planFromPath(next);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -51,8 +56,12 @@ function SignupPageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
-  // Timestamp of first render — real users need at least ~2s to fill the form.
-  const startedAt = useRef(Date.now());
+  // When the form appeared — real users need at least ~2s to fill it in.
+  // Set once it's on screen (reading the clock during render isn't allowed).
+  const startedAt = useRef(0);
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
   const turnstileWidgetRef = useRef<string | null>(null);
 
   // Mount Turnstile once the CF script loads.
@@ -145,6 +154,13 @@ function SignupPageInner() {
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
         </div>
+
+        {plan && (
+          <>
+            <FirstSteps current={1} />
+            <PlanContext plan={plan} />
+          </>
+        )}
 
         <div className="card-modern rounded-2xl p-6 sm:p-8">
           <form onSubmit={onSubmit} className="space-y-4" autoComplete="on">

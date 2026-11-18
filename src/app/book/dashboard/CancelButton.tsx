@@ -6,6 +6,9 @@ import { FREE_CANCEL_HOURS, freeCancelDeadline, isLateCancel } from "@/lib/booki
 
 type Mode = "idle" | "menu" | "confirm";
 
+/** Big enough to tap with a thumb. */
+const TAP = "inline-flex items-center min-h-[44px] px-2 -mx-2";
+
 export function CancelButton({ bookingId, startsAt }: { bookingId: string; startsAt: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -13,7 +16,7 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
   // Checked when the menu opens, so the warning matches the moment they act.
   const [late, setLate] = useState(false);
 
-  async function cancel(then?: "rebook") {
+  async function cancel() {
     setBusy(true);
     const res = await fetch("/api/booking/cancel", {
       method: "POST",
@@ -27,15 +30,11 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
       setMode("idle");
       return;
     }
-    if (then === "rebook") {
-      router.push("/book/schedule");
-      return;
-    }
     router.refresh();
   }
 
   const hint = late ? (
-    <p className="text-amber-500 text-xs leading-snug max-w-[240px]">
+    <p className="text-amber-500 text-xs leading-snug max-w-[260px]">
       It&rsquo;s within {FREE_CANCEL_HOURS} hours — changing it now uses this session.
     </p>
   ) : (
@@ -44,6 +43,8 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
       {freeCancelDeadline(startsAt).toLocaleString("en-US", {
         timeZone: "America/Chicago",
         weekday: "short",
+        month: "short",
+        day: "numeric",
         hour: "numeric",
         minute: "2-digit",
       })}
@@ -54,19 +55,19 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
   if (mode === "confirm") {
     return (
       <div className="flex flex-col items-start gap-1 shrink-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => cancel()}
             disabled={busy}
-            className="text-red-400 hover:text-red-300 text-xs tracking-wider font-bold disabled:opacity-60"
+            className={`${TAP} text-red-400 hover:text-red-300 text-xs tracking-wider font-bold disabled:opacity-60`}
           >
             {busy ? "CANCELING…" : "YES, CANCEL"}
           </button>
           <button
             onClick={() => setMode("menu")}
-            className="text-zinc-500 hover:text-zinc-300 text-xs tracking-wider"
+            className={`${TAP} text-zinc-400 hover:text-zinc-200 text-xs tracking-wider`}
           >
-            KEEP
+            KEEP IT
           </button>
         </div>
         {hint}
@@ -77,23 +78,25 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
   if (mode === "menu") {
     return (
       <div className="flex flex-col items-start gap-1 shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          {/* Moves the session: the original is only let go once the new
+              time is booked, so nothing is lost if they change their mind. */}
           <button
-            onClick={() => cancel("rebook")}
-            disabled={busy}
-            className="text-[#b07adf] hover:text-[#c89cff] text-xs tracking-wider font-bold disabled:opacity-60"
+            onClick={() => router.push(`/book/schedule?reschedule=${bookingId}`)}
+            className={`${TAP} text-[#b07adf] hover:text-[#c89cff] text-xs tracking-wider font-bold`}
           >
-            {busy ? "…" : "RESCHEDULE"}
+            RESCHEDULE
           </button>
           <button
             onClick={() => setMode("confirm")}
-            className="text-zinc-500 hover:text-red-400 text-xs tracking-wider"
+            className={`${TAP} text-zinc-400 hover:text-red-400 text-xs tracking-wider`}
           >
             CANCEL
           </button>
           <button
             onClick={() => setMode("idle")}
-            className="text-zinc-500 hover:text-zinc-500 text-xs tracking-wider"
+            aria-label="Close"
+            className={`${TAP} text-zinc-400 hover:text-zinc-200 text-sm`}
           >
             ✕
           </button>
@@ -109,7 +112,7 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
         setLate(isLateCancel(startsAt));
         setMode("menu");
       }}
-      className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider shrink-0"
+      className={`${TAP} text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest shrink-0`}
     >
       CHANGE ▾
     </button>

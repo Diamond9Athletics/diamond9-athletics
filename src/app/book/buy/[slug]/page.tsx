@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireWaiver } from "@/lib/legal/waiver";
 import { BuyRedirector } from "./BuyRedirector";
+import { FirstSteps } from "@/components/FirstSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export default async function BuyPackage({
   return (
     <main className="pt-24 bg-[#040200] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-16 text-center">
+        <FirstSteps current={3} />
         <span className="badge-amber mb-5 inline-flex">◆ {pkg.name.toUpperCase()}</span>
         <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
           ONE MOMENT
