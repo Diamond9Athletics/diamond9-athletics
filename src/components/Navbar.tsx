@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { img, STORE_URL } from "@/lib/config";
 
-export const BUILD_VERSION = "v1.17.1";
+export const BUILD_VERSION = "v1.17.2";
 
 type NavLink = { href: string; label: string; external?: boolean };
 

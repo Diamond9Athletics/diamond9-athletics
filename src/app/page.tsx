@@ -8,7 +8,7 @@ const steps = [
   { num: "03", title: "COME READY TO WORK", desc: "Bring the effort. We bring the tech: every session is tracked, so you can see what’s getting better." },
 ];
 
-/** A coach's photo in the home page hero, with their name, linking to their page. */
+/** A coach's photo, with their name, linking to their page. */
 function CoachPhoto({
   href,
   src,
@@ -47,10 +47,13 @@ export default function Home() {
   return (
     <main className="overflow-hidden page-reveal">
 
-      {/* ══ HERO: what D9 is, and the coaches ══════════════════════ */}
-      <section className="relative overflow-hidden pt-32 pb-16 sm:pt-36 lg:pt-40 lg:pb-24">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_70%_40%,rgba(153,84,210,0.16)_0%,transparent_70%)]" />
+      {/* ══ HERO: the name, front and center ═══════════════════════ */}
+      <section className="relative overflow-hidden flex items-center justify-center min-h-[72svh] sm:min-h-[80vh] pt-32 pb-20 sm:pt-36 sm:pb-24">
         <div className="absolute inset-0 grid-bg opacity-60 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,rgba(153,84,210,0.16)_0%,transparent_70%)]" />
+
+        {/* Giant watermark 9 */}
+        <div aria-hidden="true" className="absolute right-[-4%] top-1/2 -translate-y-1/2 font-display text-[32rem] leading-none text-white/[0.03] select-none pointer-events-none hidden lg:block">9</div>
 
         {/* Baseball stitching SVG curves */}
         <svg className="absolute bottom-0 left-0 right-0 w-full opacity-10 pointer-events-none" height="80" viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none">
@@ -58,49 +61,23 @@ export default function Home() {
           <path d="M0,55 C240,95 480,15 720,55 C960,95 1200,15 1440,55" stroke="#9954d2" strokeWidth="1" fill="none" strokeDasharray="6 6"/>
         </svg>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-14 items-center">
-          <div className="text-center lg:text-left">
-            <p className="animate-fade-in-up text-zinc-400 text-sm tracking-[0.3em] uppercase mb-4">Elevate Your Game</p>
-            <h1 className="font-display leading-none mb-6">
-              <span className="animate-fade-in-up block text-6xl sm:text-8xl lg:text-[8.5rem] gradient-text-white">DIAMOND 9</span>
-              <span className="animate-fade-in-up-delay block text-6xl sm:text-8xl lg:text-[8.5rem] gradient-text text-glow">ATHLETICS</span>
-            </h1>
-            <p className="animate-fade-in-up-delay-2 text-zinc-300 text-base sm:text-lg max-w-md mx-auto lg:mx-0 mb-8">
-              Pitching and hitting training in Austin, Texas. Real data every session, so you can see
-              exactly what&rsquo;s getting better.
-            </p>
-            <div className="animate-fade-in-up-delay-3 flex flex-row gap-3 justify-center lg:justify-start flex-wrap">
-              <Link href="/book" className="btn-gold animate-pulse-glow px-8 py-4 text-sm rounded-full inline-block font-black tracking-widest">
-                BOOK NOW
-              </Link>
-              <Link href="/pitching-plans" className="btn-outline px-8 py-4 text-sm rounded-full inline-block tracking-widest">
-                VIEW PLANS
-              </Link>
-            </div>
-          </div>
-
-          {/* The coaches, each linking to their page: side by side on a
-              phone, overlapping on a computer. */}
-          <div className="animate-fade-in-up-delay relative w-full max-w-md mx-auto lg:max-w-none grid grid-cols-2 gap-3 lg:block lg:h-[540px]">
-            <div className="absolute -inset-6 bg-[radial-gradient(circle_at_50%_50%,rgba(153,84,210,0.22),transparent_65%)] pointer-events-none" />
-            <CoachPhoto
-              href="/trainers/wes"
-              src={img("/images/wes-pitching.jpg")}
-              alt="Head Trainer Wes Gafford pitching"
-              role="HEAD TRAINER"
-              name="WES GAFFORD"
-              className="relative h-72 sm:h-96 lg:absolute lg:left-0 lg:top-0 lg:w-[64%] lg:h-[80%]"
-              position="center 15%"
-            />
-            <CoachPhoto
-              href="/trainers/turner"
-              src={img("/images/turner-olson.jpg")}
-              alt="Hitting Trainer Turner Olson at the plate"
-              role="HITTING TRAINER"
-              name="TURNER OLSON"
-              className="relative h-72 sm:h-96 lg:absolute lg:right-0 lg:bottom-0 lg:w-[58%] lg:h-[50%]"
-              position="48% 30%"
-            />
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+          <p className="animate-fade-in-up text-zinc-400 text-sm sm:text-base tracking-[0.3em] uppercase mb-4">Elevate Your Game</p>
+          <h1 className="font-display leading-none mb-6">
+            <span className="animate-fade-in-up block text-6xl sm:text-8xl lg:text-[10rem] gradient-text-white">DIAMOND 9</span>
+            <span aria-hidden="true" className="animate-fade-in-up-delay divider-glow block max-w-[80px] mx-auto my-2" />
+            <span className="animate-fade-in-up-delay block text-6xl sm:text-8xl lg:text-[10rem] gradient-text text-glow">ATHLETICS</span>
+          </h1>
+          <p className="animate-fade-in-up-delay-2 text-zinc-300 text-base sm:text-lg tracking-wide mb-9">
+            Real data. Real results.
+          </p>
+          <div className="animate-fade-in-up-delay-3 flex flex-row gap-3 justify-center flex-wrap">
+            <Link href="/book" className="btn-gold animate-pulse-glow px-6 sm:px-8 py-4 text-sm rounded-full inline-block font-black tracking-widest">
+              BOOK NOW
+            </Link>
+            <Link href="/pitching-plans" className="btn-outline px-6 sm:px-8 py-4 text-sm rounded-full inline-block tracking-widest">
+              VIEW PLANS
+            </Link>
           </div>
         </div>
       </section>
@@ -216,6 +193,38 @@ export default function Home() {
                 <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{boxShadow:"inset 0 0 0 1px rgba(153,84,210,0.4)"}} />
               </div>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ COACHES ═══════════════════════════════════════════════ */}
+      <section className="relative py-16 sm:py-24 px-6">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9954d2]/30 to-transparent" />
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <p className="section-label mb-3">WHO YOU&rsquo;LL TRAIN WITH</p>
+            <h2 className="font-display text-5xl sm:text-7xl text-white">YOUR <span className="gradient-text">COACHES</span></h2>
+            <div className="divider-glow max-w-[120px] mx-auto mt-5" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            <CoachPhoto
+              href="/trainers/wes"
+              src={img("/images/wes-pitching.jpg")}
+              alt="Head Trainer Wes Gafford pitching"
+              role="HEAD TRAINER"
+              name="WES GAFFORD"
+              className="relative h-72 sm:h-[28rem]"
+              position="center 15%"
+            />
+            <CoachPhoto
+              href="/trainers/turner"
+              src={img("/images/turner-olson.jpg")}
+              alt="Hitting Trainer Turner Olson at the plate"
+              role="HITTING TRAINER"
+              name="TURNER OLSON"
+              className="relative h-72 sm:h-[28rem]"
+              position="48% 30%"
+            />
           </div>
         </div>
       </section>
