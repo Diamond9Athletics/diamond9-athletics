@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { img } from "@/lib/config";
 import { HomeTestimonials } from "@/components/HomeTestimonials";
+import { HeroBackdrop } from "@/components/HeroBackdrop";
 
 const steps = [
   { num: "01", title: "CHOOSE A PLAN", desc: "Go Diamond for unlimited pitching sessions, or grab a Single or Gold plan." },
@@ -47,19 +48,9 @@ export default function Home() {
   return (
     <main className="overflow-hidden page-reveal">
 
-      {/* ══ HERO: the name, front and center ═══════════════════════ */}
+      {/* ══ HERO: the name, front and center, over the moving field ═══ */}
       <section className="relative overflow-hidden flex items-center justify-center min-h-[72svh] sm:min-h-[80vh] pt-32 pb-20 sm:pt-36 sm:pb-24">
-        <div className="absolute inset-0 grid-bg opacity-60 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,rgba(153,84,210,0.16)_0%,transparent_70%)]" />
-
-        {/* Giant watermark 9 */}
-        <div aria-hidden="true" className="absolute right-[-4%] top-1/2 -translate-y-1/2 font-display text-[32rem] leading-none text-white/[0.03] select-none pointer-events-none hidden lg:block">9</div>
-
-        {/* Baseball stitching SVG curves */}
-        <svg className="absolute bottom-0 left-0 right-0 w-full opacity-10 pointer-events-none" height="80" viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none">
-          <path d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40" stroke="#9954d2" strokeWidth="1.5" fill="none" strokeDasharray="6 6"/>
-          <path d="M0,55 C240,95 480,15 720,55 C960,95 1200,15 1440,55" stroke="#9954d2" strokeWidth="1" fill="none" strokeDasharray="6 6"/>
-        </svg>
+        <HeroBackdrop />
 
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
           <p className="animate-fade-in-up text-zinc-400 text-sm sm:text-base tracking-[0.3em] uppercase mb-4">Elevate Your Game</p>
