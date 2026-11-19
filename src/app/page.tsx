@@ -3,12 +3,6 @@ import { img } from "@/lib/config";
 import { HomeTestimonials } from "@/components/HomeTestimonials";
 import { HeroBackdrop } from "@/components/HeroBackdrop";
 
-const steps = [
-  { num: "01", title: "CHOOSE A PLAN", desc: "Go Diamond for unlimited pitching sessions, or grab a Single or Gold plan." },
-  { num: "02", title: "BOOK ONLINE", desc: "Pick any open time on the calendar. You’ll get a confirmation and a reminder." },
-  { num: "03", title: "COME READY TO WORK", desc: "Bring the effort. We bring the tech: every session is tracked, so you can see what’s getting better." },
-];
-
 /** A coach's photo, with their name, linking to their page. */
 function CoachPhoto({
   href,
@@ -216,30 +210,6 @@ export default function Home() {
               className="relative h-72 sm:h-[28rem]"
               position="48% 30%"
             />
-          </div>
-        </div>
-      </section>
-
-      {/* ══ HOW IT WORKS ══════════════════════════════════════════ */}
-      <section className="relative py-24 px-6 bg-[#020101] overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9954d2]/30 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9954d2]/30 to-transparent" />
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="section-label mb-3">THE PROCESS</p>
-            <h2 className="font-display text-5xl sm:text-7xl text-white">HOW IT <span className="gradient-text">WORKS</span></h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {steps.map((step, i) => (
-              <div key={i} className="relative card-modern rounded-2xl p-8 card-lift group">
-                <div className="step-num mb-2">{step.num}</div>
-                <h3 className="font-display text-2xl text-white mb-2">{step.title}</h3>
-                <p className="text-zinc-500 text-sm leading-relaxed">{step.desc}</p>
-                <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-[#9954d2]/8 border border-[#9954d2]/15 flex items-center justify-center">
-                  <span className="text-[#9954d2]/60 text-xs font-black">{i + 1}</span>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
