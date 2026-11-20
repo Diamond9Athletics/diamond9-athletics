@@ -30,11 +30,11 @@ export default function PageError({
   }, [error]);
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-24 text-center">
         <p className="section-label mb-3">SOMETHING WENT WRONG</p>
         <h1 className="font-display text-4xl sm:text-5xl text-white leading-none mb-5">
-          THAT DIDN&rsquo;T LOAD
+          That didn&rsquo;t load.
         </h1>
         <p className="text-zinc-400 text-sm leading-relaxed mb-8">
           We&rsquo;ve been told about it. Try again, and if it keeps happening, email{" "}
@@ -46,12 +46,12 @@ export default function PageError({
         <div className="flex items-center justify-center gap-5">
           <button
             onClick={() => (error.digest ? window.location.reload() : reset())}
-            className="btn-gold px-7 py-3 rounded-full text-xs tracking-widest font-black"
+            className="btn-gold px-7 py-3 rounded-full text-sm"
           >
-            TRY AGAIN
+            Try again
           </button>
-          <Link href="/" className="text-zinc-400 hover:text-white text-xs tracking-widest font-bold">
-            HOME
+          <Link href="/" className="text-zinc-400 hover:text-white text-sm">
+            Home
           </Link>
         </div>
       </section>

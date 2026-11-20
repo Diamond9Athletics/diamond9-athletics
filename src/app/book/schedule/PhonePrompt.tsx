@@ -59,7 +59,7 @@ export function PhonePrompt() {
           onClick={() => setState("closed")}
           className="text-zinc-500 hover:text-white text-xs tracking-widest shrink-0"
         >
-          CLOSE
+          Close
         </button>
       </div>
     );
@@ -69,7 +69,7 @@ export function PhonePrompt() {
     <form onSubmit={save} className="card-modern-amber rounded-2xl p-5 sm:p-6 mb-8 space-y-4">
       <div>
         <p className="section-label mb-1.5">ONE QUICK THING</p>
-        <h2 className="font-display text-2xl text-white">ADD YOUR PHONE NUMBER</h2>
+        <h2 className="font-display text-2xl text-white">Add your phone number</h2>
         <p className="text-zinc-400 text-sm mt-1.5">
           So your coach can reach you if a session has to move. A parent&rsquo;s number is best if
           the player is under 18.
@@ -98,14 +98,14 @@ export function PhonePrompt() {
           disabled={state === "saving"}
           className="btn-gold px-6 py-2.5 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
         >
-          {state === "saving" ? "SAVING…" : "SAVE"}
+          {state === "saving" ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
           onClick={notNow}
           className="text-zinc-500 hover:text-white text-xs tracking-widest px-2 py-2.5"
         >
-          NOT NOW
+          Not now
         </button>
       </div>
     </form>

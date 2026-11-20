@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Inter } from "next/font/google";
+import { Inter, Inter_Tight } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  variable: "--font-bebas",
+// Headings: a tight, modern sans in sentence case. Body: Inter.
+const interTight = Inter_Tight({
+  variable: "--font-heading",
   subsets: ["latin"],
 });
 
@@ -68,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${bebasNeue.variable} font-sans bg-[#040200] text-white antialiased`}>
+      <body className={`${inter.variable} ${interTight.variable} font-sans bg-[#0d0c11] text-[#f3f1f6] antialiased`}>
         <Navbar />
         {children}
         <Footer />

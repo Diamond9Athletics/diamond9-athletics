@@ -434,9 +434,9 @@ export function AddSessionPanel({
         <button
           type="submit"
           disabled={busy || !selected}
-          className="btn-gold px-6 py-2.5 rounded-full text-[11px] tracking-widest font-black disabled:opacity-50"
+          className="btn-gold px-6 py-2.5 rounded-full text-[13px] disabled:opacity-50"
         >
-          {busy ? "ADDING…" : "ADD SESSION"}
+          {busy ? "Adding…" : "Add session"}
         </button>
       </div>
     </form>

@@ -27,7 +27,7 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
         style={{
           margin: 0,
           minHeight: "100vh",
-          background: "#040200",
+          background: "#0d0c11",
           color: "#e4e4e7",
           fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Arial, sans-serif",
           display: "flex",
@@ -49,18 +49,17 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
           <button
             onClick={() => window.location.reload()}
             style={{
-              background: "#9954d2",
-              color: "#fff",
+              background: "#a97ce2",
+              color: "#160d20",
               border: 0,
               borderRadius: 999,
               padding: "12px 28px",
-              fontSize: 12,
-              letterSpacing: "0.15em",
-              fontWeight: 800,
+              fontSize: 14,
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
-            RELOAD
+            Reload
           </button>
         </div>
       </body>

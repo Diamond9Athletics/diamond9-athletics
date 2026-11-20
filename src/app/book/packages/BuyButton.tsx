@@ -41,7 +41,7 @@ export function BuyButton({
         disabled={loading}
         className={`${featured ? "btn-gold" : "btn-outline"} w-full py-3.5 rounded-full text-sm tracking-widest font-bold disabled:opacity-60`}
       >
-        {loading ? "REDIRECTING…" : kind === "enrollment" ? "ENROLL NOW" : "BUY PLAN"}
+        {loading ? "Redirecting…" : kind === "enrollment" ? "Enroll now" : "Buy plan"}
       </button>
       {error && (
         <p className="text-red-400 text-xs mt-2">{error}</p>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const trainers = [
   {
-    name: "WES GAFFORD",
+    name: "Wes Gafford",
     href: "/trainers/wes",
     title: "HEAD TRAINER",
     jersey: "1",
@@ -20,7 +20,7 @@ const trainers = [
     icon: <IconBaseball className="w-10 h-10 text-[#b07adf]" />,
   },
   {
-    name: "TURNER OLSON",
+    name: "Turner Olson",
     href: "/trainers/turner",
     title: "HITTING TRAINER",
     jersey: "9",
@@ -59,13 +59,13 @@ function DriveVideo({ id, title }: { id: string; title: string }) {
 
 export default function About() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <PageHero
         badge="◆ MEET THE TEAM"
-        title="THE"
-        accent="TRAINERS"
+        title="The"
+        accent="trainers"
         subtitle="Built on data. Defined by results."
       />
 
@@ -76,15 +76,7 @@ export default function About() {
             const card = (
               <>
                 {/* Photo panel */}
-                <div className="relative h-56 bg-gradient-to-br from-zinc-900 to-[#050202] overflow-hidden">
-                  {/* Diagonal corner accent */}
-                  <div className="coach-accent" />
-                  {/* Grid */}
-                  <div className="absolute inset-0 grid-bg opacity-15" />
-                  {/* Jersey watermark */}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-display text-[8rem] leading-none text-white/[0.04] select-none pointer-events-none">
-                    #{trainer.jersey}
-                  </div>
+                <div className="relative h-64 bg-[#141319] overflow-hidden">
                   {/* Photo */}
                   {i === 0 ? (
                     <div className="absolute inset-0">
@@ -106,7 +98,7 @@ export default function About() {
                   <p className="text-zinc-400 text-sm leading-relaxed mb-5">{trainer.bio}</p>
                   <div className="flex flex-wrap gap-2">
                     {trainer.specialties.map((s, j) => (
-                      <span key={j} className="text-xs text-[#9954d2]/70 bg-[#9954d2]/8 border border-[#9954d2]/15 px-3 py-1 rounded-full tracking-wide">{s}</span>
+                      <span key={j} className="text-xs text-zinc-300 bg-white/[0.03] border border-white/10 px-3 py-1 rounded-full">{s}</span>
                     ))}
                   </div>
                 </div>
@@ -126,17 +118,16 @@ export default function About() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-4">
         <div className="text-center mb-8">
           <p className="section-label mb-3">SEE IT IN ACTION</p>
-          <h2 className="font-display text-4xl sm:text-5xl text-white">WATCH THE <span className="gradient-text">TRAINERS</span></h2>
+          <h2 className="font-display text-4xl sm:text-5xl text-white">Watch the <span className="gradient-text">trainers</span></h2>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
 
         {/* Main trainer video */}
         <div className="relative rounded-2xl overflow-hidden card-modern-amber card-lift mb-5">
-          <div className="h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
           <DriveVideo id="1aGdvsoJLRG3xG-LepY_DHETKaGb87hH1" title="Trainers in action" />
-          <div className="px-6 py-4 flex items-center justify-between gap-4 bg-zinc-950/60">
+          <div className="px-6 py-4 flex items-center justify-between gap-4 border-t border-white/[0.06]">
             <div>
-              <p className="text-white font-bold text-sm">TRAINERS IN ACTION</p>
+              <p className="text-white font-medium">Trainers in action</p>
               <p className="text-zinc-500 text-xs mt-0.5">Diamond Nine Athletics — Training Session</p>
             </div>
             <span className="badge-amber shrink-0">◆ FEATURED</span>
@@ -146,12 +137,12 @@ export default function About() {
         {/* Athlete clip */}
         <div className="relative rounded-2xl overflow-hidden card-modern card-lift">
           <DriveVideo id="1Py9YLc1LKHXo5QuFh4RByXdiXNZYkd0U" title="Athlete spotlight" />
-          <div className="px-6 py-4 flex items-center justify-between gap-4 bg-zinc-950/60">
+          <div className="px-6 py-4 flex items-center justify-between gap-4 border-t border-white/[0.06]">
             <div>
-              <p className="text-white font-bold text-sm">ATHLETE SPOTLIGHT</p>
+              <p className="text-white font-medium">Athlete spotlight</p>
               <p className="text-zinc-500 text-xs mt-0.5">Thrall — Completion Highlight</p>
             </div>
-            <span className="pitch-tag pitch-tag-fb shrink-0">⚾ LIVE SESSION</span>
+            <span className="badge-amber shrink-0">LIVE SESSION</span>
           </div>
         </div>
       </section>
@@ -159,16 +150,14 @@ export default function About() {
       {/* ── Mission quote ────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 py-20">
         <div className="card-modern-amber rounded-2xl p-8 sm:p-14 relative overflow-hidden">
-          <div className="h-px bg-gradient-to-r from-transparent via-[#9954d2]/40 to-transparent absolute top-0 left-8 right-8" />
-          <div className="absolute inset-0 stripe-card" />
           <IconDiamond className="w-8 h-8 text-[#9954d2]/40 mx-auto mb-5 relative z-10" />
-          <p className="font-display text-xl sm:text-2xl text-white leading-relaxed relative z-10 text-center">
-            &ldquo;DATA-DRIVEN TRAINING. ELITE INSTRUCTION. EVERY ATHLETE LEAVES BETTER THAN THEY ARRIVED.&rdquo;
+          <p className="font-display text-2xl sm:text-4xl text-white leading-[1.15] relative z-10 text-center">
+            &ldquo;Data-driven training. Elite instruction. Every athlete leaves better than they arrived.&rdquo;
           </p>
           <div className="divider-glow max-w-[80px] mx-auto mt-7 relative z-10" />
           <div className="mt-8 relative z-10 text-center">
-            <Link href="/book" className="btn-gold px-8 py-3.5 rounded-full text-sm tracking-widest font-black inline-block">
-              BOOK A SESSION
+            <Link href="/book" className="btn-gold inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm">
+              Book a session <span aria-hidden="true">↗</span>
             </Link>
           </div>
         </div>

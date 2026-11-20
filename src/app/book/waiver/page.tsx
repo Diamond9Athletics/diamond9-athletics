@@ -42,13 +42,12 @@ export default async function WaiverPage({
     `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || "this athlete";
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-2xl mx-auto px-6 py-12">
         <div className="text-center mb-8">
           <span className="badge-amber mb-4 inline-flex">◆ ONE QUICK STEP</span>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            BEFORE YOU
-            <span className="block gradient-text">TRAIN</span>
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
+            Before you <span className="gradient-text">train</span>
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
           <p className="text-zinc-400 text-sm mt-5 max-w-md mx-auto">

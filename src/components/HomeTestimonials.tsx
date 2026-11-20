@@ -4,13 +4,13 @@ export function HomeTestimonials() {
   if (testimonials.length === 0) return null;
 
   return (
-    <section className="relative py-24 px-6 bg-[#040200] overflow-hidden">
+    <section className="relative py-24 px-6 bg-[#0d0c11] overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9954d2]/30 to-transparent" />
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
           <p className="section-label mb-3">RESULTS</p>
           <h2 className="font-display text-5xl sm:text-7xl text-white">
-            WHAT ATHLETES <span className="gradient-text">SAY</span>
+            What athletes <span className="gradient-text">say</span>
           </h2>
           <div className="divider-glow max-w-[120px] mx-auto mt-5" />
         </div>

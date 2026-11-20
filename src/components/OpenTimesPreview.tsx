@@ -41,7 +41,7 @@ export function OpenTimesPreview({ category }: { category: "pitching" | "hitting
       <div className="card-modern rounded-2xl p-6 sm:p-8">
         <p className="section-label mb-2">THIS WEEK</p>
         <h2 className="font-display text-3xl sm:text-4xl text-white leading-none mb-2">
-          OPEN <span className="gradient-text">TIMES</span>
+          Open <span className="gradient-text">times</span>
         </h2>
         <p className="text-zinc-400 text-sm mb-6">
           Times a new athlete can book right now. Pick a plan above to grab one.
@@ -70,7 +70,7 @@ export function OpenTimesPreview({ category }: { category: "pitching" | "hitting
                         {d.slots.slice(0, PER_DAY).map((s) => (
                           <span
                             key={s}
-                            className="text-xs text-zinc-200 bg-zinc-900/60 border border-zinc-800 rounded-full px-3 py-1.5"
+                            className="text-xs text-zinc-200 bg-white/[0.03] border border-white/10 rounded-full px-3 py-1.5"
                           >
                             {timeLabel(s)}
                           </span>

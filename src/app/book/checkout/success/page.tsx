@@ -60,13 +60,13 @@ export default async function Success() {
     : { ready: false, firstTime: false, enrolledIn: null };
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-xl mx-auto px-6 py-16 sm:py-20 text-center">
         {firstTime && !enrolledIn && <FirstSteps current={4} />}
         <span className="badge-amber mb-5 inline-flex">◆ THANK YOU</span>
-        <h1 className="font-display text-5xl sm:text-7xl text-white leading-none">
-          PAYMENT
-          <span className="block gradient-text">CONFIRMED</span>
+        <h1 className="font-display text-[2.6rem] sm:text-7xl text-white leading-[1.04]">
+          Payment
+          <span className="block gradient-text">confirmed.</span>
         </h1>
         <div className="divider-glow max-w-[100px] mx-auto mt-5 mb-7" />
 
@@ -79,7 +79,7 @@ export default async function Success() {
               href="/book/login?next=%2Fbook%2Fschedule"
               className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block"
             >
-              SIGN IN TO BOOK
+              Sign in to book
             </Link>
           </>
         ) : enrolledIn ? (
@@ -91,7 +91,7 @@ export default async function Success() {
               href="/book/dashboard"
               className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block"
             >
-              GO TO MY ACCOUNT
+              Go to my account
             </Link>
           </>
         ) : ready ? (
@@ -103,14 +103,14 @@ export default async function Success() {
               href="/book/schedule"
               className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block"
             >
-              {firstTime ? "BOOK YOUR FIRST SESSION" : "BOOK A SESSION"}
+              {firstTime ? "Book your first session" : "Book a session"}
             </Link>
             <div className="mt-4">
               <Link
                 href="/book/dashboard"
                 className="inline-flex items-center min-h-[44px] text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest"
               >
-                GO TO MY ACCOUNT →
+                Go to my account →
               </Link>
             </div>
           </>

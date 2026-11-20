@@ -37,7 +37,7 @@ export function WaitForSessions() {
           href="/book/dashboard"
           className="btn-gold inline-block px-10 py-4 rounded-full text-sm tracking-widest font-black"
         >
-          GO TO MY ACCOUNT
+          Go to my account
         </Link>
       </div>
     );

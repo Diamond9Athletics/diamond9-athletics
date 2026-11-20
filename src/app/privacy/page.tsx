@@ -15,7 +15,7 @@ const LAST_UPDATED = "November 16, 2026";
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <h2 className="font-display text-2xl text-white mb-3">{title}</h2>
+      <h2 className="font-display text-2xl sm:text-[1.7rem] text-white mb-3">{title}</h2>
       {children}
     </div>
   );
@@ -35,18 +35,18 @@ function Item({ label, children }: { label: string; children: ReactNode }) {
 
 export default function Privacy() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
       {/* Hero */}
       <PageHero
         badge="◆ LEGAL"
-        title="PRIVACY"
-        accent="POLICY"
+        title="Privacy"
+        accent="policy"
       >
         <p className="text-zinc-500 text-xs tracking-wider mt-4">LAST UPDATED · {LAST_UPDATED.toUpperCase()}</p>
       </PageHero>
 
       {/* Body */}
-      <section className="max-w-3xl mx-auto px-6 pb-24">
+      <section className="max-w-3xl mx-auto px-6 pt-12 sm:pt-16 pb-24">
         <div className="card-modern rounded-2xl p-7 sm:p-10 space-y-8 text-zinc-300 text-sm leading-relaxed">
           <div>
             <p>
@@ -58,7 +58,7 @@ export default function Privacy() {
             </p>
           </div>
 
-          <Section title="INFORMATION WE COLLECT">
+          <Section title="Information we collect">
             <Sub>ON THE WEBSITE</Sub>
             <ul className="list-disc pl-5 space-y-2">
               <Item label="Account information">
@@ -113,7 +113,7 @@ export default function Privacy() {
             </ul>
           </Section>
 
-          <Section title="HOW WE USE YOUR INFORMATION">
+          <Section title="How we use your information">
             <ul className="list-disc pl-5 space-y-2">
               <li>To create and manage your account and the athletes on it.</li>
               <li>
@@ -135,7 +135,7 @@ export default function Privacy() {
             </ul>
           </Section>
 
-          <Section title="SHARING YOUR INFORMATION">
+          <Section title="Sharing your information">
             <p className="mb-3">
               We do not sell your personal information, and we don&rsquo;t share it with advertisers.
               We share it only as needed to run our services:
@@ -165,7 +165,7 @@ export default function Privacy() {
             </ul>
           </Section>
 
-          <Section title="PHONE NUMBERS & TEXT MESSAGES">
+          <Section title="Phone numbers & text messages">
             <p className="mb-3">
               When you create an account on the Website, we ask for a mobile phone number so your
               coach can reach you about your training sessions, for example if a session has to move.
@@ -183,7 +183,7 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="PAYMENTS">
+          <Section title="Payments">
             <p>
               Payments on the Website are processed by Stripe. Your card details go directly to
               Stripe, and we never see or store your full card number. We keep a record of what you
@@ -193,7 +193,7 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="COOKIES">
+          <Section title="Cookies">
             <ul className="list-disc pl-5 space-y-2">
               <li>Sign-in cookies keep you signed in to your account. Booking doesn&rsquo;t work without them.</li>
               <li>Your browser remembers whether you picked the light or dark theme.</li>
@@ -205,7 +205,7 @@ export default function Privacy() {
             </ul>
           </Section>
 
-          <Section title="DATA RETENTION">
+          <Section title="Data retention">
             <p>
               We keep your information while your account is open and as needed to provide our
               services. You can ask us to delete your account at any time by emailing us. We&rsquo;ll
@@ -215,7 +215,7 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="YOUR CHOICES">
+          <Section title="Your choices">
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 Update your name, phone number, and text reminder setting in{" "}
@@ -232,7 +232,7 @@ export default function Privacy() {
             </ul>
           </Section>
 
-          <Section title="CHILDREN’S PRIVACY">
+          <Section title="Children’s privacy">
             <p>
               Parents and guardians usually set up Website accounts for their players, and a parent or
               guardian must accept the Participant Agreement for any player under 18. The App is
@@ -243,7 +243,7 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="THIRD-PARTY DATA & TRADEMARKS">
+          <Section title="Third-party data & trademarks">
             <p className="mb-3">
               The App is an independent training tool developed by Diamond Nine Athletics LLC and
               is <span className="text-white">not affiliated with, endorsed by, or partnered with</span>{" "}
@@ -259,7 +259,7 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="SECURITY">
+          <Section title="Security">
             <p>
               We use reasonable technical and organizational measures to protect your information,
               including encrypted connections to the Website and limiting who can see account data.
@@ -268,7 +268,7 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="CHANGES TO THIS POLICY">
+          <Section title="Changes to this policy">
             <p>
               We may update this Privacy Policy from time to time. If we make significant changes,
               we&rsquo;ll let you know by email or on the Website or App. The &ldquo;Last Updated&rdquo;
@@ -276,7 +276,7 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="CONTACT US">
+          <Section title="Contact us">
             <p>
               If you have questions about this Privacy Policy or your data, contact us at{" "}
               <a href={`mailto:${EMAIL}`} className="text-[#b07adf] hover:underline">{EMAIL}</a>.

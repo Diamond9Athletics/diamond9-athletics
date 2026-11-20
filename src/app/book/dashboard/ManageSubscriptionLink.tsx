@@ -123,25 +123,25 @@ export function ManageSubscriptionLink({
             <button
               onClick={resumeMembership}
               disabled={busy !== null}
-              className="btn-gold px-6 py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
+              className="btn-gold px-6 py-3 rounded-full text-[13px] disabled:opacity-60"
             >
-              {busy === "resume" ? "RESUMING…" : "RESUME MEMBERSHIP"}
+              {busy === "resume" ? "Resuming…" : "Resume membership"}
             </button>
           ) : (
             <button
               onClick={() => setConfirming(true)}
               disabled={busy !== null}
-              className="btn-outline px-6 py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
+              className="btn-outline px-6 py-3 rounded-full text-[13px] disabled:opacity-60"
             >
-              CANCEL MEMBERSHIP
+              Cancel membership
             </button>
           )}
           <button
             onClick={openPortal}
             disabled={busy !== null}
-            className="text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest font-bold px-2 py-3 disabled:opacity-60"
+            className="text-zinc-400 hover:text-white text-[13px] font-medium px-2 py-3 disabled:opacity-60"
           >
-            {busy === "portal" ? "OPENING…" : "UPDATE CARD / INVOICES →"}
+            {busy === "portal" ? "Opening…" : "Update card / invoices →"}
           </button>
         </div>
       </div>
@@ -173,16 +173,16 @@ export function ManageSubscriptionLink({
               <button
                 onClick={cancelNow}
                 disabled={busy !== null}
-                className="btn-outline-danger px-6 py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60 border border-red-500/50 text-red-300 hover:border-red-500 hover:text-red-200"
+                className="px-6 py-3 rounded-full text-[13px] font-medium disabled:opacity-60 border border-red-500/50 text-red-300 hover:border-red-500 hover:text-red-200 transition-colors"
               >
-                {busy === "cancel" ? "CANCELING…" : "YES, CANCEL"}
+                {busy === "cancel" ? "Canceling…" : "Yes, cancel"}
               </button>
               <button
                 onClick={() => setConfirming(false)}
                 disabled={busy !== null}
-                className="btn-gold px-6 py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
+                className="btn-gold px-6 py-3 rounded-full text-[13px] disabled:opacity-60"
               >
-                KEEP MEMBERSHIP
+                Keep membership
               </button>
             </div>
           </div>

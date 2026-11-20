@@ -13,18 +13,18 @@ const LAST_UPDATED = "November 16, 2026";
 
 export default function Terms() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
       {/* Hero */}
       <PageHero
         badge="◆ LEGAL"
-        title="TERMS OF"
-        accent="SERVICE"
+        title="Terms of"
+        accent="service"
       >
         <p className="text-zinc-500 text-xs tracking-wider mt-4">LAST UPDATED · {LAST_UPDATED.toUpperCase()}</p>
       </PageHero>
 
       {/* Body */}
-      <section className="max-w-3xl mx-auto px-6 pb-24">
+      <section className="max-w-3xl mx-auto px-6 pt-12 sm:pt-16 pb-24">
         <div className="card-modern rounded-2xl p-7 sm:p-10 space-y-8 text-zinc-300 text-sm leading-relaxed">
 
           <div>
@@ -38,7 +38,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">USE OF THE APP</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Use of the app</h2>
             <p>
               You agree to use the App only for lawful purposes and in accordance with these Terms.
               You are responsible for any activity that occurs under your account and for keeping
@@ -47,7 +47,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">ACCOUNTS</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Accounts</h2>
             <p>
               To access certain features, you may need to create an account. You agree to provide
               accurate information and to keep it up to date. We reserve the right to suspend or
@@ -56,7 +56,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">PRICING</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Pricing</h2>
             <p>
               The App is currently free to use. We reserve the right to introduce paid features or
               subscription plans in future versions. Any such changes will be announced in advance
@@ -66,7 +66,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">TRAINING SESSIONS &amp; CANCELLATIONS</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Training sessions &amp; cancellations</h2>
             <p>
               Sessions booked on our website can be cancelled or rescheduled from your dashboard
               for free up to {FREE_CANCEL_HOURS} hours before they start. Inside{" "}
@@ -78,7 +78,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">TEXT MESSAGES</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Text messages</h2>
             <p className="mb-3">
               If you opt in to text reminders on our website, Diamond Nine Athletics will text
               reminders about sessions you&rsquo;ve booked to the mobile number on your account,
@@ -94,7 +94,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">CONTENT &amp; INTELLECTUAL PROPERTY</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Content &amp; intellectual property</h2>
             <p>
               All content provided through the App, including text, graphics, training plans, and
               videos, is owned by Diamond Nine Athletics or its licensors and is protected by
@@ -104,7 +104,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">THIRD-PARTY TRADEMARKS &amp; INDEPENDENCE</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Third-party trademarks &amp; independence</h2>
             <p className="mb-3">
               This application is an independent training tool developed by Diamond Nine Athletics
               LLC and is <span className="text-white">not affiliated with, endorsed by, sponsored by,
@@ -129,7 +129,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">DISCLAIMER</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Disclaimer</h2>
             <p>
               The App is provided on an &ldquo;as is&rdquo; basis. Training content is for general
               informational purposes and is not a substitute for medical advice. Consult a qualified
@@ -139,7 +139,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">LIMITATION OF LIABILITY</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Limitation of liability</h2>
             <p>
               To the maximum extent permitted by law, Diamond Nine Athletics shall not be liable for
               any indirect, incidental, special, or consequential damages arising out of or related
@@ -148,7 +148,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">CHANGES TO THESE TERMS</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Changes to these terms</h2>
             <p>
               We may update these Terms from time to time. If we make significant changes, we will
               notify you within the App or via email. Your continued use of the App after the changes
@@ -157,7 +157,7 @@ export default function Terms() {
           </div>
 
           <div>
-            <h2 className="font-display text-2xl text-white mb-3">CONTACT</h2>
+            <h2 className="font-display text-2xl text-white mb-3">Contact</h2>
             <p>
               If you have questions about these Terms, contact us at{" "}
               <a href={`mailto:${EMAIL}`} className="text-[#b07adf] hover:underline">{EMAIL}</a>.

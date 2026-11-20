@@ -122,7 +122,7 @@ export function WaiverAcceptForm({
         disabled={!ready || busy}
         className="btn-gold w-full py-3.5 rounded-full text-sm tracking-widest font-black disabled:opacity-50"
       >
-        {busy ? "SAVING…" : "ACKNOWLEDGE & CONTINUE"}
+        {busy ? "Saving…" : "Acknowledge & continue"}
       </button>
     </form>
   );

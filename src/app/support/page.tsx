@@ -11,53 +11,53 @@ const EMAIL = "support@diamond9athletics.com";
 
 const topics = [
   {
-    title: "ACCOUNT & LOGIN",
+    title: "Account & login",
     desc: "Trouble creating an account, signing in, or resetting your password.",
   },
   {
-    title: "TRAINING DATA",
+    title: "Training data",
     desc: "Sessions, metrics, or videos not saving or displaying correctly.",
   },
   {
-    title: "BILLING & PLANS",
+    title: "Billing & plans",
     desc: "Questions about subscriptions, receipts, or upgrading your plan.",
   },
   {
-    title: "BUG REPORTS",
+    title: "Bug reports",
     desc: "Something not working as expected — include device + steps to reproduce.",
   },
   {
-    title: "FEATURE REQUESTS",
-    desc: "Have an idea that would make the app better? We&rsquo;d love to hear it.",
+    title: "Feature requests",
+    desc: "Have an idea that would make the app better? We’d love to hear it.",
   },
   {
-    title: "DATA & PRIVACY",
+    title: "Data & privacy",
     desc: "Requests to export or delete your data, or questions about our privacy practices.",
   },
 ];
 
 export default function Support() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
       {/* Hero */}
       <PageHero
         badge="◆ WE’RE HERE TO HELP"
-        title="APP"
-        accent="SUPPORT"
+        title="App"
+        accent="support"
         subtitle="Questions about the Diamond Nine Athletics app? Reach out anytime."
       />
 
       {/* Contact card */}
-      <section className="max-w-3xl mx-auto px-6 pb-6">
+      <section className="max-w-3xl mx-auto px-6 pt-12 sm:pt-16 pb-6">
         <div className="card-modern-amber rounded-2xl p-7 sm:p-10 text-center">
           <p className="section-label mb-3">GET IN TOUCH</p>
-          <h2 className="font-display text-3xl sm:text-4xl text-white mb-2">EMAIL US</h2>
+          <h2 className="font-display text-3xl sm:text-4xl text-white mb-2">Email us</h2>
           <p className="text-zinc-400 text-sm mb-6">
             We typically respond within 1–2 business days.
           </p>
           <a
             href={`mailto:${EMAIL}?subject=App%20Support`}
-            className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block break-all"
+            className="btn-gold px-7 py-3 rounded-full text-sm inline-block break-all"
           >
             {EMAIL}
           </a>
@@ -68,13 +68,13 @@ export default function Support() {
       <section className="max-w-3xl mx-auto px-6 pb-24 pt-10">
         <div className="text-center mb-8">
           <p className="section-label mb-3">WHAT CAN WE HELP WITH?</p>
-          <h2 className="font-display text-3xl sm:text-4xl text-white">COMMON <span className="gradient-text">TOPICS</span></h2>
+          <h2 className="font-display text-3xl sm:text-4xl text-white">Common <span className="gradient-text">topics</span></h2>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {topics.map((t) => (
             <div key={t.title} className="card-modern rounded-2xl p-6">
-              <p className="text-[#b07adf] text-xs tracking-widest font-bold mb-2">{t.title}</p>
+              <p className="text-white font-medium mb-1.5">{t.title}</p>
               <p className="text-zinc-400 text-sm leading-relaxed">{t.desc}</p>
             </div>
           ))}

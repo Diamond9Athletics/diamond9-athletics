@@ -59,15 +59,15 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
           <button
             onClick={() => cancel()}
             disabled={busy}
-            className={`${TAP} text-red-400 hover:text-red-300 text-xs tracking-wider font-bold disabled:opacity-60`}
+            className={`${TAP} text-red-400 hover:text-red-300 text-[13px] font-medium disabled:opacity-60`}
           >
-            {busy ? "CANCELING…" : "YES, CANCEL"}
+            {busy ? "Canceling…" : "Yes, cancel"}
           </button>
           <button
             onClick={() => setMode("menu")}
-            className={`${TAP} text-zinc-400 hover:text-zinc-200 text-xs tracking-wider`}
+            className={`${TAP} text-zinc-400 hover:text-zinc-200 text-[13px]`}
           >
-            KEEP IT
+            Keep it
           </button>
         </div>
         {hint}
@@ -83,15 +83,15 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
               time is booked, so nothing is lost if they change their mind. */}
           <button
             onClick={() => router.push(`/book/schedule?reschedule=${bookingId}`)}
-            className={`${TAP} text-[#b07adf] hover:text-[#c89cff] text-xs tracking-wider font-bold`}
+            className={`${TAP} text-[#b07adf] hover:text-[#c89cff] text-[13px] font-medium`}
           >
-            RESCHEDULE
+            Reschedule
           </button>
           <button
             onClick={() => setMode("confirm")}
-            className={`${TAP} text-zinc-400 hover:text-red-400 text-xs tracking-wider`}
+            className={`${TAP} text-zinc-400 hover:text-red-400 text-[13px]`}
           >
-            CANCEL
+            Cancel
           </button>
           <button
             onClick={() => setMode("idle")}
@@ -112,9 +112,9 @@ export function CancelButton({ bookingId, startsAt }: { bookingId: string; start
         setLate(isLateCancel(startsAt));
         setMode("menu");
       }}
-      className={`${TAP} text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest shrink-0`}
+      className={`${TAP} text-zinc-400 hover:text-white text-[13px] shrink-0`}
     >
-      CHANGE ▾
+      Change ▾
     </button>
   );
 }

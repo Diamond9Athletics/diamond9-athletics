@@ -193,7 +193,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
             disabled={profileSaving}
             className="btn-gold px-8 py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
           >
-            {profileSaving ? "SAVING…" : "SAVE CHANGES"}
+            {profileSaving ? "Saving…" : "Save changes"}
           </button>
         </form>
       </div>
@@ -241,7 +241,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
             disabled={pwSaving || !pw}
             className="btn-outline px-8 py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
           >
-            {pwSaving ? "UPDATING…" : "UPDATE PASSWORD"}
+            {pwSaving ? "Updating…" : "Update password"}
           </button>
         </form>
       </div>
@@ -251,15 +251,15 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           href="/book/dashboard"
           className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider"
         >
-          ← BACK TO DASHBOARD
+          ← Back to dashboard
         </Link>
       </div>
 
       <style>{`
         .input {
           width: 100%;
-          background: rgba(24,24,27,0.5);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.1);
           color: white;
           font-size: 0.875rem;
           padding: 0.75rem 0.9rem;
@@ -267,7 +267,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           outline: none;
           transition: border-color .15s;
         }
-        .input:focus { border-color: rgba(153,84,210,0.5); }
+        .input:focus { border-color: rgba(169,124,226,0.6); }
       `}</style>
     </div>
   );

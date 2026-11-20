@@ -2,80 +2,77 @@ import Link from "next/link";
 import { BUILD_VERSION } from "./Navbar";
 import { img, STORE_URL } from "@/lib/config";
 
+const LINK = "block text-zinc-400 text-sm hover:text-white transition-colors";
+const HEADING = "text-zinc-500 text-[11px] font-medium tracking-[0.14em] uppercase mb-4";
+
 export default function Footer() {
   return (
-    <footer className="bg-[#020101] border-t border-zinc-800/50 relative overflow-hidden">
-      {/* Baseball stitching SVG top decoration */}
-      <svg className="absolute top-0 left-0 right-0 w-full opacity-[0.07] pointer-events-none" height="40" viewBox="0 0 1440 40" fill="none" preserveAspectRatio="none">
-        <path d="M0,20 C240,40 480,0 720,20 C960,40 1200,0 1440,20" stroke="#9954d2" strokeWidth="1.5" fill="none" strokeDasharray="6 6"/>
-      </svg>
+    <footer className="bg-[#0a090d] border-t border-white/[0.06]">
+      {/* Closing call to action */}
+      <div className="max-w-7xl mx-auto px-6 pt-16 sm:pt-20 pb-14 sm:pb-16 border-b border-white/[0.06]">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+          <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.02] text-white">
+            Ready to train?
+            <span className="block text-[#b48ae6]">Book your next session.</span>
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/book" className="btn-gold inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm">
+              Book now <span aria-hidden="true">↗</span>
+            </Link>
+            <Link href="/pitching-plans" className="btn-outline inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm">
+              View plans <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </div>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-14 pb-10">
+      <div className="max-w-7xl mx-auto px-6 pt-12 pb-10">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
-
           {/* Brand */}
           <div className="col-span-2">
-            <div className="mb-4">
-              <img
-                src={img("/images/d9-logo.png")}
-                alt="Diamond Nine Athletics"
-                className="h-24 sm:h-32 md:h-48 w-auto mix-blend-screen"
-              />
-            </div>
-            <p className="text-zinc-500 text-xs leading-relaxed mb-5 max-w-[220px]">
+            <img src={img("/images/d9-wordmark.png")} alt="Diamond Nine Athletics" className="h-12 w-auto mb-5" />
+            <p className="text-zinc-500 text-sm leading-relaxed max-w-[260px]">
               Elite baseball training powered by Rapsodo data. Real trainers. Real results.
             </p>
-
           </div>
 
-          {/* Training */}
           <div>
-            <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">TRAINING</p>
+            <p className={HEADING}>Training</p>
             <div className="space-y-2.5">
-              <Link href="/pitching-plans" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Pitching Plans</Link>
-              <Link href="/hitting-plans"  className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Hitting Plans</Link>
-              <Link href="/book"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Book Session</Link>
-              <Link href="/faq"    className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">FAQ</Link>
+              <Link href="/pitching-plans" className={LINK}>Pitching plans</Link>
+              <Link href="/hitting-plans" className={LINK}>Hitting plans</Link>
+              <Link href="/book" className={LINK}>Book a session</Link>
+              <Link href="/faq" className={LINK}>FAQ</Link>
             </div>
           </div>
 
-          {/* Company */}
           <div>
-            <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">COMPANY</p>
+            <p className={HEADING}>Company</p>
             <div className="space-y-2.5">
-              <Link href="/app"     className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">D9 App</Link>
-              <Link href="/about"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">About</Link>
-              <a href={STORE_URL} target="_blank" rel="noopener noreferrer" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Shop</a>
-              <Link href="/contact" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Contact</Link>
-              <Link href="/support" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">App Support</Link>
-              <Link href="/privacy" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Privacy Policy</Link>
-              <Link href="/terms"   className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Terms of Service</Link>
-              <Link href="/waiver"  className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">Participant Agreement</Link>
+              <Link href="/app" className={LINK}>D9 App</Link>
+              <Link href="/about" className={LINK}>About</Link>
+              <a href={STORE_URL} target="_blank" rel="noopener noreferrer" className={LINK}>Shop</a>
+              <Link href="/contact" className={LINK}>Contact</Link>
+              <Link href="/support" className={LINK}>App support</Link>
             </div>
           </div>
 
-          {/* Connect */}
           <div>
-            <p className="text-zinc-500 text-xs tracking-widest mb-4 font-bold">CONNECT</p>
-            <div className="space-y-3">
-              <a href="https://instagram.com/diamond9atx" target="_blank" rel="noopener noreferrer" className="block text-zinc-400 text-sm hover:text-[#b07adf] transition-colors">
+            <p className={HEADING}>More</p>
+            <div className="space-y-2.5">
+              <a href="https://instagram.com/diamond9atx" target="_blank" rel="noopener noreferrer" className={LINK}>
                 Instagram
               </a>
-            </div>
-            <div className="mt-6">
-              <Link href="/book" className="btn-gold px-5 py-2.5 rounded-full text-xs tracking-widest inline-block font-black">
-                BOOK NOW
-              </Link>
+              <Link href="/privacy" className={LINK}>Privacy policy</Link>
+              <Link href="/terms" className={LINK}>Terms of service</Link>
+              <Link href="/waiver" className={LINK}>Participant agreement</Link>
             </div>
           </div>
-
         </div>
 
-        <div className="divider-glow mb-6" />
-
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-zinc-500 text-xs">© 2026 Diamond Nine Athletics. All rights reserved.</p>
-          <span className="font-mono text-zinc-500 text-xs">{BUILD_VERSION}</span>
+          <span className="font-mono text-zinc-600 text-xs">{BUILD_VERSION}</span>
         </div>
       </div>
     </footer>

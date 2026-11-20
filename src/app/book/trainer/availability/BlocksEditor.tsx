@@ -111,9 +111,9 @@ export function BlocksEditor({ initialBlocks }: { initialBlocks: Block[] }) {
           <button
             onClick={add}
             disabled={busy}
-            className="ml-auto btn-gold px-5 py-2 rounded-full text-[11px] tracking-widest font-black disabled:opacity-60"
+            className="ml-auto btn-gold px-5 py-2 rounded-full text-[13px] disabled:opacity-60"
           >
-            {busy ? "ADDING…" : "ADD BLOCK"}
+            {busy ? "Adding…" : "Add block"}
           </button>
         </div>
       </div>

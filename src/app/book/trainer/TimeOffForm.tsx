@@ -180,9 +180,9 @@ export function TimeOffForm({
       <button
         type="submit"
         disabled={busy}
-        className="btn-gold w-full py-3 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
+        className="btn-gold w-full py-3 rounded-full text-sm disabled:opacity-60"
       >
-        {busy ? "SAVING…" : "BLOCK THIS TIME"}
+        {busy ? "Saving…" : "Block this time"}
       </button>
     </form>
   );

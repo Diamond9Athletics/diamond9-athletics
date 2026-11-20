@@ -42,12 +42,12 @@ export default async function BuyPackage({
   await requireWaiver(supabase, user, here);
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-16 text-center">
         <FirstSteps current={3} />
         <span className="badge-amber mb-5 inline-flex">◆ {pkg.name.toUpperCase()}</span>
-        <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
-          ONE MOMENT
+        <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04] mb-4">
+          One moment
         </h1>
         <div className="divider-glow max-w-[80px] mx-auto mb-6" />
         <p className="text-zinc-400 text-sm leading-relaxed mb-8">

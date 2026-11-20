@@ -155,18 +155,18 @@ export function CoachCalendar({
           <button
             type="button"
             onClick={() => setModal({ kind: "add" })}
-            className="btn-gold px-4 py-2 rounded-full text-[11px] tracking-widest font-black"
+            className="btn-gold px-4 py-2 rounded-full text-[13px]"
           >
-            + ADD SESSION
+            + Add session
           </button>
         )}
         {canEdit && (
           <button
             type="button"
             onClick={() => setModal({ kind: "block" })}
-            className="btn-outline px-4 py-2 rounded-full text-[11px] tracking-widest font-bold"
+            className="btn-outline px-4 py-2 rounded-full text-[13px]"
           >
-            BLOCK TIME OFF
+            Block time off
           </button>
         )}
       </div>
@@ -846,9 +846,9 @@ function TimeOffDetail({
           type="button"
           onClick={remove}
           disabled={busy}
-          className="btn-outline px-5 py-2.5 rounded-full text-[11px] tracking-widest font-bold disabled:opacity-60"
+          className="btn-outline px-5 py-2.5 rounded-full text-[13px] disabled:opacity-60"
         >
-          {busy ? "REMOVING…" : "REMOVE THIS TIME OFF"}
+          {busy ? "Removing…" : "Remove this time off"}
         </button>
       )}
       {error && <p className="text-red-400 text-xs">{error}</p>}

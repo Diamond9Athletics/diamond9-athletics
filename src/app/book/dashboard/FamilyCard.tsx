@@ -71,9 +71,9 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                   ) : (
                     <Link
                       href={`/book/subscribe?for=${encodeURIComponent(a.key)}`}
-                      className="text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest font-bold"
+                      className="text-zinc-400 hover:text-white text-[13px] font-medium"
                     >
-                      JOIN DIAMOND
+                      Join Diamond
                     </Link>
                   )}
                   {!a.holder && !a.agreementCurrent && renewing !== a.key && (
@@ -83,9 +83,9 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                         setRemoving(null);
                         setError(null);
                       }}
-                      className="text-amber-400 hover:text-amber-300 text-xs tracking-widest font-bold"
+                      className="text-amber-400 hover:text-amber-300 text-[13px] font-medium"
                     >
-                      RENEW
+                      Renew
                     </button>
                   )}
                   {!a.holder && removing !== a.key && (
@@ -95,9 +95,9 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                         setRenewing(null);
                         setError(null);
                       }}
-                      className="text-zinc-500 hover:text-red-300 text-xs tracking-widest font-bold"
+                      className="text-zinc-500 hover:text-red-300 text-[13px] font-medium"
                     >
-                      REMOVE
+                      Remove
                     </button>
                   )}
                 </div>
@@ -110,18 +110,18 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                     <button
                       onClick={() => setRemoving(null)}
                       disabled={busy}
-                      className="text-zinc-400 hover:text-white text-xs tracking-widest font-bold"
+                      className="text-zinc-400 hover:text-white text-[13px] font-medium"
                     >
-                      KEEP
+                      Keep
                     </button>
                     <button
                       onClick={async () => {
                         if (await send("DELETE", { id: a.key })) setRemoving(null);
                       }}
                       disabled={busy}
-                      className="text-red-300 hover:text-red-200 text-xs tracking-widest font-bold disabled:opacity-60"
+                      className="text-red-300 hover:text-red-200 text-[13px] font-medium disabled:opacity-60"
                     >
-                      {busy ? "REMOVING…" : "YES, REMOVE"}
+                      {busy ? "Removing…" : "Yes, remove"}
                     </button>
                   </div>
                 </div>
@@ -131,7 +131,7 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
                 <AgreementForm
                   athleteFirstName={a.firstName}
                   busy={busy}
-                  submitLabel="RENEW AGREEMENT"
+                  submitLabel="Renew agreement"
                   onCancel={() => setRenewing(null)}
                   onSubmit={async (guardianName) => {
                     if (await send("PATCH", { id: a.key, guardianName, accept: true })) {
@@ -175,9 +175,9 @@ export function FamilyCard({ athletes }: { athletes: FamilyMember[] }) {
             setRemoving(null);
             setError(null);
           }}
-          className="btn-outline px-5 py-2.5 rounded-full text-xs tracking-widest font-bold"
+          className="btn-outline px-5 py-2.5 rounded-full text-[13px]"
         >
-          + ADD AN ATHLETE
+          + Add an athlete
         </button>
       )}
       {family && (
@@ -233,7 +233,7 @@ function AddAthleteForm({
       <AgreementForm
         athleteFirstName={firstName.trim() || "them"}
         busy={busy}
-        submitLabel="ADD ATHLETE"
+        submitLabel="Add athlete"
         disabled={!firstName.trim()}
         onCancel={onCancel}
         onSubmit={(guardianName) => onSubmit({ firstName, lastName, guardianName })}
@@ -294,16 +294,16 @@ function AgreementForm({
         <button
           onClick={() => onSubmit(guardianName.trim())}
           disabled={!ready || busy}
-          className="btn-gold px-6 py-2.5 rounded-full text-xs tracking-widest font-black disabled:opacity-50"
+          className="btn-gold px-6 py-2.5 rounded-full text-[13px] disabled:opacity-50"
         >
-          {busy ? "SAVING…" : submitLabel}
+          {busy ? "Saving…" : submitLabel}
         </button>
         <button
           onClick={onCancel}
           disabled={busy}
           className="text-zinc-500 hover:text-zinc-300 text-xs tracking-widest font-bold"
         >
-          CANCEL
+          Cancel
         </button>
       </div>
     </div>

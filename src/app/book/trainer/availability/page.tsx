@@ -22,7 +22,7 @@ export default async function AvailabilityPage() {
 
   if (!me?.is_trainer) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-24 text-center text-zinc-400">
           This page is for trainers.
         </section>
@@ -51,12 +51,12 @@ export default async function AvailabilityPage() {
   ]);
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-3xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
           <p className="section-label mb-3">YOUR HOURS</p>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            AVAILABILITY
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
+            Availability
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
           <p className="text-zinc-500 text-xs mt-4">
@@ -86,9 +86,9 @@ export default async function AvailabilityPage() {
         <div className="mt-10 text-center">
           <Link
             href="/book/trainer"
-            className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider"
+            className="text-zinc-500 hover:text-white text-[13px]"
           >
-            ← BACK TO SCHEDULE
+            ← Back to schedule
           </Link>
         </div>
       </section>

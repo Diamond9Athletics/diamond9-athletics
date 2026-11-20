@@ -126,13 +126,13 @@ export default async function Dashboard({
     justBooked && (Array.isArray(justBooked.trainer) ? justBooked.trainer[0] : justBooked.trainer);
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-4xl mx-auto px-6 py-12 sm:py-16">
         <div className="text-center mb-10">
           <p className="section-label mb-3">YOUR DASHBOARD</p>
-          <h1 className="font-display text-5xl sm:text-7xl text-white leading-none">
-            WELCOME<span className="text-[#b07adf]">,</span>
-            <span className="block gradient-text">{displayName.toUpperCase()}</span>
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
+            Welcome,
+            <span className="block gradient-text">{displayName}</span>
           </h1>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
@@ -163,8 +163,8 @@ export default async function Dashboard({
             {next ? (
               <>
                 <p className="text-zinc-500 text-xs tracking-widest mb-2 font-bold">YOUR NEXT SESSION</p>
-                <p className="font-display text-4xl sm:text-5xl text-white leading-none">
-                  {sessionDay(next.starts_at).toUpperCase()}
+                <p className="font-display text-4xl sm:text-5xl text-white leading-[1.05]">
+                  {sessionDay(next.starts_at)}
                   {/* Time drops to its own line on phones instead of wrapping mid-time. */}
                   <span className="hidden sm:inline gradient-text"> · </span>
                   <br className="sm:hidden" />
@@ -205,13 +205,13 @@ export default async function Dashboard({
           </div>
           <Link
             href={canBook ? "/book/schedule" : "/book/packages"}
-            className="btn-gold shrink-0 text-center px-10 py-4 rounded-full text-sm tracking-widest font-black"
+            className="btn-gold shrink-0 text-center px-8 py-3.5 rounded-full text-sm"
           >
-            {canBook ? "BOOK A SESSION" : "SEE PLANS"}
+            {canBook ? "Book a session" : "See plans"}
           </Link>
         </div>
 
-        {/* Without credits the big button above already says SEE PLANS,
+        {/* Without credits the big button above already says "See plans",
             so the package card only shows for people who can book. */}
         <div className={`grid grid-cols-1 ${canBook ? "md:grid-cols-2" : ""} gap-5 mb-6`}>
           <div className="card-modern rounded-2xl p-6 sm:p-7">
@@ -220,7 +220,7 @@ export default async function Dashboard({
                 <p className="text-zinc-500 text-xs tracking-widest mb-2 font-bold">DIAMOND MEMBERSHIP</p>
                 <p className="font-display gradient-text mb-1 leading-none flex items-baseline gap-3">
                   <span className="text-7xl">∞</span>
-                  <span className="text-2xl text-zinc-400 font-normal tracking-wider">UNLIMITED</span>
+                  <span className="text-2xl text-zinc-400 font-normal">Unlimited</span>
                 </p>
                 <p className="text-zinc-500 text-xs mt-2">
                   {isFamily && memberNames.length > 0
@@ -268,7 +268,7 @@ export default async function Dashboard({
                 href="/book/packages"
                 className="btn-outline px-6 py-3 rounded-full text-xs tracking-widest font-black text-center"
               >
-                SEE PLANS
+                See plans
               </Link>
             </div>
           )}
@@ -325,9 +325,9 @@ export default async function Dashboard({
             </ul>
             {past.length > PAST_SHOWN && (
               <details className="group mt-2">
-                <summary className="no-marker list-none cursor-pointer inline-flex items-center gap-1 min-h-[44px] text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest">
-                  <span className="group-open:hidden">SHOW ALL ({past.length})</span>
-                  <span className="hidden group-open:inline">SHOW FEWER</span>
+                <summary className="no-marker list-none cursor-pointer inline-flex items-center gap-1 min-h-[44px] text-zinc-400 hover:text-white text-[13px]">
+                  <span className="group-open:hidden">Show all ({past.length})</span>
+                  <span className="hidden group-open:inline">Show fewer</span>
                   <span aria-hidden="true" className="transition-transform group-open:rotate-180">▾</span>
                 </summary>
                 <ul className="space-y-2 mt-1">
@@ -363,7 +363,7 @@ export default async function Dashboard({
                   href="/book/trainer"
                   className="btn-outline px-5 py-2.5 rounded-full text-xs tracking-widest font-bold"
                 >
-                  MY SCHEDULE
+                  My schedule
                 </Link>
               )}
               {profile.is_admin && (
@@ -372,13 +372,13 @@ export default async function Dashboard({
                     href="/book/trainer?coach=all"
                     className="btn-outline px-5 py-2.5 rounded-full text-xs tracking-widest font-bold"
                   >
-                    ALL COACHES&rsquo; SCHEDULES
+                    All coaches&rsquo; schedules
                   </Link>
                   <Link
                     href="/book/admin"
                     className="btn-outline px-5 py-2.5 rounded-full text-xs tracking-widest font-bold"
                   >
-                    ADMIN PANEL
+                    Admin panel
                   </Link>
                 </>
               )}
@@ -405,14 +405,14 @@ export default async function Dashboard({
                 href="/book/profile"
                 className="btn-outline px-5 py-2.5 rounded-full text-xs tracking-widest font-bold"
               >
-                MY PROFILE
+                My profile
               </Link>
               <form action="/book/logout" method="post">
                 <button
                   type="submit"
                   className="btn-outline px-5 py-2.5 rounded-full text-xs tracking-widest font-bold"
                 >
-                  SIGN OUT
+                  Sign out
                 </button>
               </form>
             </div>

@@ -11,7 +11,7 @@ const EMAIL = "support@diamond9athletics.com";
 
 export default function WaiverPublicPage() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
       <section className="relative pt-16 pb-10 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(153,84,210,0.06)_0%,transparent_100%)]" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">

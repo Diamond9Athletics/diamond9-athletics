@@ -12,19 +12,19 @@ export const metadata: Metadata = {
 
 export default function HittingPlans() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <PageHero
         badge="TRAINING PROGRAMS"
-        title="HITTING"
-        accent="PLANS"
+        title="Hitting"
+        accent="plans"
         subtitle="Every rep has a purpose."
       />
 
       {/* ── Plans Grid ───────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+      <section className="max-w-6xl mx-auto px-6 pt-12 sm:pt-16 pb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
           {plansFor("hitting").map((plan) => (
             <PlanCard
               key={plan.name}

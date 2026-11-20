@@ -23,8 +23,8 @@ export function AddToCalendar({
 }) {
   return (
     <details className="group" open={open}>
-      <summary className="no-marker list-none cursor-pointer inline-flex items-center gap-1 min-h-[44px] text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest">
-        ADD TO CALENDAR
+      <summary className="no-marker list-none cursor-pointer inline-flex items-center gap-1 min-h-[44px] text-zinc-400 hover:text-white text-[13px]">
+        Add to calendar
         <span aria-hidden="true" className="transition-transform group-open:rotate-180">▾</span>
       </summary>
       <div className="flex flex-wrap gap-2 pb-2">
@@ -32,15 +32,15 @@ export function AddToCalendar({
           href={googleCalendarUrl(serviceName, trainerName, { startsAtIso: startsAt, endsAtIso: endsAt })}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-outline px-4 py-2.5 rounded-full text-xs tracking-widest font-bold"
+          className="btn-outline px-4 py-2.5 rounded-full text-[13px]"
         >
-          GOOGLE
+          Google
         </a>
         <a
           href={`/api/booking/ics?id=${bookingId}`}
-          className="btn-outline px-4 py-2.5 rounded-full text-xs tracking-widest font-bold"
+          className="btn-outline px-4 py-2.5 rounded-full text-[13px]"
         >
-          APPLE / OUTLOOK
+          Apple / Outlook
         </a>
       </div>
     </details>

@@ -16,46 +16,46 @@ const credentials: string[] = [];
 const focus = [
   {
     num: "#1",
-    title: "BAT SPEED",
+    title: "Bat speed",
     desc: "More bat speed and rotational power, built from the ground up with lower-half sequencing that carries into the swing.",
   },
   {
     num: "#2",
-    title: "CONSISTENT CONTACT",
+    title: "Consistent contact",
     desc: "A clean swing path and barrel control, so hard contact shows up more often instead of once in a while.",
   },
   {
     num: "#3",
-    title: "A GAME-READY SWING",
+    title: "A game-ready swing",
     desc: "Timing, pitch recognition, and video breakdown to build a swing that's repeatable and holds up against live pitching.",
   },
 ];
 
 export default function TurnerOlsonBio() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
       <PageHero
         badge="HITTING TRAINER"
-        title="TURNER"
-        accent="OLSON"
+        title="Turner"
+        accent="Olson"
       />
 
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          <div className="relative rounded-2xl overflow-hidden card-lift h-80 lg:h-[480px]">
+          <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] h-80 lg:h-[480px]">
             <img src={img("/images/turner-olson.jpg")} alt="Turner Olson at the plate" className="w-full h-full object-cover object-center" />
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent" />
           </div>
           <div>
             <p className="section-label mb-3">HITTING TRAINER</p>
-            <h2 className="font-display text-4xl text-white mb-4">TURNER OLSON</h2>
+            <h2 className="font-display text-4xl text-white mb-4">Turner Olson</h2>
             <p className="text-zinc-400 text-sm leading-relaxed mb-6">
               Swing-mechanics specialist focused on bat speed, contact consistency, and a
               repeatable, game-ready swing. Every hitting session is one-on-one.
             </p>
             <div className="flex flex-wrap gap-2">
               {["Swing Mechanics", "Bat Speed", "Pitch Recognition", "Video Breakdown", "Lower-Half Sequencing", "Barrel Control"].map((s) => (
-                <span key={s} className="text-xs text-[#9954d2]/70 bg-[#9954d2]/8 border border-[#9954d2]/15 px-3 py-1 rounded-full tracking-wide">{s}</span>
+                <span key={s} className="text-xs text-zinc-300 bg-white/[0.03] border border-white/10 px-3 py-1 rounded-full">{s}</span>
               ))}
             </div>
           </div>
@@ -65,7 +65,7 @@ export default function TurnerOlsonBio() {
       <section className="max-w-5xl mx-auto px-6 pb-16">
         <div className="text-center mb-12">
           <p className="section-label mb-3">THE APPROACH</p>
-          <h2 className="font-display text-4xl sm:text-5xl text-white">WHAT WE <span className="gradient-text">WORK ON</span></h2>
+          <h2 className="font-display text-4xl sm:text-5xl text-white">What we <span className="gradient-text">work on</span></h2>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -79,19 +79,19 @@ export default function TurnerOlsonBio() {
         </div>
       </section>
 
-      <section className={`max-w-5xl mx-auto px-6 pb-20 ${credentials.length ? "border-t border-zinc-800/40 pt-16" : ""}`}>
+      <section className={`max-w-5xl mx-auto px-6 pb-20 ${credentials.length ? "border-t border-white/[0.06] pt-16" : ""}`}>
         {credentials.length > 0 && (
           <>
             <div className="text-center mb-10">
               <p className="section-label mb-3">RESUME</p>
-              <h2 className="font-display text-4xl sm:text-5xl text-white">PLAYING <span className="gradient-text">&amp; COACHING</span></h2>
+              <h2 className="font-display text-4xl sm:text-5xl text-white">Playing <span className="gradient-text">&amp; coaching</span></h2>
             </div>
             <div className="card-modern-amber rounded-2xl p-8 sm:p-12">
               <ul className="space-y-3">
                 {credentials.map((c) => (
                   <li key={c} className="flex items-center gap-3 text-zinc-300 text-sm">
-                    <svg className="w-3.5 h-3.5 text-[#9954d2] shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    <svg className="w-4 h-4 text-[#a97ce2] shrink-0" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5l3.5 3.5 7.5-8" />
                     </svg>
                     {c}
                   </li>
@@ -101,8 +101,8 @@ export default function TurnerOlsonBio() {
           </>
         )}
         <div className={`${credentials.length ? "mt-10 " : ""}text-center flex flex-wrap gap-3 justify-center`}>
-          <Link href="/hitting-plans" className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block">SEE HITTING PLANS</Link>
-          <Link href="/about" className="btn-outline px-8 py-4 rounded-full text-sm tracking-widest inline-block">MEET THE TEAM</Link>
+          <Link href="/hitting-plans" className="btn-gold inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm">See hitting plans <span aria-hidden="true">↗</span></Link>
+          <Link href="/about" className="btn-outline inline-flex items-center px-7 py-3 rounded-full text-sm">Meet the team</Link>
         </div>
       </section>
     </main>

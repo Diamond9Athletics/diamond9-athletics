@@ -42,7 +42,7 @@ export default async function AdminPage() {
     .single();
   if (!me?.is_admin) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-24 text-center text-zinc-400">
           Admin only.{" "}
           <Link href="/book/dashboard" className="text-[#b07adf]">
@@ -162,27 +162,26 @@ export default async function AdminPage() {
   });
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-6xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
           <p className="section-label mb-3">ADMIN</p>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            THE
-            <span className="block gradient-text">CONTROL ROOM</span>
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
+            The <span className="gradient-text">control room</span>
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link
               href="/book/admin/numbers"
-              className="btn-gold inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-black"
+              className="btn-gold inline-block px-5 py-2 rounded-full text-[13px]"
             >
-              THE NUMBERS →
+              The numbers →
             </Link>
             <Link
               href="/book/trainer?coach=all"
-              className="btn-outline inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-bold"
+              className="btn-outline inline-block px-5 py-2 rounded-full text-[13px]"
             >
-              ALL COACHES&rsquo; SCHEDULES →
+              All coaches&rsquo; schedules →
             </Link>
           </div>
         </div>
@@ -272,9 +271,9 @@ export default async function AdminPage() {
         <div className="text-center mt-8">
           <Link
             href="/book/dashboard"
-            className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider"
+            className="text-zinc-500 hover:text-white text-[13px]"
           >
-            ← BACK TO DASHBOARD
+            ← Back to dashboard
           </Link>
         </div>
       </section>

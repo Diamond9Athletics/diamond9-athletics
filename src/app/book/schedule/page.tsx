@@ -167,13 +167,12 @@ export default async function BookPage({
   }));
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-3xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
           <p className="section-label mb-3">USE YOUR PLAN</p>
-          <h1 className="font-display text-5xl sm:text-7xl text-white leading-none">
-            BOOK A
-            <span className="block gradient-text">SESSION</span>
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
+            Book a <span className="gradient-text">session</span>
           </h1>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>

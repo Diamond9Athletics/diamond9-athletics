@@ -28,13 +28,13 @@ export default async function SubscribeSuccessPage() {
   }
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-16 sm:py-20 text-center">
         {firstTime && <FirstSteps current={4} />}
         <span className="badge-amber mb-5 inline-flex">◆ YOU&rsquo;RE IN</span>
-        <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-3">
-          WELCOME TO
-          <span className="block gradient-text">DIAMOND</span>
+        <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04] mb-3">
+          Welcome to
+          <span className="block gradient-text">Diamond.</span>
         </h1>
         <div className="divider-glow max-w-[80px] mx-auto mb-6" />
         <p className="text-zinc-300 text-sm leading-relaxed mb-3">
@@ -49,14 +49,14 @@ export default async function SubscribeSuccessPage() {
           href={user ? "/book/schedule" : "/book/login?next=%2Fbook%2Fschedule"}
           className="btn-gold inline-block px-10 py-4 rounded-full text-sm tracking-widest font-black"
         >
-          {firstTime ? "BOOK YOUR FIRST SESSION" : "BOOK A SESSION"}
+          {firstTime ? "Book your first session" : "Book a session"}
         </Link>
         <div className="mt-4">
           <Link
             href="/book/dashboard"
             className="inline-flex items-center min-h-[44px] text-zinc-400 hover:text-[#b07adf] text-xs tracking-widest"
           >
-            GO TO MY ACCOUNT →
+            Go to my account →
           </Link>
         </div>
       </section>

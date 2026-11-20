@@ -58,12 +58,12 @@ export default async function SubscribePage({
 
   if (chosen && !members.has(chosen.key)) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-16 text-center">
           <FirstSteps current={3} />
           <span className="badge-amber mb-5 inline-flex">◆ DIAMOND MEMBERSHIP</span>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
-            ONE MOMENT
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04] mb-4">
+            One moment
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mb-6" />
           <p className="text-zinc-400 text-sm leading-relaxed mb-8">
@@ -78,12 +78,12 @@ export default async function SubscribePage({
 
   if (family.length === 1) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-16 text-center">
           <FirstSteps current={3} />
           <span className="badge-amber mb-5 inline-flex">◆ DIAMOND MEMBERSHIP</span>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
-            YOU&rsquo;RE IN
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04] mb-4">
+            You&rsquo;re in
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mb-6" />
           <p className="text-zinc-400 text-sm leading-relaxed mb-8">
@@ -93,7 +93,7 @@ export default async function SubscribePage({
             href="/book/dashboard"
             className="btn-gold inline-block px-8 py-3 rounded-full text-xs tracking-widest font-black"
           >
-            MY ACCOUNT
+            My account
           </Link>
         </section>
       </main>
@@ -101,13 +101,13 @@ export default async function SubscribePage({
   }
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-16">
         <div className="text-center">
           <FirstSteps current={3} />
           <span className="badge-amber mb-5 inline-flex">◆ DIAMOND MEMBERSHIP</span>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none mb-4">
-            WHO&rsquo;S IT FOR?
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04] mb-4">
+            Who&rsquo;s it for?
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mb-6" />
           <p className="text-zinc-400 text-sm leading-relaxed mb-8">

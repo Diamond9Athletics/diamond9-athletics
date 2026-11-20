@@ -70,7 +70,7 @@ export default async function TrainerPage({
 
   if (!me?.is_trainer && !me?.is_admin) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-24 text-center text-zinc-400">
           This page is for trainers.{" "}
           <Link href="/book/dashboard" className="text-[#b07adf]">Go to your dashboard</Link>.
@@ -113,7 +113,7 @@ export default async function TrainerPage({
     view.kind === "all" ? trainers.map((t) => t.id) : [view.kind === "coach" ? view.id : user.id];
   if (shownIds.length === 0) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-24 text-center text-zinc-400">
           No coaches set up yet.
         </section>
@@ -249,17 +249,17 @@ export default async function TrainerPage({
   const activeTab = view.kind === "coach" ? view.id : view.kind;
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div className="text-center mb-8">
           <p className="section-label mb-3">TRAINER VIEW</p>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
             {view.kind === "mine"
-              ? "YOUR"
+              ? "Your"
               : view.kind === "all"
-                ? "TEAM"
-                : `${view.first.toUpperCase()}’S`}
-            <span className="block gradient-text">SCHEDULE</span>
+                ? "Team"
+                : `${view.first}’s`}{" "}
+            <span className="gradient-text">schedule</span>
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
           <p className="text-zinc-500 text-xs mt-4">All times Central</p>
@@ -267,9 +267,9 @@ export default async function TrainerPage({
             <div className="mt-5">
               <Link
                 href="/book/trainer/availability"
-                className="btn-outline inline-block px-5 py-2 rounded-full text-[11px] tracking-widest font-bold"
+                className="btn-outline inline-block px-5 py-2 rounded-full text-[13px]"
               >
-                EDIT MY WEEKLY HOURS
+                Edit my weekly hours
               </Link>
             </div>
           )}
@@ -304,9 +304,9 @@ export default async function TrainerPage({
         <div className="mt-10 text-center">
           <Link
             href="/book/dashboard"
-            className="text-zinc-500 hover:text-[#b07adf] text-xs tracking-wider"
+            className="text-zinc-500 hover:text-white text-[13px]"
           >
-            ← BACK TO MY DASHBOARD
+            ← Back to my dashboard
           </Link>
         </div>
       </section>

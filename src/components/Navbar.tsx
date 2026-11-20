@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { img, STORE_URL } from "@/lib/config";
 
-export const BUILD_VERSION = "v1.17.4";
+export const BUILD_VERSION = "v1.18.0";
 
 type NavLink = { href: string; label: string; external?: boolean };
 
@@ -30,7 +30,7 @@ const mobileLinks: NavLink[] = [
   ...navLinks.slice(2),
 ];
 
-// BOOK NOW for someone who isn't signed in: sign in (or create an account
+// "Book now" for someone who isn't signed in: sign in (or create an account
 // from the sign-in page), then straight back to the calendar.
 const SIGNED_OUT_BOOK_HREF = `/book/login?next=${encodeURIComponent("/book/schedule")}`;
 
@@ -121,8 +121,8 @@ function PlansMenu({ pathname }: { pathname: string }) {
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1 text-sm font-medium tracking-wide transition-colors duration-200 ${
-          active || open ? "text-[#b07adf]" : "text-zinc-400 hover:text-white"
+        className={`flex items-center gap-1 text-[13px] font-medium transition-colors duration-200 ${
+          active || open ? "text-white" : "text-zinc-400 hover:text-white"
         }`}
       >
         Plans
@@ -142,16 +142,16 @@ function PlansMenu({ pathname }: { pathname: string }) {
       {open && (
         // pt-3 (not mt-3) keeps the hover area continuous down to the panel.
         <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3">
-          <div className="bg-zinc-950/95 backdrop-blur-md border border-zinc-800/80 rounded-xl p-1.5 min-w-[180px] shadow-xl">
+          <div className="bg-[#141319] border border-white/10 rounded-xl p-1.5 min-w-[180px] shadow-2xl shadow-black/50">
             {planLinks.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className={`block px-3.5 py-2.5 rounded-lg text-sm font-medium tracking-wide transition-colors ${
+                className={`block px-3.5 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
                   pathname === l.href
-                    ? "text-[#b07adf] bg-[#9954d2]/10"
-                    : "text-zinc-300 hover:text-white hover:bg-zinc-800/60"
+                    ? "text-white bg-white/[0.06]"
+                    : "text-zinc-300 hover:text-white hover:bg-white/[0.05]"
                 }`}
               >
                 {l.label}
@@ -169,42 +169,37 @@ export default function Navbar() {
   const pathname = usePathname();
   const account = useAccount(pathname);
 
-  // Until we know, BOOK NOW goes through /book, which routes server-side.
+  // Until we know, "Book now" goes through /book, which routes server-side.
   const bookHref =
     account === undefined ? "/book" : account ? "/book/schedule" : SIGNED_OUT_BOOK_HREF;
   const accountHref = account ? "/book/dashboard" : "/book/login";
-  const accountLabel = account ? "MY ACCOUNT" : "SIGN IN";
-  // Hold the button's space while checking so signed-in visitors never
-  // see a flash of SIGN IN.
+  const accountLabel = account ? "My account" : "Sign in";
+  // Hold the link's space while checking so signed-in visitors never
+  // see a flash of "Sign in".
   const accountHidden = account === undefined ? "invisible" : "";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
-      {/* Top glow line */}
-      <div className="divider-glow" />
-
-      <div className="bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/50">
+      <div className="bg-[#0d0c11]/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-24">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
+          <div className="flex items-center justify-between h-16">
+            <Link href="/" className="flex items-center shrink-0" aria-label="Diamond Nine Athletics home">
               <img
-                src={img("/images/d9-logo.png")}
+                src={img("/images/d9-wordmark.png")}
                 alt="Diamond Nine Athletics"
-                className="h-[96px] w-auto mix-blend-screen group-hover:opacity-90 transition-opacity duration-200"
+                className="h-9 w-auto opacity-95 hover:opacity-100 transition-opacity duration-200"
               />
-
             </Link>
 
-            {/* Desktop Nav Links */}
-            <div className="hidden lg:flex items-center gap-5 xl:gap-8">
+            {/* Desktop links */}
+            <div className="hidden lg:flex items-center gap-7">
               <PlansMenu pathname={pathname} />
-              {navLinks.map((link) => (
+              {navLinks.map((link) =>
                 link.external ? (
                   <a
                     key={link.href}
                     href={link.href}
-                    className="text-sm font-medium tracking-wide transition-colors duration-200 text-zinc-400 hover:text-white"
+                    className="text-[13px] font-medium transition-colors duration-200 text-zinc-400 hover:text-white"
                   >
                     {link.label}
                   </a>
@@ -212,39 +207,35 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`text-sm font-medium tracking-wide transition-colors duration-200 ${
-                      pathname === link.href
-                        ? "text-[#b07adf]"
-                        : "text-zinc-400 hover:text-white"
+                    className={`text-[13px] font-medium transition-colors duration-200 ${
+                      pathname === link.href ? "text-white" : "text-zinc-400 hover:text-white"
                     }`}
                   >
                     {link.label}
                   </Link>
-                )
-              ))}
+                ),
+              )}
             </div>
 
-            {/* Account + Book Now */}
-            <div className="hidden lg:flex items-center gap-3">
+            {/* Account + Book now */}
+            <div className="hidden lg:flex items-center gap-5">
               {account?.isTrainer && (
-                <Link
-                  href="/book/trainer"
-                  className="btn-outline px-4 xl:px-5 py-2.5 rounded-full text-sm tracking-wider inline-block"
-                >
-                  MY SCHEDULE
+                <Link href="/book/trainer" className="text-[13px] font-medium text-zinc-300 hover:text-white transition-colors">
+                  My schedule
                 </Link>
               )}
               <Link
                 href={accountHref}
-                className={`btn-outline px-4 xl:px-5 py-2.5 rounded-full text-sm tracking-wider inline-block ${accountHidden}`}
+                className={`text-[13px] font-medium text-zinc-300 hover:text-white transition-colors ${accountHidden}`}
               >
                 {accountLabel}
               </Link>
               <Link
                 href={bookHref}
-                className="btn-gold px-5 xl:px-6 py-2.5 rounded-full text-sm tracking-wider inline-block"
+                className="btn-gold inline-flex items-center gap-1.5 pl-4 pr-3.5 py-2 rounded-full text-[13px]"
               >
-                BOOK NOW
+                Book now
+                <span aria-hidden="true">→</span>
               </Link>
             </div>
 
@@ -253,9 +244,9 @@ export default function Navbar() {
               <Link
                 href={bookHref}
                 onClick={() => setIsOpen(false)}
-                className="btn-gold px-5 py-2.5 rounded-full text-xs tracking-widest font-black"
+                className="btn-gold px-4 py-2 rounded-full text-[13px]"
               >
-                BOOK
+                Book
               </Link>
               <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -263,20 +254,20 @@ export default function Navbar() {
                 aria-label="Toggle menu"
                 aria-expanded={isOpen}
               >
-                <div className="w-6 h-5 relative flex flex-col justify-between">
+                <div className="w-5 h-3.5 relative flex flex-col justify-between">
                   <span
-                    className={`w-full h-0.5 bg-white transition-all duration-300 ${
-                      isOpen ? "rotate-45 translate-y-2" : ""
+                    className={`w-full h-px bg-white transition-all duration-300 ${
+                      isOpen ? "rotate-45 translate-y-[6.5px]" : ""
                     }`}
                   />
                   <span
-                    className={`w-full h-0.5 bg-white transition-all duration-300 ${
+                    className={`w-full h-px bg-white transition-all duration-300 ${
                       isOpen ? "opacity-0" : ""
                     }`}
                   />
                   <span
-                    className={`w-full h-0.5 bg-white transition-all duration-300 ${
-                      isOpen ? "-rotate-45 -translate-y-2" : ""
+                    className={`w-full h-px bg-white transition-all duration-300 ${
+                      isOpen ? "-rotate-45 -translate-y-[6.5px]" : ""
                     }`}
                   />
                 </div>
@@ -285,20 +276,20 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Phone menu */}
         <div
           className={`lg:hidden overflow-hidden transition-all duration-300 ${
             isOpen ? "max-h-[640px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="px-4 pb-4 pt-2 space-y-1 bg-zinc-950/95 border-t border-zinc-800/50">
-            {mobileLinks.map((link) => (
+          <div className="px-4 pb-5 pt-2 border-t border-white/[0.06]">
+            {mobileLinks.map((link) =>
               link.external ? (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="block px-4 py-3 rounded-sm text-sm font-medium tracking-wide transition-colors text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  className="block px-2 py-3 text-[15px] font-medium border-b border-white/[0.05] transition-colors text-zinc-300 hover:text-white"
                 >
                   {link.label}
                 </a>
@@ -307,39 +298,39 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`block px-4 py-3 rounded-sm text-sm font-medium tracking-wide transition-colors ${
-                    pathname === link.href
-                      ? "text-[#b07adf] bg-[#9954d2]/5"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  className={`block px-2 py-3 text-[15px] font-medium border-b border-white/[0.05] transition-colors ${
+                    pathname === link.href ? "text-white" : "text-zinc-300 hover:text-white"
                   }`}
                 >
                   {link.label}
                 </Link>
-              )
-            ))}
-            {account?.isTrainer && (
-              <Link
-                href="/book/trainer"
-                onClick={() => setIsOpen(false)}
-                className="block mt-2 btn-outline px-4 py-3 rounded-full text-sm tracking-wider text-center"
-              >
-                MY SCHEDULE
-              </Link>
+              ),
             )}
-            <Link
-              href={accountHref}
-              onClick={() => setIsOpen(false)}
-              className={`block mt-2 btn-outline px-4 py-3 rounded-full text-sm tracking-wider text-center ${accountHidden}`}
-            >
-              {accountLabel}
-            </Link>
-            <Link
-              href={bookHref}
-              onClick={() => setIsOpen(false)}
-              className="block mt-2 btn-gold px-4 py-3 rounded-full text-sm tracking-wider text-center"
-            >
-              BOOK NOW
-            </Link>
+            <div className="grid gap-2 pt-4">
+              {account?.isTrainer && (
+                <Link
+                  href="/book/trainer"
+                  onClick={() => setIsOpen(false)}
+                  className="btn-outline px-4 py-3 rounded-full text-sm text-center"
+                >
+                  My schedule
+                </Link>
+              )}
+              <Link
+                href={accountHref}
+                onClick={() => setIsOpen(false)}
+                className={`btn-outline px-4 py-3 rounded-full text-sm text-center ${accountHidden}`}
+              >
+                {accountLabel}
+              </Link>
+              <Link
+                href={bookHref}
+                onClick={() => setIsOpen(false)}
+                className="btn-gold px-4 py-3 rounded-full text-sm text-center"
+              >
+                Book now
+              </Link>
+            </div>
           </div>
         </div>
       </div>

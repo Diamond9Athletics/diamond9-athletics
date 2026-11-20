@@ -166,25 +166,25 @@ function sections(): { title: string; items: Item[] }[] {
 
 export default function Faq() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
       <PageHero
-        badge="◆ QUESTIONS"
-        title="FREQUENTLY"
-        accent="ASKED"
+        badge="◆ FAQ"
+        title="Frequently asked"
+        accent="questions"
         subtitle="Booking, plans, and what to expect."
       />
 
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-24 space-y-10">
+      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-12 sm:pt-16 pb-24 space-y-12">
         {sections().map((section) => (
           <div key={section.title}>
             <p className="section-label mb-4">{section.title}</p>
-            <div className="space-y-3">
+            <div className="border-t border-white/[0.08]">
               {section.items.map((item) => (
-                <details key={item.q} className="faq card-modern rounded-2xl group">
-                  <summary className="flex items-center justify-between gap-4 cursor-pointer list-none px-5 sm:px-6 py-4 text-white text-sm sm:text-base font-semibold">
+                <details key={item.q} className="faq border-b border-white/[0.08] group">
+                  <summary className="flex items-center justify-between gap-4 cursor-pointer list-none py-5 text-white text-[15px] sm:text-[17px] font-medium">
                     {item.q}
                     <svg
-                      className="w-4 h-4 text-[#b07adf] shrink-0 transition-transform duration-200 group-open:rotate-180"
+                      className="w-4 h-4 text-zinc-500 shrink-0 transition-transform duration-200 group-open:rotate-180"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                       aria-hidden="true"
@@ -196,7 +196,7 @@ export default function Faq() {
                       />
                     </svg>
                   </summary>
-                  <div className="px-5 sm:px-6 pb-5 -mt-1 text-zinc-400 text-sm leading-relaxed">
+                  <div className="pb-6 -mt-1 pr-8 text-zinc-400 text-[15px] leading-relaxed">
                     {item.a}
                   </div>
                 </details>
@@ -208,8 +208,8 @@ export default function Faq() {
         <div className="card-modern-amber rounded-2xl p-6 sm:p-8 text-center">
           <p className="section-label mb-2">STILL HAVE A QUESTION?</p>
           <p className="text-zinc-400 text-sm mb-5">We&rsquo;re happy to help.</p>
-          <Link href="/contact" className="btn-gold px-8 py-3 rounded-full text-xs tracking-widest font-black inline-block">
-            CONTACT US
+          <Link href="/contact" className="btn-gold inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm">
+            Contact us <span aria-hidden="true">↗</span>
           </Link>
         </div>
       </section>

@@ -226,9 +226,9 @@ export function BookingFlow({
         </p>
         <Link
           href="/book/packages"
-          className="btn-gold inline-block px-8 py-3 rounded-full text-xs tracking-widest font-black"
+          className="btn-gold inline-block px-7 py-3 rounded-full text-sm"
         >
-          SEE PLANS
+          See plans
         </Link>
       </div>
     );
@@ -262,7 +262,7 @@ export function BookingFlow({
     stepIndex > 0 ? (
       <BackButton onClick={() => setStep(visible[stepIndex - 1])} />
     ) : rescheduleFor ? (
-      <BackLink href="/book/dashboard" label="← KEEP MY CURRENT TIME" />
+      <BackLink href="/book/dashboard" label="← Keep my current time" />
     ) : null;
 
   return (
@@ -434,7 +434,7 @@ function AthleteStep({
           key={a.key}
           onClick={() => onPick(a)}
           disabled={!a.agreementCurrent}
-          className="w-full text-left flex items-center justify-between gap-3 rounded-xl px-4 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition disabled:opacity-50 disabled:hover:border-zinc-800"
+          className="w-full text-left flex items-center justify-between gap-3 rounded-xl px-4 py-3 bg-white/[0.03] border border-white/10 hover:border-[#a97ce2]/60 transition disabled:opacity-50 disabled:hover:border-white/10"
         >
           <span className="text-white text-sm font-bold">{a.name}</span>
           {!a.agreementCurrent ? (
@@ -478,9 +478,9 @@ function ServiceStep({
         </p>
         <Link
           href="/book/packages"
-          className="btn-gold inline-block px-8 py-3 rounded-full text-xs tracking-widest font-black"
+          className="btn-gold inline-block px-7 py-3 rounded-full text-sm"
         >
-          SEE PLANS
+          See plans
         </Link>
         {back && <div>{back}</div>}
       </div>
@@ -496,7 +496,7 @@ function ServiceStep({
         <button
           key={service.id}
           onClick={() => onPick(bucket)}
-          className="w-full text-left flex items-center justify-between rounded-xl px-4 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition"
+          className="w-full text-left flex items-center justify-between rounded-xl px-4 py-3 bg-white/[0.03] border border-white/10 hover:border-[#a97ce2]/60 transition"
         >
           <div>
             <p className="text-white text-sm font-bold">{service.name}</p>
@@ -505,7 +505,7 @@ function ServiceStep({
           {isSubscription ? (
             <span className="text-[#b07adf] text-xs font-bold flex items-baseline gap-1">
               <span className="text-lg leading-none">∞</span>
-              <span>UNLIMITED</span>
+              <span>Unlimited</span>
             </span>
           ) : (
             <span className="text-[#b07adf] text-xs font-bold">
@@ -538,7 +538,7 @@ function TrainerStep({
           <button
             key={t.id}
             onClick={() => onPick(t)}
-            className="w-full text-left rounded-xl px-4 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition"
+            className="w-full text-left rounded-xl px-4 py-3 bg-white/[0.03] border border-white/10 hover:border-[#a97ce2]/60 transition"
           >
             <p className="text-white text-sm font-bold">
               {t.first_name} {t.last_name}
@@ -672,7 +672,7 @@ function DateStep({
                 key={q.iso}
                 type="button"
                 onClick={() => onPickSlot(q.date, q.iso)}
-                className="rounded-xl px-3 py-3 min-h-[44px] bg-zinc-900/60 border border-[#9954d2]/30 hover:border-[#9954d2] transition text-white text-sm font-semibold"
+                className="rounded-xl px-3 py-3 min-h-[44px] bg-white/[0.03] border border-[#a97ce2]/35 hover:border-[#9954d2] transition text-white text-sm font-semibold"
               >
                 {quickPickLabel(q.iso)}
               </button>
@@ -726,12 +726,12 @@ function DateStep({
               disabled={disabled}
               className={`rounded-xl px-2 py-3 border transition text-center ${
                 disabled
-                  ? "bg-zinc-900/30 border-zinc-800 opacity-50 cursor-not-allowed"
+                  ? "bg-white/[0.015] border-white/[0.06] opacity-50 cursor-not-allowed"
                   : fullDay
                     ? "bg-red-950/20 border-red-900/40 hover:border-red-500/60"
                     : partial
                       ? "bg-amber-950/15 border-amber-900/30 hover:border-amber-500/40"
-                      : "bg-zinc-900/50 border-zinc-800 hover:border-[#9954d2]/50"
+                      : "bg-white/[0.03] border-white/10 hover:border-[#9954d2]/50"
               }`}
               title={
                 dayBlocks
@@ -986,7 +986,7 @@ function TimeStep({
               <button
                 key={iso}
                 onClick={() => onPick(iso)}
-                className="rounded-xl px-2 py-3 bg-zinc-900/50 border border-zinc-800 hover:border-[#9954d2]/50 transition text-white text-sm"
+                className="rounded-xl px-2 py-3 bg-white/[0.03] border border-white/10 hover:border-[#a97ce2]/60 transition text-white text-sm"
               >
                 {d.toLocaleTimeString("en-US", {
                   timeZone: TZ,
@@ -1118,9 +1118,9 @@ function ConfirmStep({
         </p>
         <Link
           href="/book/dashboard"
-          className="btn-gold block text-center w-full py-4 rounded-full text-sm tracking-widest font-black"
+          className="btn-gold block text-center w-full py-3.5 rounded-full text-sm"
         >
-          GO TO MY ACCOUNT
+          Go to my account
         </Link>
       </div>
     );
@@ -1206,7 +1206,7 @@ function ConfirmStep({
                 className={`rounded-xl px-1 py-2.5 min-h-[44px] border text-xs sm:text-sm font-bold leading-tight transition ${
                   weeks === n
                     ? "border-[#9954d2] bg-[#9954d2]/15 text-white"
-                    : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-[#9954d2]/50"
+                    : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-[#9954d2]/50"
                 }`}
               >
                 {n === 1 ? "Just once" : `${n} weeks`}
@@ -1230,15 +1230,15 @@ function ConfirmStep({
       <button
         onClick={confirm}
         disabled={submitting}
-        className="btn-gold w-full py-4 rounded-full text-sm tracking-widest font-black disabled:opacity-60"
+        className="btn-gold w-full py-3.5 rounded-full text-sm disabled:opacity-60"
       >
         {submitting
-          ? "BOOKING…"
+          ? "Booking…"
           : rescheduleFor
-            ? "CONFIRM RESCHEDULE"
+            ? "Confirm reschedule"
             : weeks > 1
-              ? `BOOK ${weeks} SESSIONS`
-              : "CONFIRM BOOKING"}
+              ? `Book ${weeks} sessions`
+              : "Confirm booking"}
       </button>
       {back}
     </div>
@@ -1268,12 +1268,12 @@ function Row({ label, value }: { label: string; value: string }) {
 
 /** Big enough to tap with a thumb. */
 const BACK_CLASS =
-  "inline-flex items-center min-h-[44px] -ml-2 px-2 text-zinc-400 hover:text-[#b07adf] text-sm tracking-wider";
+  "inline-flex items-center min-h-[44px] -ml-2 px-2 text-zinc-400 hover:text-white text-sm";
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className={BACK_CLASS}>
-      ← BACK
+      ← Back
     </button>
   );
 }

@@ -44,10 +44,10 @@ function ForgotPasswordInner() {
 
   if (sent) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-20 text-center">
           <span className="badge-amber mb-5 inline-flex">◆ CHECK YOUR EMAIL</span>
-          <h1 className="font-display text-5xl text-white mb-4">RESET LINK SENT</h1>
+          <h1 className="font-display text-[2.6rem] sm:text-5xl text-white leading-[1.04] mb-4">Reset link sent</h1>
           <div className="divider-glow max-w-[80px] mx-auto mb-6" />
           <p className="text-zinc-400 text-sm leading-relaxed mb-6">
             If <span className="text-white">{email}</span> has an account here, a link to set a
@@ -66,7 +66,7 @@ function ForgotPasswordInner() {
               href="/book/signup"
               className="btn-outline block w-full text-center py-3 rounded-full text-xs tracking-widest font-black"
             >
-              CREATE AN ACCOUNT
+              Create an account
             </Link>
           </div>
           <p className="text-zinc-500 text-xs">
@@ -80,13 +80,12 @@ function ForgotPasswordInner() {
   }
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-16">
         <div className="text-center mb-8">
           <span className="badge-amber mb-4 inline-flex">◆ FORGOT PASSWORD</span>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            RESET
-            <span className="block gradient-text">PASSWORD</span>
+          <h1 className="font-display text-[2.6rem] sm:text-5xl text-white leading-[1.04]">
+            Reset your password
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
         </div>
@@ -125,7 +124,7 @@ function ForgotPasswordInner() {
               disabled={submitting}
               className="btn-gold w-full py-3.5 rounded-full text-sm tracking-widest font-black disabled:opacity-60"
             >
-              {submitting ? "SENDING…" : "SEND RESET LINK"}
+              {submitting ? "Sending…" : "Send reset link"}
             </button>
           </form>
         </div>
@@ -142,8 +141,8 @@ function ForgotPasswordInner() {
       <style>{`
         .input {
           width: 100%;
-          background: rgba(24,24,27,0.5);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.1);
           color: white;
           font-size: 0.875rem;
           padding: 0.75rem 0.9rem;
@@ -151,7 +150,7 @@ function ForgotPasswordInner() {
           outline: none;
           transition: border-color .15s;
         }
-        .input:focus { border-color: rgba(153,84,210,0.5); }
+        .input:focus { border-color: rgba(169,124,226,0.6); }
       `}</style>
     </main>
   );

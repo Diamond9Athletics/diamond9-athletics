@@ -24,11 +24,11 @@ export default async function EmailPreferences({
   }
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-md mx-auto px-6 py-16">
         <div className="text-center mb-8">
           <span className="badge-amber mb-4 inline-flex">◆ EMAIL PREFERENCES</span>
-          <h1 className="font-display text-5xl text-white leading-none">CHECK-IN EMAILS</h1>
+          <h1 className="font-display text-[2.6rem] sm:text-5xl text-white leading-[1.04]">Check-in emails</h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
         </div>
 
@@ -57,7 +57,7 @@ export default async function EmailPreferences({
                   type="submit"
                   className={`${off ? "btn-gold" : "btn-outline"} w-full py-3.5 rounded-full text-xs tracking-widest font-black`}
                 >
-                  {off ? "TURN THEM BACK ON" : "TURN OFF CHECK-IN EMAILS"}
+                  {off ? "Turn them back on" : "Turn off check-in emails"}
                 </button>
               </form>
               <p className="text-zinc-500 text-xs">

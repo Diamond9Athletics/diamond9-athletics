@@ -83,12 +83,12 @@ export default function Contact() {
   }
 
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
       {/* Hero */}
       <PageHero
         badge="◆ REACH OUT"
-        title="GET IN"
-        accent="TOUCH"
+        title="Get in"
+        accent="touch"
       />
 
       {/* Form + Info */}
@@ -98,10 +98,10 @@ export default function Contact() {
           <div className="lg:col-span-3 card-modern rounded-2xl p-7 sm:p-9">
             {submitted ? (
               <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-[#9954d2]/10 border border-[#9954d2]/20 flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center">
                   <svg className="w-6 h-6 text-[#b07adf]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <h3 className="font-display text-3xl text-white">MESSAGE SENT</h3>
+                <h3 className="font-display text-3xl text-white">Message sent</h3>
                 <p className="text-zinc-500 text-sm">We&apos;ll be in touch shortly.</p>
               </div>
             ) : (
@@ -114,33 +114,33 @@ export default function Contact() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">NAME</label>
-                    <input type="text" required autoComplete="name" value={form.name} onChange={set("name")} placeholder="Your name" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
+                    <input type="text" required autoComplete="name" value={form.name} onChange={set("name")} placeholder="Your name" className="w-full bg-white/[0.03] border border-white/10 focus:border-[#a97ce2]/60 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
                   </div>
                   <div>
                     <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">EMAIL</label>
-                    <input type="email" required autoComplete="email" value={form.email} onChange={set("email")} placeholder="your@email.com" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
+                    <input type="email" required autoComplete="email" value={form.email} onChange={set("email")} placeholder="your@email.com" className="w-full bg-white/[0.03] border border-white/10 focus:border-[#a97ce2]/60 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">PHONE</label>
-                  <input type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} placeholder="(555) 000-0000" className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
+                  <input type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} placeholder="(555) 000-0000" className="w-full bg-white/[0.03] border border-white/10 focus:border-[#a97ce2]/60 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600" />
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">PLAN INTEREST</label>
-                  <select value={form.plan} onChange={set("plan")} className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all">
+                  <select value={form.plan} onChange={set("plan")} className="w-full bg-white/[0.03] border border-white/10 focus:border-[#a97ce2]/60 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all">
                     <option value="">Select a plan...</option>
                     {plans.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-zinc-500 text-xs tracking-wider mb-1.5">MESSAGE</label>
-                  <textarea rows={4} value={form.message} onChange={set("message")} placeholder="Tell us about your goals..." className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-[#9954d2]/40 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600 resize-none" />
+                  <textarea rows={4} value={form.message} onChange={set("message")} placeholder="Tell us about your goals..." className="w-full bg-white/[0.03] border border-white/10 focus:border-[#a97ce2]/60 text-white text-sm px-4 py-3 rounded-xl outline-none transition-all placeholder:text-zinc-600 resize-none" />
                 </div>
                 {error && (
                   <p className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">{error}</p>
                 )}
-                <button type="submit" disabled={sending} className="btn-gold w-full py-4 rounded-full text-sm tracking-wider font-bold disabled:opacity-60">
-                  {sending ? "SENDING…" : "SEND MESSAGE"}
+                <button type="submit" disabled={sending} className="btn-gold w-full py-3.5 rounded-full text-sm disabled:opacity-60">
+                  {sending ? "Sending…" : "Send message"}
                 </button>
               </form>
             )}

@@ -15,42 +15,42 @@ const APP_STORE_URL =
 
 const features = [
   {
-    title: "RAPSODO & TRACKMAN",
+    title: "Rapsodo & Trackman",
     desc: "Upload your Rapsodo or Trackman CSV — get per-pitch analytics, strike zone heatmaps, movement profiles, personal bests, and progression charts automatically.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 15l4-4 3 3 5-6" />
     ),
   },
   {
-    title: "LEADERBOARDS",
+    title: "Leaderboards",
     desc: "See where you stack up against every Diamond Nine athlete. Live rankings keep pitchers competitive and chasing the top spot.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8M12 17v4M6 4h12v4a6 6 0 01-12 0V4zM6 6H4a2 2 0 002 4m12-4h2a2 2 0 01-2 4" />
     ),
   },
   {
-    title: "TRAINING PROGRAMS",
+    title: "Training programs",
     desc: "Coaches build reusable multi-week training programs once, then apply them to any athlete's calendar in a single tap.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
     ),
   },
   {
-    title: "DRILL LIBRARY",
+    title: "Drill library",
     desc: "Organized library of drills with video attachments — either YouTube links or coach-uploaded clips — so every rep is done right.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
     ),
   },
   {
-    title: "COACH ↔ ATHLETE",
+    title: "Coach ↔ athlete",
     desc: "Direct messaging between coaches and athletes, plus daily training checklists so nothing gets missed.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.5-1.34" />
     ),
   },
   {
-    title: "SCOUTING REPORTS",
+    title: "Scouting reports",
     desc: "Generate professional PDF reports of any athlete's arsenal and progression — ready to send to college coaches and scouts.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -80,13 +80,13 @@ function AppStoreBadge({ className = "" }: { className?: string }) {
 
 export default function AppPage() {
   return (
-    <main className="pt-24 bg-[#040200]">
+    <main className="pt-16 bg-[#0d0c11]">
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <PageHero
         badge="◆ NOW ON iOS · FREE"
-        title="THE DIAMOND 9"
-        accent="APP"
+        title="The Diamond 9"
+        accent="app"
         subtitle="Track your pitching. Follow your plan. Outwork everyone. The training tool built for serious pitchers — and the coaches who develop them."
       >
         <div className="flex flex-col items-center gap-4 mt-8">
@@ -100,10 +100,10 @@ export default function AppPage() {
       </PageHero>
 
       {/* ── Features ─────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
+      <section className="max-w-7xl mx-auto px-6 py-16 sm:py-20">
         <div className="text-center mb-12">
           <p className="section-label mb-3">WHAT&rsquo;S INSIDE</p>
-          <h2 className="font-display text-4xl sm:text-6xl text-white">BUILT TO <span className="gradient-text">DEVELOP</span></h2>
+          <h2 className="font-display text-4xl sm:text-6xl text-white">Built to <span className="gradient-text">develop</span></h2>
           <div className="divider-glow max-w-[120px] mx-auto mt-5" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -114,7 +114,7 @@ export default function AppPage() {
                   {f.icon}
                 </svg>
               </div>
-              <h3 className="font-display text-2xl text-white mb-2 tracking-wide">{f.title}</h3>
+              <h3 className="font-display text-2xl text-white mb-2">{f.title}</h3>
               <p className="text-zinc-400 text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}
@@ -128,11 +128,10 @@ export default function AppPage() {
       {/* ── Free banner ──────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-6 py-8">
         <div className="card-modern-amber rounded-2xl overflow-hidden card-lift">
-          <div className="h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
           <div className="p-8 sm:p-10 text-center">
             <p className="section-label mb-3">SIMPLE</p>
             <h2 className="font-display text-4xl sm:text-5xl text-white mb-3">
-              <span className="gradient-text">FREE</span> TO DOWNLOAD AND USE
+              <span className="gradient-text">Free</span> to download and use
             </h2>
             <p className="text-zinc-400 text-sm sm:text-base max-w-xl mx-auto mb-6">
               For athletes and coaches. No subscription. No in-app purchases. Premium plans coming soon.
@@ -146,13 +145,13 @@ export default function AppPage() {
       <section className="max-w-3xl mx-auto px-6 pb-24 pt-4">
         <div className="card-modern rounded-2xl p-8 sm:p-10 text-center">
           <p className="section-label mb-3">QUESTIONS?</p>
-          <h2 className="font-display text-3xl sm:text-4xl text-white mb-3">WE&rsquo;VE GOT YOU</h2>
+          <h2 className="font-display text-3xl sm:text-4xl text-white mb-3">We&rsquo;ve got you</h2>
           <p className="text-zinc-400 text-sm mb-6">
             Reach out anytime — we typically respond within 1–2 business days.
           </p>
           <a
             href={`mailto:${EMAIL}?subject=Diamond%20Nine%20App`}
-            className="btn-gold px-10 py-4 rounded-full text-sm tracking-widest font-black inline-block break-all"
+            className="btn-gold px-7 py-3 rounded-full text-sm inline-block break-all"
           >
             {EMAIL}
           </a>

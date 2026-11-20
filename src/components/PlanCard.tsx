@@ -9,46 +9,38 @@ export function PlanCard({ plan, action }: { plan: Plan; action: ReactNode }) {
   const value = plan.value ?? planValue(plan);
   return (
     <div
-      className={`relative rounded-2xl overflow-hidden flex flex-col card-lift card-shine ${plan.featured ? "plan-featured card-modern-amber" : "card-modern"}`}
+      className={`relative rounded-2xl flex flex-col card-lift ${plan.featured ? "plan-featured card-modern-amber" : "card-modern"}`}
     >
-      {plan.featured && (
-        <>
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#9954d2] to-transparent" />
-          <div className="ribbon">{plan.tag}</div>
-        </>
-      )}
-      {/* Jersey number watermark */}
-      <div className="jersey-num absolute right-2 bottom-[-10px] text-[6rem] opacity-[0.06]">{plan.jersey}</div>
-
-      <div className={`p-6 flex flex-col flex-1 ${plan.featured ? "pt-7" : ""}`}>
-        {/* The featured plan's tag is on its corner ribbon instead. */}
-        <div className="mb-5 h-6">
-          {!plan.featured && (
-            <span className="text-xs tracking-wider font-bold px-2.5 py-1 rounded-full bg-zinc-800/60 text-zinc-400 border border-zinc-700/30">
-              {plan.tag}
-            </span>
-          )}
+      <div className="p-6 sm:p-7 flex flex-col flex-1">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <h3 className="font-display text-[1.75rem] leading-tight text-white">{plan.name}</h3>
+          <span
+            className={`mt-1 shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full border ${
+              plan.featured
+                ? "text-[#d6bff5] border-[#a97ce2]/40 bg-[#a97ce2]/10"
+                : "text-zinc-400 border-white/10 bg-white/[0.03]"
+            }`}
+          >
+            {plan.tag}
+          </span>
         </div>
-        <h3 className="font-display text-3xl text-white mb-0.5">{plan.name}</h3>
-        <p className="text-zinc-400 text-sm mb-4">{plan.sub}</p>
-        <p className="gradient-text font-display text-5xl mb-4">
+        <p className="text-zinc-500 text-sm mb-6">{plan.sub}</p>
+        <p className="font-display text-5xl text-white mb-5">
           ${plan.price}
-          {plan.sessions === "unlimited" && (
-            <span className="text-2xl text-zinc-500 font-normal ml-1">/MO</span>
-          )}
+          {plan.sessions === "unlimited" && <span className="text-lg text-zinc-500 font-normal ml-1.5">/ month</span>}
         </p>
 
         {/* What it works out to */}
-        <div className="mb-5 rounded-xl bg-[#9954d2]/8 border border-[#9954d2]/15 px-3.5 py-2.5">
-          <p className="text-white text-sm font-semibold">{value.main}</p>
-          {value.note && <p className="text-[#b07adf] text-xs mt-0.5">{value.note}</p>}
+        <div className="mb-6 pb-5 border-b border-white/[0.07]">
+          <p className="text-zinc-200 text-sm font-medium">{value.main}</p>
+          {value.note && <p className="text-[#b48ae6] text-xs mt-1">{value.note}</p>}
         </div>
 
-        <ul className="space-y-2.5 flex-1 mb-6">
+        <ul className="space-y-3 flex-1 mb-7">
           {plan.features.map((feature) => (
-            <li key={feature} className="flex items-center gap-2.5 text-zinc-300 text-sm">
-              <svg className="w-3.5 h-3.5 text-[#9954d2] shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            <li key={feature} className="flex items-start gap-2.5 text-zinc-300 text-sm leading-snug">
+              <svg className="w-4 h-4 mt-px text-[#a97ce2] shrink-0" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5l3.5 3.5 7.5-8" />
               </svg>
               {feature}
             </li>
@@ -62,7 +54,7 @@ export function PlanCard({ plan, action }: { plan: Plan; action: ReactNode }) {
 
 /** The plan card's button as a plain link. */
 export function planLinkClass(featured?: boolean) {
-  return `text-center py-3.5 rounded-full text-sm tracking-widest font-bold block ${featured ? "btn-gold" : "btn-outline"}`;
+  return `text-center py-3 rounded-full text-sm block ${featured ? "btn-gold" : "btn-outline"}`;
 }
 
 export const SESSIONS_EXPIRE = "Sessions expire 31 days after your first scheduled session.";

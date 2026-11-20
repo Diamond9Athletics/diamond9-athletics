@@ -143,9 +143,9 @@ export function AvailabilityEditor({
         <button
           onClick={save}
           disabled={saving}
-          className="btn-gold ml-auto px-6 py-2.5 rounded-full text-xs tracking-widest font-black disabled:opacity-60"
+          className="btn-gold ml-auto px-6 py-2.5 rounded-full text-sm disabled:opacity-60"
         >
-          {saving ? "SAVING…" : "SAVE HOURS"}
+          {saving ? "Saving…" : "Save hours"}
         </button>
       </div>
     </div>

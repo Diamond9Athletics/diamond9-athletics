@@ -35,7 +35,7 @@ export default async function NumbersPage() {
   const { data: me } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
   if (!me?.is_admin) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen">
         <section className="max-w-md mx-auto px-6 py-24 text-center text-zinc-400">
           Admin only.{" "}
           <Link href="/book/dashboard" className="text-[#b07adf]">
@@ -83,12 +83,12 @@ export default async function NumbersPage() {
   const lastPast = pastWeeks[pastWeeks.length - 1];
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="viz-root max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div className="text-center mb-10">
           <p className="section-label mb-3">ADMIN</p>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            THE <span className="gradient-text">NUMBERS</span>
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
+            The <span className="gradient-text">numbers</span>
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
           <p className="text-zinc-500 text-xs mt-4">

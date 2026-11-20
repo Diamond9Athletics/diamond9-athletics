@@ -69,13 +69,12 @@ function LoginPageInner() {
   }
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-md mx-auto px-6 pt-8 pb-16 sm:py-16">
         <div className="text-center mb-8">
           <span className="badge-amber mb-4 inline-flex">{plan ? "◆ ALMOST THERE" : "◆ ATHLETE LOGIN"}</span>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            {plan ? "YOUR" : "SIGN"}
-            <span className="block gradient-text">{plan ? "ACCOUNT" : "IN"}</span>
+          <h1 className="font-display text-[2.6rem] sm:text-5xl text-white leading-[1.04]">
+            {plan ? "Your account" : "Sign in"}
           </h1>
           <div className="divider-glow max-w-[80px] mx-auto mt-5" />
         </div>
@@ -94,7 +93,7 @@ function LoginPageInner() {
                 href={signupHref}
                 className="btn-gold block w-full py-3.5 rounded-full text-sm tracking-widest font-black"
               >
-                CREATE AN ACCOUNT
+                Create an account
               </Link>
             </div>
           </>
@@ -148,9 +147,9 @@ function LoginPageInner() {
                 {showSignupNudge && (
                   <Link
                     href={signupHref}
-                    className="inline-block bg-[#9954d2] hover:bg-[#b07adf] text-black px-4 py-2 rounded-full text-xs tracking-widest font-black no-underline"
+                    className="btn-gold inline-block px-4 py-2 rounded-full text-xs no-underline"
                   >
-                    CREATE AN ACCOUNT →
+                    Create an account →
                   </Link>
                 )}
               </div>
@@ -161,7 +160,7 @@ function LoginPageInner() {
               disabled={submitting}
               className="btn-gold w-full py-3.5 rounded-full text-sm tracking-widest font-black disabled:opacity-60"
             >
-              {submitting ? "SIGNING IN…" : "SIGN IN"}
+              {submitting ? "Signing in…" : "Sign in"}
             </button>
           </form>
         </div>
@@ -182,7 +181,7 @@ function LoginPageInner() {
             href={signupHref}
             className="btn-outline block w-full py-3.5 rounded-full text-sm tracking-widest font-black"
           >
-            CREATE AN ACCOUNT
+            Create an account
           </Link>
         </div>
         )}
@@ -191,8 +190,8 @@ function LoginPageInner() {
       <style>{`
         .input {
           width: 100%;
-          background: rgba(24,24,27,0.5);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.1);
           color: white;
           font-size: 0.875rem;
           padding: 0.75rem 0.9rem;
@@ -200,7 +199,7 @@ function LoginPageInner() {
           outline: none;
           transition: border-color .15s;
         }
-        .input:focus { border-color: rgba(153,84,210,0.5); }
+        .input:focus { border-color: rgba(169,124,226,0.6); }
       `}</style>
     </main>
   );

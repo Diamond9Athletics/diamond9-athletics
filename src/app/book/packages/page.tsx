@@ -39,9 +39,9 @@ function asPlan(pkg: PackageRow): Plan {
   return {
     slug: pkg.slug,
     category: pkg.service?.category ?? "pitching",
-    name: known?.name ?? pkg.name.toUpperCase(),
+    name: known?.name ?? pkg.name,
     title: known?.title ?? pkg.name,
-    tag: known?.tag ?? (pkg.kind === "enrollment" ? "FULL PROGRAM" : "PLAN"),
+    tag: known?.tag ?? (pkg.kind === "enrollment" ? "Full program" : "Plan"),
     price: Math.round(pkg.price_cents) / 100,
     sessions,
     sub:
@@ -54,7 +54,7 @@ function asPlan(pkg: PackageRow): Plan {
     featured: known?.featured,
     jersey: known?.jersey ?? String(sessions),
     href: `/book/buy/${pkg.slug}`,
-    cta: "BUY PLAN",
+    cta: "Buy plan",
     value: pkg.kind === "enrollment" ? { main: "One price for the full program" } : undefined,
   };
 }
@@ -75,7 +75,7 @@ export default async function Packages() {
 
   if (error) {
     return (
-      <main className="pt-24 bg-[#040200] min-h-screen text-zinc-300 text-center">
+      <main className="pt-16 bg-[#0d0c11] min-h-screen text-zinc-300 text-center">
         <p className="p-10">Failed to load plans: {error.message}</p>
       </main>
     );
@@ -85,12 +85,12 @@ export default async function Packages() {
   const membership = PLANS.find((p) => p.sessions === "unlimited");
 
   return (
-    <main className="pt-24 bg-[#040200] min-h-screen">
+    <main className="pt-16 bg-[#0d0c11] min-h-screen">
       <section className="max-w-6xl mx-auto px-6 py-10 sm:py-12">
         <div className="text-center mb-10">
           <p className="section-label mb-3">BUY SESSIONS</p>
-          <h1 className="font-display text-5xl sm:text-6xl text-white leading-none">
-            CHOOSE A <span className="gradient-text">PLAN</span>
+          <h1 className="font-display text-[2.6rem] sm:text-6xl text-white leading-[1.04]">
+            Choose a <span className="gradient-text">plan</span>
           </h1>
           <div className="divider-glow max-w-[100px] mx-auto mt-5" />
         </div>
@@ -101,10 +101,10 @@ export default async function Packages() {
           if (!cards.length && !showMembership) return null;
           return (
             <div key={category} className="mb-12">
-              <h2 className="font-display text-3xl sm:text-4xl text-white mb-5 tracking-wide">
-                {category.toUpperCase()} <span className="gradient-text">PLANS</span>
+              <h2 className="font-display text-3xl sm:text-4xl text-white mb-5">
+                {category === "pitching" ? "Pitching" : "Hitting"} <span className="gradient-text">plans</span>
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                 {showMembership && (
                   <PlanCard
                     plan={membership}
