@@ -135,7 +135,6 @@ export async function POST(request: NextRequest) {
               ${sibling ? `${escape(sibling.first_name ?? "Your athlete")}&rsquo;s` : "Your"} ${escape(service)}${coachFirst ? ` with ${escape(coachFirst)}` : ""} on <b style="color:#fff;">${escape(when)}</b> has been cancelled by Diamond Nine Athletics. ${escape(outcome)}
             </p>
             ${noteHtml}
-            <p style="margin:0;color:#71717a;font-size:13px;">Questions? Just reply to this email.</p>
           `,
         }),
         replyTo: "support@diamond9athletics.com",
