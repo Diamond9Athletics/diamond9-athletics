@@ -10,12 +10,17 @@
  *  - demote_trainer  : set is_trainer=false, clear trainer_* fields
  *  - delete          : delete the auth user (cascades to profile via FK)
  *  - adjust_credits  : add or subtract credits for a given service, with note
+ *  - set_phone       : save the account's phone, { phone } — e.g. a parent's
+ *                      number for texting from the schedule. Text-reminder
+ *                      consent is tied to the number it was given for, so a
+ *                      new number never inherits it.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, shell } from "@/lib/email";
 import { passwordResetEmail, resetLink, signInLink } from "@/lib/auth/sign-in-link";
+import { formatUsPhone } from "@/lib/phone";
 
 function esc(s: string) {
   return s
@@ -286,6 +291,16 @@ export async function POST(request: NextRequest) {
         `Admin ${user.id} deducted ${need} ${service.name} credits from ${targetId}${note ? ` — ${note}` : ""}`,
       );
       return NextResponse.json({ ok: true });
+    }
+
+    case "set_phone": {
+      const phone = formatUsPhone(typeof body.phone === "string" ? body.phone : "");
+      if (!phone) {
+        return NextResponse.json({ error: "Enter a 10-digit U.S. phone number." }, { status: 400 });
+      }
+      const { error: pErr } = await admin.from("profiles").update({ phone }).eq("id", target.id);
+      if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 });
+      return NextResponse.json({ ok: true, phone });
     }
 
     default:

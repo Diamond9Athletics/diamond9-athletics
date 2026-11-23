@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ClientOption, ServiceOption } from "./AddSessionPanel";
+import { WeekRoster } from "./WeekRoster";
 import { CoachCalendar } from "./CoachCalendar";
 import {
   DIAMOND_PITCHING_PRICE_ID,
@@ -304,6 +305,11 @@ export default async function TrainerPage({
           addSession={addSession}
           nav={nav}
         />
+
+        {/* Admin: who still needs a time this week, a tap from a text. */}
+        {isAdmin && (
+          <WeekRoster key={weekStart} weekStart={weekStart} adminFirstName={me.first_name?.trim() || "Coach"} />
+        )}
 
         <div className="mt-10 text-center">
           <Link
