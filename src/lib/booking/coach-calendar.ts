@@ -15,6 +15,8 @@ export type CalSession = {
   startsAt: string;
   endsAt: string;
   athleteName: string;
+  /** "Jack" — for sentences about them. */
+  firstName: string;
   /** "Jack J." — fits in a calendar cell. */
   shortName: string;
   email: string | null;
@@ -24,6 +26,8 @@ export type CalSession = {
   notes: string | null;
   firstSession: boolean;
   waiverAccepted: boolean;
+  /** Booked with a session off a plan (a membership session has none to give back). */
+  usesSession: boolean;
 };
 
 export type CalTimeOff = {

@@ -11,6 +11,7 @@ import type {
 } from "@/lib/booking/coach-calendar";
 import { AddSessionPanel, type ClientOption, type ServiceOption } from "./AddSessionPanel";
 import { MoveBookingButton } from "./MoveBookingButton";
+import { CancelSessionPanel } from "./CancelSessionPanel";
 import { TimeOffForm } from "./TimeOffForm";
 import { phoneLink } from "@/lib/phone";
 
@@ -74,6 +75,7 @@ export function CoachCalendar({
   myId,
   canEdit,
   canMove,
+  canCancel,
   addSession,
   nav,
 }: {
@@ -84,6 +86,8 @@ export function CoachCalendar({
   /** Your own schedule: add sessions, block and remove time off. */
   canEdit: boolean;
   canMove: boolean;
+  /** Admins: cancel any session. */
+  canCancel: boolean;
   addSession: AddSessionData | null;
   nav: { prev: string; next: string; thisWeek: string | null };
 }) {
@@ -241,6 +245,7 @@ export function CoachCalendar({
             s={session}
             coachName={team ? coachName(session.trainerId) : null}
             canMove={canMove}
+            canCancel={canCancel}
             onClose={close}
           />
         </Modal>
@@ -713,11 +718,13 @@ function SessionDetail({
   s,
   coachName,
   canMove,
+  canCancel,
   onClose,
 }: {
   s: CalSession;
   coachName: string | null;
   canMove: boolean;
+  canCancel: boolean;
   onClose: () => void;
 }) {
   return (
@@ -783,12 +790,14 @@ function SessionDetail({
       )}
 
       {canMove && (
-        <div className="border-t border-zinc-800 pt-4 flex items-center justify-between gap-3">
+        <div className="border-t border-white/[0.08] pt-4 flex items-center justify-between gap-3">
           <span className="text-zinc-500 text-[10px] tracking-widest font-bold">CHANGE THE TIME</span>
           {/* Remount after a move so the picker starts from the new time. */}
           <MoveBookingButton key={s.startsAt} bookingId={s.id} startsAtIso={s.startsAt} />
         </div>
       )}
+
+      {canCancel && <CancelSessionPanel key={s.id} s={s} onDone={onClose} />}
     </div>
   );
 }

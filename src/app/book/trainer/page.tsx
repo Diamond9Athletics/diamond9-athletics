@@ -44,6 +44,7 @@ type BookingRow = {
   starts_at: string;
   ends_at: string;
   notes: string | null;
+  credit_bucket_id: string | null;
   service: Service | Service[] | null;
   athlete: Athlete | Athlete[] | null;
 };
@@ -131,7 +132,7 @@ export default async function TrainerPage({
       admin
         .from("bookings")
         .select(
-          "id, user_id, athlete_id, trainer_id, starts_at, ends_at, notes, service:services(name, category), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone), sibling:athletes(first_name, last_name, waiver_version)",
+          "id, user_id, athlete_id, trainer_id, starts_at, ends_at, notes, credit_bucket_id, service:services(name, category), athlete:profiles!bookings_user_id_fkey(first_name, last_name, email, phone), sibling:athletes(first_name, last_name, waiver_version)",
         )
         .eq("status", "confirmed")
         .in("trainer_id", loadIds)
@@ -177,6 +178,7 @@ export default async function TrainerPage({
       startsAt: r.starts_at,
       endsAt: r.ends_at,
       athleteName,
+      firstName: first || athleteName,
       shortName: first ? `${first}${last ? ` ${last[0]}.` : ""}` : athleteName,
       email: a?.email ?? null,
       phone: a?.phone ?? null,
@@ -185,6 +187,7 @@ export default async function TrainerPage({
       notes: r.notes,
       firstSession: firstSessions.has(r.id),
       waiverAccepted: sib ? sib.waiver_version === WAIVER_VERSION : acceptedWaiver.has(r.user_id),
+      usesSession: Boolean(r.credit_bucket_id),
     };
   });
 
@@ -297,6 +300,7 @@ export default async function TrainerPage({
           myId={user.id}
           canEdit={view.kind === "mine"}
           canMove={isAdmin || view.kind === "mine"}
+          canCancel={isAdmin}
           addSession={addSession}
           nav={nav}
         />
